@@ -11,8 +11,9 @@ import { validateBirthData } from '../astro-core/birthdata/validateBirthData';
 import { lookupCoordinates } from '../astro-core/birthdata/geoLookup';
 import { parseBirthData } from '../astro-core/birthdata/parseBirthData';
 
-// Guru API backend URL - defaults to production, can be overridden via env
-const GURU_API_BASE_URL = process.env.GURU_API_URL || 'https://guru-api-660206747784.us-central1.run.app';
+// Guru API backend URL - CANONICAL asia-south1 region (DO NOT CHANGE)
+// Can be overridden via GURU_API_URL env variable if needed
+const GURU_API_BASE_URL = process.env.GURU_API_URL || 'https://guru-api-660206747784.asia-south1.run.app';
 
 export async function calculateAstroChart(
   birthData: BirthData,

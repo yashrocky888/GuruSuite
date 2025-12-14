@@ -49,11 +49,20 @@ fi
 echo "🔨 Building Docker image..."
 gcloud builds submit --tag gcr.io/$GCP_PROJECT_ID/guru-api --quiet
 
+# REGION LOCK: asia-south1 is canonical
+REGION="asia-south1"  # CANONICAL REGION - DO NOT CHANGE
+
+# REGION LOCK: Fail if region is not asia-south1
+if [ "$REGION" != "asia-south1" ]; then
+    echo "❌ ERROR: Deployment region must be 'asia-south1'"
+    exit 1
+fi
+
 echo "☁️  Deploying to Cloud Run..."
 gcloud run deploy guru-api \
   --image gcr.io/$GCP_PROJECT_ID/guru-api \
   --platform managed \
-  --region us-central11 \
+  --region $REGION \
   --allow-unauthenticated \
   --port 8080 \
   --memory 2Gi \
@@ -64,7 +73,7 @@ gcloud run deploy guru-api \
   --quiet
 
 # Get URL
-SERVICE_URL=$(gcloud run services describe guru-api --region us-central11 --format 'value(status.url)' 2>/dev/null)
+SERVICE_URL=$(gcloud run services describe guru-api --region $REGION --format 'value(status.url)' 2>/dev/null)
 
 echo ""
 echo "✅ Deployment Complete!"

@@ -3,9 +3,16 @@
 
 set -e
 
-PROJECT_ID="guru-api-660206747784"
-REGION="us-central1"
+PROJECT_ID="guru-api-6b9ba"
+REGION="asia-south1"  # CANONICAL REGION - DO NOT CHANGE
 SERVICE_NAME="guru-api"
+
+# REGION LOCK: Fail if region is not asia-south1
+if [ "$REGION" != "asia-south1" ]; then
+    echo "❌ ERROR: Deployment region must be 'asia-south1'"
+    echo "   Current region: $REGION"
+    exit 1
+fi
 
 echo "🚀 GURU API - COMPLETE DEPLOYMENT"
 echo "=================================="

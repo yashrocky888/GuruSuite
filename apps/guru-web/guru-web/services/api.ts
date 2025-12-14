@@ -6,7 +6,8 @@
 
 import axios from 'axios';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://guru-api-660206747784.us-central1.run.app';
+// CANONICAL API URL - asia-south1 region (DO NOT CHANGE)
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://guru-api-660206747784.asia-south1.run.app';
 const LOCATION_API_BASE_URL = process.env.NEXT_PUBLIC_ASTRO_API_URL || 'http://localhost:3001/api';
 
 // Create axios instance with default config

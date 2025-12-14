@@ -3,9 +3,16 @@
 
 set -e
 
-PROJECT_ID="${GCP_PROJECT_ID:-your-project-id}"
-REGION="${GCP_REGION:-us-central11}"
+PROJECT_ID="${GCP_PROJECT_ID:-guru-api-6b9ba}"
+REGION="asia-south1"  # CANONICAL REGION - DO NOT CHANGE
 SERVICE_NAME="guru-api"
+
+# REGION LOCK: Fail if region is not asia-south1
+if [ "$REGION" != "asia-south1" ]; then
+    echo "❌ ERROR: Deployment region must be 'asia-south1'"
+    echo "   Current region: $REGION"
+    exit 1
+fi
 
 echo "🚀 Deploying Guru API to Firebase Cloud Run"
 echo "=============================================="

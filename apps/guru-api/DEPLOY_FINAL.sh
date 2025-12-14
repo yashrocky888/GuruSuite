@@ -11,8 +11,15 @@ echo ""
 
 # Try to detect project from URL
 PROJECT_NUM="660206747784"
-REGION="us-central1"
+REGION="asia-south1"  # CANONICAL REGION - DO NOT CHANGE
 SERVICE_NAME="guru-api"
+
+# REGION LOCK: Fail if region is not asia-south1
+if [ "$REGION" != "asia-south1" ]; then
+    echo "❌ ERROR: Deployment region must be 'asia-south1'"
+    echo "   Current region: $REGION"
+    exit 1
+fi
 
 # Try to get project ID from project number
 PROJECT_ID=$(gcloud projects list --filter="projectNumber=$PROJECT_NUM" --format="value(projectId)" 2>/dev/null | head -1)

@@ -27,9 +27,17 @@ echo "✅ gcloud CLI found"
 echo ""
 
 # Set project
-PROJECT_ID="guru-api-660206747784"
-REGION="us-central1"
+PROJECT_ID="guru-api-6b9ba"
+REGION="asia-south1"  # CANONICAL REGION - DO NOT CHANGE
 SERVICE_NAME="guru-api"
+
+# REGION LOCK: Fail if region is not asia-south1
+if [ "$REGION" != "asia-south1" ]; then
+    echo "❌ ERROR: Deployment region must be 'asia-south1'"
+    echo "   Current region: $REGION"
+    echo "   This is a safety check to prevent accidental deployments to wrong region"
+    exit 1
+fi
 
 echo "📋 Configuration:"
 echo "  Project: $PROJECT_ID"
