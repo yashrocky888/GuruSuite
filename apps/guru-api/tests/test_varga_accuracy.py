@@ -34,16 +34,16 @@ EXPECTED_VARGAS = {
         "Ketu": 3,   # Cancer
     },
     "D10": {
-        "Asc": 4,   # Cancer
-        "Sun": 8,   # Aquarius
-        "Moon": 9,  # Pisces
-        "Mercury": 12,  # Gemini (wait, 12 = Pisces? Let me check - actually 12 in 1-12 = Pisces, but user said Gemini)
-        "Venus": 11,  # Taurus
-        "Mars": 12,  # Gemini
-        "Jupiter": 8,  # Aquarius
-        "Saturn": None,  # Not in reference
-        "Rahu": 8,   # Aquarius
-        "Ketu": 4,   # Cancer
+        "Asc": 4,   # Cancer (Karka)
+        "Sun": 8,   # Scorpio (Vrischika)
+        "Moon": 9,  # Sagittarius (Dhanu)
+        "Mercury": 12,  # Pisces (Meena)
+        "Venus": 11,  # Aquarius (Kumbha)
+        "Mars": 12,  # Pisces (Meena)
+        "Jupiter": 8,  # Scorpio (Vrischika)
+        "Saturn": 8,  # Scorpio (Vrischika)
+        "Rahu": 8,   # Scorpio (Vrischika)
+        "Ketu": 4,   # Cancer (Karka)
     },
     "D12": {
         "Asc": None,  # Not explicitly in reference
@@ -130,6 +130,7 @@ def test_d10_dasamsa(test_kundli):
         "Venus": "Venus",
         "Mars": "Mars",
         "Jupiter": "Jupiter",
+        "Saturn": "Saturn",
         "Rahu": "Rahu",
         "Ketu": "Ketu"
     }
