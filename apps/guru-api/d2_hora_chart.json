@@ -1,0 +1,94 @@
+{
+  "chart": "D2 (Hora)",
+  "description": "Hora chart for wealth and finances",
+  "birth_details": {
+    "date": "1995-05-16",
+    "time": "18:38",
+    "place": "Bangalore",
+    "latitude": 12.9716,
+    "longitude": 77.5946
+  },
+  "planets": {
+    "Sun": {
+      "d1_degree": 31.4194,
+      "d2_degree": 32.8388,
+      "sign": "Taurus",
+      "sign_sanskrit": "Taurus",
+      "sign_index": 1,
+      "degrees_in_sign": 2.8388,
+      "lord": "Venus"
+    },
+    "Moon": {
+      "d1_degree": 235.2503,
+      "d2_degree": 200.5006,
+      "sign": "Libra",
+      "sign_sanskrit": "Libra",
+      "sign_index": 6,
+      "degrees_in_sign": 20.5006,
+      "lord": "Venus"
+    },
+    "Mercury": {
+      "d1_degree": 52.1205,
+      "d2_degree": 14.241,
+      "sign": "Aries",
+      "sign_sanskrit": "Aries",
+      "sign_index": 0,
+      "degrees_in_sign": 14.241,
+      "lord": "Mars"
+    },
+    "Venus": {
+      "d1_degree": 5.699,
+      "d2_degree": 11.398,
+      "sign": "Aries",
+      "sign_sanskrit": "Aries",
+      "sign_index": 0,
+      "degrees_in_sign": 11.398,
+      "lord": "Mars"
+    },
+    "Mars": {
+      "d1_degree": 122.2535,
+      "d2_degree": 124.507,
+      "sign": "Leo",
+      "sign_sanskrit": "Leo",
+      "sign_index": 4,
+      "degrees_in_sign": 4.507,
+      "lord": "Sun"
+    },
+    "Jupiter": {
+      "d1_degree": 228.6842,
+      "d2_degree": 187.3684,
+      "sign": "Libra",
+      "sign_sanskrit": "Libra",
+      "sign_index": 6,
+      "degrees_in_sign": 7.3684,
+      "lord": "Venus"
+    },
+    "Saturn": {
+      "d1_degree": 328.9001,
+      "d2_degree": 357.8002,
+      "sign": "Pisces",
+      "sign_sanskrit": "Pisces",
+      "sign_index": 11,
+      "degrees_in_sign": 27.8002,
+      "lord": "Jupiter"
+    },
+    "Rahu": {
+      "d1_degree": 191.7326,
+      "d2_degree": 203.4652,
+      "sign": "Libra",
+      "sign_sanskrit": "Libra",
+      "sign_index": 6,
+      "degrees_in_sign": 23.4652,
+      "lord": "Venus"
+    },
+    "Ketu": {
+      "d1_degree": 11.7326,
+      "d2_degree": 23.4652,
+      "sign": "Aries",
+      "sign_sanskrit": "Aries",
+      "sign_index": 0,
+      "degrees_in_sign": 23.4652,
+      "lord": "Mars"
+    }
+  }
+}

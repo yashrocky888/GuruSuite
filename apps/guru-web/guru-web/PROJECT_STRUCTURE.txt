@@ -1,0 +1,100 @@
+GURU WEB APPLICATION - PROJECT STRUCTURE
+==========================================
+
+guru-web/
+├── app/                          # Next.js App Router
+│   ├── page.tsx                  # Landing page
+│   ├── layout.tsx                # Root layout
+│   ├── globals.css               # Global styles with spiritual theme
+│   ├── kundali/
+│   │   └── page.tsx              # Kundali chart page
+│   ├── dasha/
+│   │   └── page.tsx              # Dasha timeline page
+│   ├── today/
+│   │   └── page.tsx              # Today's predictions page
+│   ├── monthly/
+│   │   └── page.tsx              # Monthly forecast page
+│   ├── yearly/
+│   │   └── page.tsx              # Yearly overview page
+│   ├── muhurtha/
+│   │   └── page.tsx              # Muhurtha finder page
+│   ├── karma/
+│   │   └── page.tsx              # Karma report page
+│   ├── chat/
+│   │   └── page.tsx              # Guru Chat page
+│   └── profile/
+│       └── page.tsx              # Profile page
+│
+├── frontend/
+│   ├── components/               # React components (to be created)
+│   ├── layouts/
+│   │   └── MainLayout.tsx        # Main layout with header & navbar
+│   ├── pages/                    # Legacy pages folder
+│   ├── styles/                   # Additional styles
+│   ├── hooks/
+│   │   └── useDebounce.ts        # Debounce hook
+│   ├── utils/
+│   │   ├── constants.ts          # App constants
+│   │   └── helpers.ts            # Helper functions
+│   ├── state/                    # Zustand stores
+│   │   ├── useUserStore.ts       # User state
+│   │   ├── useGuruStore.ts      # Guru chat state
+│   │   └── useUIStore.ts         # UI state
+│   ├── services/
+│   │   └── guruApi.ts            # API service layer
+│   ├── assets/                   # Static assets
+│   └── animations/               # Framer Motion animations
+│       ├── index.ts              # Animation exports
+│       ├── fadeIn.ts             # Fade in animations
+│       ├── slideUp.ts            # Slide up animations
+│       ├── slideLeft.ts          # Slide left animations
+│       ├── pageTransition.ts     # Page transitions
+│       └── staggerContainer.ts   # Stagger animations
+│
+├── guru-personality/             # Guru personality engine
+│   ├── prompt-templates/
+│   │   ├── guru_default.txt      # Default Guru prompt
+│   │   ├── guru_chart_explain.txt # Chart explanation prompt
+│   │   ├── guru_daily_message.txt # Daily message prompt
+│   │   ├── guru_karmic_report.txt # Karma report prompt
+│   │   └── guru_remedy_guide.txt  # Remedy guide prompt
+│   ├── conversation-engine/
+│   │   ├── guru_orchestrator.js  # Conversation orchestration
+│   │   └── chat_memory_manager.js # Chat memory management
+│   ├── memory/
+│   │   ├── user_memory.json      # Memory schema
+│   │   └── user_memory.js        # Memory manager
+│   └── formatters/
+│       ├── format_guru_response.js    # Response formatting
+│       └── inject_spiritual_tone.js    # Spiritual tone injection
+│
+├── tests/                        # Test files
+├── config/
+│   └── api.config.ts             # API configuration
+├── docs/
+│   └── README.md                 # Documentation
+├── public/                       # Public assets
+├── package.json                  # Dependencies
+├── tsconfig.json                 # TypeScript config
+├── next.config.ts                # Next.js config
+└── .env.example                  # Environment variables example
+
+TECHNOLOGY STACK:
+- Next.js 16 (App Router)
+- TypeScript
+- TailwindCSS v4
+- Framer Motion
+- Zustand
+- Axios
+- Heroicons & Lucide React
+- Recharts
+
+UI/UX PRINCIPLES:
+✓ Super clean, Apple-style minimal design
+✓ Soft gradients (blue-purple, gold-white spiritual tones)
+✓ Smooth animations with Framer Motion
+✓ Glassmorphism effects
+✓ Spiritual vibe with golden aura accents
+✓ Mobile-first responsive design
+
+STATUS: Phase 1 Complete - All structure and placeholders created

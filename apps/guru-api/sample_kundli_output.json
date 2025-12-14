@@ -1,0 +1,207 @@
+{
+  "success": true,
+  "data": {
+    "kundli": {
+      "Ascendant": {
+        "degree": 212.2696,
+        "sign": "Scorpio",
+        "degrees_in_sign": 2.2696,
+        "nakshatra": "Visakha",
+        "nakshatra_index": 15,
+        "pada": 4
+      },
+      "Planets": {
+        "Sun": {
+          "degree": 31.4194,
+          "sign": "Taurus",
+          "degrees_in_sign": 1.4194,
+          "house": 6,
+          "nakshatra": "Krittika",
+          "nakshatra_index": 2,
+          "pada": 2,
+          "retro": false,
+          "speed": 0.963555
+        },
+        "Moon": {
+          "degree": 235.2503,
+          "sign": "Scorpio",
+          "degrees_in_sign": 25.2503,
+          "house": 1,
+          "nakshatra": "Jyeshtha",
+          "nakshatra_index": 17,
+          "pada": 3,
+          "retro": false,
+          "speed": 15.117638
+        },
+        "Mars": {
+          "degree": 122.2535,
+          "sign": "Leo",
+          "degrees_in_sign": 2.2535,
+          "house": 9,
+          "nakshatra": "Magha",
+          "nakshatra_index": 9,
+          "pada": 1,
+          "retro": false,
+          "speed": 0.410833
+        },
+        "Mercury": {
+          "degree": 52.1205,
+          "sign": "Taurus",
+          "degrees_in_sign": 22.1205,
+          "house": 7,
+          "nakshatra": "Rohini",
+          "nakshatra_index": 3,
+          "pada": 4,
+          "retro": false,
+          "speed": 0.630278
+        },
+        "Jupiter": {
+          "degree": 228.6842,
+          "sign": "Scorpio",
+          "degrees_in_sign": 18.6842,
+          "house": 1,
+          "nakshatra": "Jyeshtha",
+          "nakshatra_index": 17,
+          "pada": 1,
+          "retro": true,
+          "speed": -0.120833
+        },
+        "Venus": {
+          "degree": 5.6990,
+          "sign": "Aries",
+          "degrees_in_sign": 5.6990,
+          "house": 6,
+          "nakshatra": "Ashwini",
+          "nakshatra_index": 0,
+          "pada": 2,
+          "retro": false,
+          "speed": 1.210833
+        },
+        "Saturn": {
+          "degree": 328.9001,
+          "sign": "Aquarius",
+          "degrees_in_sign": 28.9001,
+          "house": 4,
+          "nakshatra": "Purva Bhadrapada",
+          "nakshatra_index": 24,
+          "pada": 3,
+          "retro": false,
+          "speed": 0.080833
+        },
+        "Rahu": {
+          "degree": 191.7326,
+          "sign": "Libra",
+          "degrees_in_sign": 11.7326,
+          "house": 12,
+          "nakshatra": "Swati",
+          "nakshatra_index": 14,
+          "pada": 2,
+          "retro": true,
+          "speed": -0.050000
+        },
+        "Ketu": {
+          "degree": 11.7326,
+          "sign": "Aries",
+          "degrees_in_sign": 11.7326,
+          "house": 6,
+          "nakshatra": "Ashwini",
+          "nakshatra_index": 0,
+          "pada": 4,
+          "retro": true,
+          "speed": 0.050000
+        }
+      },
+      "Houses": [
+        {
+          "house": 1,
+          "degree": 212.2696,
+          "sign": "Scorpio",
+          "degrees_in_sign": 2.2696
+        },
+        {
+          "house": 2,
+          "degree": 242.2696,
+          "sign": "Sagittarius",
+          "degrees_in_sign": 2.2696
+        },
+        {
+          "house": 3,
+          "degree": 272.2696,
+          "sign": "Capricorn",
+          "degrees_in_sign": 2.2696
+        },
+        {
+          "house": 4,
+          "degree": 302.2696,
+          "sign": "Aquarius",
+          "degrees_in_sign": 2.2696
+        },
+        {
+          "house": 5,
+          "degree": 332.2696,
+          "sign": "Pisces",
+          "degrees_in_sign": 2.2696
+        },
+        {
+          "house": 6,
+          "degree": 2.2696,
+          "sign": "Aries",
+          "degrees_in_sign": 2.2696
+        },
+        {
+          "house": 7,
+          "degree": 32.2696,
+          "sign": "Taurus",
+          "degrees_in_sign": 2.2696
+        },
+        {
+          "house": 8,
+          "degree": 62.2696,
+          "sign": "Gemini",
+          "degrees_in_sign": 2.2696
+        },
+        {
+          "house": 9,
+          "degree": 92.2696,
+          "sign": "Cancer",
+          "degrees_in_sign": 2.2696
+        },
+        {
+          "house": 10,
+          "degree": 122.2696,
+          "sign": "Leo",
+          "degrees_in_sign": 2.2696
+        },
+        {
+          "house": 11,
+          "degree": 152.2696,
+          "sign": "Virgo",
+          "degrees_in_sign": 2.2696
+        },
+        {
+          "house": 12,
+          "degree": 182.2696,
+          "sign": "Libra",
+          "degrees_in_sign": 2.2696
+        }
+      ]
+    },
+    "birth_details": {
+      "birth_date": "1995-05-16",
+      "birth_time": "18:38:00",
+      "birth_latitude": 12.9629,
+      "birth_longitude": 77.5775,
+      "timezone": "Asia/Kolkata",
+      "birth_place": "Bangalore, India"
+    },
+    "calculation_method": {
+      "ayanamsa": "Lahiri (Chitra Paksha)",
+      "node_type": "TRUE NODE (Spashth Rahu/Ketu)",
+      "house_system": "Placidus",
+      "ephemeris": "Swiss Ephemeris",
+      "flags": "FLG_SWIEPH | FLG_SIDEREAL | FLG_TRUEPOS | FLG_SPEED"
+    }
+  },
+  "generated_at": "2025-12-08T11:50:00.000000"
+}
+

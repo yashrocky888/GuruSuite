@@ -1,0 +1,241 @@
+{
+    "success": true,
+    "data": {
+        "kundli": {
+            "Ascendant": {
+                "degree": 212.2696,
+                "sign": "Scorpio",
+                "degrees_in_sign": 2.2696
+            },
+            "Planets": {
+                "Sun": {
+                    "degree": 31.4162,
+                    "sign": "Taurus",
+                    "degrees_in_sign": 1.4162,
+                    "house": 6
+                },
+                "Moon": {
+                    "degree": 235.2525,
+                    "sign": "Scorpio",
+                    "degrees_in_sign": 25.2525,
+                    "house": 1
+                },
+                "Mercury": {
+                    "degree": 52.1202,
+                    "sign": "Taurus",
+                    "degrees_in_sign": 22.1202,
+                    "house": 7
+                },
+                "Venus": {
+                    "degree": 5.691,
+                    "sign": "Aries",
+                    "degrees_in_sign": 5.691,
+                    "house": 6
+                },
+                "Mars": {
+                    "degree": 122.2529,
+                    "sign": "Leo",
+                    "degrees_in_sign": 2.2529,
+                    "house": 9
+                },
+                "Jupiter": {
+                    "degree": 228.6896,
+                    "sign": "Scorpio",
+                    "degrees_in_sign": 18.6896,
+                    "house": 1
+                },
+                "Saturn": {
+                    "degree": 328.898,
+                    "sign": "Aquarius",
+                    "degrees_in_sign": 28.898,
+                    "house": 4
+                },
+                "Rahu": {
+                    "degree": 191.735,
+                    "sign": "Libra",
+                    "degrees_in_sign": 11.735,
+                    "house": 12
+                },
+                "Ketu": {
+                    "degree": 11.735,
+                    "sign": "Aries",
+                    "degrees_in_sign": 11.735,
+                    "house": 6
+                }
+            },
+            "Houses": [
+                {
+                    "house": 1,
+                    "degree": 212.2696,
+                    "sign": "Scorpio",
+                    "degrees_in_sign": 2.2696
+                },
+                {
+                    "house": 2,
+                    "degree": 241.2108,
+                    "sign": "Sagittarius",
+                    "degrees_in_sign": 1.2108
+                },
+                {
+                    "house": 3,
+                    "degree": 270.9327,
+                    "sign": "Capricorn",
+                    "degrees_in_sign": 0.9327
+                },
+                {
+                    "house": 4,
+                    "degree": 302.3203,
+                    "sign": "Aquarius",
+                    "degrees_in_sign": 2.3203
+                },
+                {
+                    "house": 5,
+                    "degree": 334.4748,
+                    "sign": "Pisces",
+                    "degrees_in_sign": 4.4748
+                },
+                {
+                    "house": 6,
+                    "degree": 4.8825,
+                    "sign": "Aries",
+                    "degrees_in_sign": 4.8825
+                },
+                {
+                    "house": 7,
+                    "degree": 32.2696,
+                    "sign": "Taurus",
+                    "degrees_in_sign": 2.2696
+                },
+                {
+                    "house": 8,
+                    "degree": 61.2108,
+                    "sign": "Gemini",
+                    "degrees_in_sign": 1.2108
+                },
+                {
+                    "house": 9,
+                    "degree": 90.9327,
+                    "sign": "Cancer",
+                    "degrees_in_sign": 0.9327
+                },
+                {
+                    "house": 10,
+                    "degree": 122.3203,
+                    "sign": "Leo",
+                    "degrees_in_sign": 2.3203
+                },
+                {
+                    "house": 11,
+                    "degree": 154.4748,
+                    "sign": "Virgo",
+                    "degrees_in_sign": 4.4748
+                },
+                {
+                    "house": 12,
+                    "degree": 184.8825,
+                    "sign": "Libra",
+                    "degrees_in_sign": 4.8825
+                }
+            ]
+        },
+        "interpretation": {
+            "planets": {},
+            "houses": {},
+            "yogas": {
+                "summary": {
+                    "total_yogas": 0,
+                    "summary": "No significant yogas detected in the chart.",
+                    "categories": {}
+                },
+                "detailed": [],
+                "total": 0
+            },
+            "dasha": {},
+            "transits": {},
+            "life_themes": {
+                "career": {
+                    "house_10_lord": "Unknown",
+                    "planets_in_10": [],
+                    "analysis": "Career & Profession Analysis:\n\n10th House (Career):\n\u2022 House Lord: Unknown\n\u2022 Planets in 10th: None",
+                    "career_indicators": 0
+                },
+                "relationships": {
+                    "house_7_lord": "Unknown",
+                    "planets_in_7": [],
+                    "venus_house": 0,
+                    "analysis": "Relationships & Marriage Analysis:\n\n7th House (Marriage):\n\u2022 House Lord: Unknown\n\u2022 Planets in 7th: None\n\nVenus (Relationships):\n\u2022 Venus in 0th house"
+                },
+                "finances": {
+                    "house_2_lord": "Unknown",
+                    "planets_in_2": [],
+                    "house_11_lord": "Unknown",
+                    "analysis": "Finances & Wealth Analysis:\n\n2nd House (Wealth):\n\u2022 House Lord: Unknown\n\u2022 Planets in 2nd: None\n\n11th House (Gains):\n\u2022 House Lord: Unknown"
+                },
+                "health": {
+                    "house_6_lord": "Unknown",
+                    "planets_in_6": [],
+                    "planets_in_1": [],
+                    "analysis": "Health Analysis:\n\n6th House (Health):\n\u2022 House Lord: Unknown\n\u2022 Planets in 6th: None\n\n1st House (Physical Body):\n\u2022 Planets in 1st: None"
+                },
+                "spirituality": {
+                    "house_9_lord": "Unknown",
+                    "planets_in_9": [],
+                    "planets_in_12": [],
+                    "ketu_house": 0,
+                    "analysis": "Spirituality Analysis:\n\n9th House (Dharma, Spirituality):\n\u2022 House Lord: Unknown\n\u2022 Planets in 9th: None\n\n12th House (Moksha, Liberation):\n\u2022 Planets in 12th: None\n\nKetu (Spirituality):\n\u2022 Ketu in 0th house"
+                },
+                "family": {
+                    "house_4_lord": "Unknown",
+                    "planets_in_4": [],
+                    "house_9_lord": "Unknown",
+                    "analysis": "Family Analysis:\n\n4th House (Mother, Family):\n\u2022 House Lord: Unknown\n\u2022 Planets in 4th: None\n\n9th House (Father):\n\u2022 House Lord: Unknown"
+                },
+                "children": {
+                    "house_5_lord": "Unknown",
+                    "planets_in_5": [],
+                    "jupiter_house": 0,
+                    "analysis": "Children Analysis:\n\n5th House (Children):\n\u2022 House Lord: Unknown\n\u2022 Planets in 5th: None\n\nJupiter (Children Karaka):\n\u2022 Jupiter in 0th house"
+                },
+                "property": {
+                    "house_4_lord": "Unknown",
+                    "planets_in_4": [],
+                    "analysis": "Property & Assets Analysis:\n\n4th House (Property):\n\u2022 House Lord: Unknown\n\u2022 Planets in 4th: None"
+                },
+                "education": {
+                    "planets_in_4": [],
+                    "house_5_lord": "Unknown",
+                    "planets_in_5": [],
+                    "mercury_house": 0,
+                    "analysis": "Education Analysis:\n\n4th House (Education):\n\u2022 Planets in 4th: None\n\n5th House (Intelligence):\n\u2022 House Lord: Unknown\n\u2022 Planets in 5th: None\n\nMercury (Education Karaka):\n\u2022 Mercury in 0th house"
+                }
+            },
+            "remedies": {
+                "gemstones": [],
+                "mantras": [],
+                "pujas": [],
+                "habits": [
+                    {
+                        "habit": "Meditation",
+                        "frequency": "Daily",
+                        "benefit": "Reduces stress and improves mental clarity"
+                    },
+                    {
+                        "habit": "Prayer",
+                        "frequency": "Daily morning and evening",
+                        "benefit": "Connects with divine and brings peace"
+                    },
+                    {
+                        "habit": "Charity",
+                        "frequency": "Regular",
+                        "benefit": "Reduces negative karma and brings blessings"
+                    }
+                ],
+                "donations": [],
+                "general": []
+            },
+            "summary": "COMPLETE JYOTISH INTERPRETATION SUMMARY\n\nChart Overview:\nThis is a comprehensive Vedic Astrology interpretation based on your birth chart.\n\nPlanetary Analysis:\n0 planets analyzed with their positions, strengths, and significations.\n\nYogas Detected:\n0 yogas found in the chart, including 0 highly auspicious combinations.\n\nDasha Period:\n\nLife Themes Analyzed:\n\u2022 Career: Career & Profession Analysis:\n\n10th House (Career):\n\u2022 House Lord: Unknown\n\u2022 Planets in 10th: None...\n\u2022 Relationships: Relationships & Marriage Analysis:\n\n7th House (Marriage):\n\u2022 House Lord: Unknown\n\u2022 Planets in 7th: No...\n\u2022 Finances: Finances & Wealth Analysis:\n\n2nd House (Wealth):\n\u2022 House Lord: Unknown\n\u2022 Planets in 2nd: None\n\n11th ...\n\u2022 Health: Health Analysis:\n\n6th House (Health):\n\u2022 House Lord: Unknown\n\u2022 Planets in 6th: None\n\n1st House (Physi...\n\nRemedies:\n0 gemstone recommendations\n0 mantra recommendations\n0 puja recommendations\n\nThis interpretation provides a complete analysis of your birth chart based on classical Vedic Astrology principles."
+        },
+        "summary": "Complete birth chart analysis with detailed interpretation"
+    },
+    "generated_at": "2025-12-08T10:17:36.668111"
+}

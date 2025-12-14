@@ -1,0 +1,62 @@
+.south-chart-wrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.south-chart-svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Chart background - glassmorphic */
+.south-chart-svg rect[id="border"] {
+  fill: rgba(255, 255, 255, 0.05) !important;
+  stroke: rgba(212, 175, 55, 0.4) !important;
+  stroke-width: 2 !important;
+}
+
+/* Center empty box */
+.south-chart-svg rect[id="center"] {
+  fill: rgba(255, 255, 255, 0.02) !important;
+  stroke: rgba(212, 175, 55, 0.3) !important;
+  stroke-width: 2 !important;
+}
+
+/* Sign rectangles - modern glass */
+.south-chart-svg rect[id] {
+  fill: rgba(255, 255, 255, 0.08) !important;
+  stroke: rgba(212, 175, 55, 0.5) !important;
+  stroke-width: 1.5 !important;
+  transition: all 0.3s ease;
+}
+
+.south-chart-svg rect[id]:hover {
+  fill: rgba(212, 175, 55, 0.1) !important;
+  stroke: rgba(212, 175, 55, 0.8) !important;
+}
+
+.ascendant-sign {
+  fill: rgba(212, 175, 55, 0.15) !important;
+  stroke: #d4af37 !important;
+  stroke-width: 2.5 !important;
+  filter: drop-shadow(0 0 8px rgba(212, 175, 55, 0.4));
+}
+
+.ascendant-label {
+  font: bold 18px sans-serif;
+  fill: #d4af37 !important;
+  font-weight: 600;
+}
+
+.planet-text {
+  font: bold 13px sans-serif;
+  fill: #3b82f6 !important;
+  font-weight: 500;
+}

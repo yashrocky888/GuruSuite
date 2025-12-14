@@ -1,0 +1,112 @@
+{
+  "chart": "D12 (Dwadasamsa)",
+  "description": "Dwadasamsa chart for parents and expenses",
+  "birth_details": {
+    "date": "1995-05-16",
+    "time": "18:38",
+    "place": "Bangalore",
+    "latitude": 12.9716,
+    "longitude": 77.5946
+  },
+  "planets": {
+    "Sun": {
+      "d1_degree": 31.4194,
+      "d1_sign": "Taurus",
+      "d12_degree": 17.0328,
+      "sign": "Aries",
+      "sign_sanskrit": "Aries",
+      "sign_index": 0,
+      "degrees_in_sign": 17.0328,
+      "lord": "Mars",
+      "division": 1
+    },
+    "Moon": {
+      "d1_degree": 235.2503,
+      "d1_sign": "Scorpio",
+      "d12_degree": 303.0036,
+      "sign": "Aquarius",
+      "sign_sanskrit": "Aquarius",
+      "sign_index": 10,
+      "degrees_in_sign": 3.0036,
+      "lord": "Saturn",
+      "division": 11
+    },
+    "Mercury": {
+      "d1_degree": 52.1205,
+      "d1_sign": "Taurus",
+      "d12_degree": 265.446,
+      "sign": "Sagittarius",
+      "sign_sanskrit": "Sagittarius",
+      "sign_index": 8,
+      "degrees_in_sign": 25.446,
+      "lord": "Jupiter",
+      "division": 9
+    },
+    "Venus": {
+      "d1_degree": 5.699,
+      "d1_sign": "Aries",
+      "d12_degree": 68.388,
+      "sign": "Gemini",
+      "sign_sanskrit": "Gemini",
+      "sign_index": 2,
+      "degrees_in_sign": 8.388,
+      "lord": "Mercury",
+      "division": 3
+    },
+    "Mars": {
+      "d1_degree": 122.2535,
+      "d1_sign": "Leo",
+      "d12_degree": 27.042,
+      "sign": "Aries",
+      "sign_sanskrit": "Aries",
+      "sign_index": 0,
+      "degrees_in_sign": 27.042,
+      "lord": "Mars",
+      "division": 1
+    },
+    "Jupiter": {
+      "d1_degree": 228.6842,
+      "d1_sign": "Scorpio",
+      "d12_degree": 224.2104,
+      "sign": "Scorpio",
+      "sign_sanskrit": "Scorpio",
+      "sign_index": 7,
+      "degrees_in_sign": 14.2104,
+      "lord": "Mars",
+      "division": 8
+    },
+    "Saturn": {
+      "d1_degree": 328.9001,
+      "d1_sign": "Aquarius",
+      "d12_degree": 346.8012,
+      "sign": "Pisces",
+      "sign_sanskrit": "Pisces",
+      "sign_index": 11,
+      "degrees_in_sign": 16.8012,
+      "lord": "Jupiter",
+      "division": 12
+    },
+    "Rahu": {
+      "d1_degree": 191.7326,
+      "d1_sign": "Libra",
+      "d12_degree": 140.7912,
+      "sign": "Leo",
+      "sign_sanskrit": "Leo",
+      "sign_index": 4,
+      "degrees_in_sign": 20.7912,
+      "lord": "Sun",
+      "division": 5
+    },
+    "Ketu": {
+      "d1_degree": 11.7326,
+      "d1_sign": "Aries",
+      "d12_degree": 140.7912,
+      "sign": "Leo",
+      "sign_sanskrit": "Leo",
+      "sign_index": 4,
+      "degrees_in_sign": 20.7912,
+      "lord": "Sun",
+      "division": 5
+    }
+  }
+}

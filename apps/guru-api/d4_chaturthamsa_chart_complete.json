@@ -1,0 +1,112 @@
+{
+  "chart": "D4 (Chaturthamsa)",
+  "description": "Chaturthamsa chart for property and assets",
+  "birth_details": {
+    "date": "1995-05-16",
+    "time": "18:38",
+    "place": "Bangalore",
+    "latitude": 12.9716,
+    "longitude": 77.5946
+  },
+  "planets": {
+    "Sun": {
+      "d1_degree": 31.4194,
+      "d1_sign": "Taurus",
+      "d4_degree": 125.6776,
+      "sign": "Leo",
+      "sign_sanskrit": "Leo",
+      "sign_index": 4,
+      "degrees_in_sign": 5.6776,
+      "lord": "Sun",
+      "division": 1
+    },
+    "Moon": {
+      "d1_degree": 235.2503,
+      "d1_sign": "Scorpio",
+      "d4_degree": 221.0012,
+      "sign": "Scorpio",
+      "sign_sanskrit": "Scorpio",
+      "sign_index": 7,
+      "degrees_in_sign": 11.0012,
+      "lord": "Mars",
+      "division": 4
+    },
+    "Mercury": {
+      "d1_degree": 52.1205,
+      "d1_sign": "Taurus",
+      "d4_degree": 208.482,
+      "sign": "Libra",
+      "sign_sanskrit": "Libra",
+      "sign_index": 6,
+      "degrees_in_sign": 28.482,
+      "lord": "Venus",
+      "division": 3
+    },
+    "Venus": {
+      "d1_degree": 5.699,
+      "d1_sign": "Aries",
+      "d4_degree": 22.796,
+      "sign": "Aries",
+      "sign_sanskrit": "Aries",
+      "sign_index": 0,
+      "degrees_in_sign": 22.796,
+      "lord": "Mars",
+      "division": 1
+    },
+    "Mars": {
+      "d1_degree": 122.2535,
+      "d1_sign": "Leo",
+      "d4_degree": 129.014,
+      "sign": "Leo",
+      "sign_sanskrit": "Leo",
+      "sign_index": 4,
+      "degrees_in_sign": 9.014,
+      "lord": "Sun",
+      "division": 1
+    },
+    "Jupiter": {
+      "d1_degree": 228.6842,
+      "d1_sign": "Scorpio",
+      "d4_degree": 194.7368,
+      "sign": "Libra",
+      "sign_sanskrit": "Libra",
+      "sign_index": 6,
+      "degrees_in_sign": 14.7368,
+      "lord": "Venus",
+      "division": 3
+    },
+    "Saturn": {
+      "d1_degree": 328.9001,
+      "d1_sign": "Aquarius",
+      "d4_degree": 235.6004,
+      "sign": "Scorpio",
+      "sign_sanskrit": "Scorpio",
+      "sign_index": 7,
+      "degrees_in_sign": 25.6004,
+      "lord": "Mars",
+      "division": 4
+    },
+    "Rahu": {
+      "d1_degree": 191.7326,
+      "d1_sign": "Libra",
+      "d4_degree": 46.9304,
+      "sign": "Taurus",
+      "sign_sanskrit": "Taurus",
+      "sign_index": 1,
+      "degrees_in_sign": 16.9304,
+      "lord": "Venus",
+      "division": 2
+    },
+    "Ketu": {
+      "d1_degree": 11.7326,
+      "d1_sign": "Aries",
+      "d4_degree": 46.9304,
+      "sign": "Taurus",
+      "sign_sanskrit": "Taurus",
+      "sign_index": 1,
+      "degrees_in_sign": 16.9304,
+      "lord": "Venus",
+      "division": 2
+    }
+  }
+}

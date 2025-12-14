@@ -1,0 +1,804 @@
+{
+  "success": true,
+  "data": {
+    "kundli": {
+      "Ascendant": {
+        "degree": 212.2823,
+        "sign": "Scorpio",
+        "sign_sanskrit": "Vrishchika",
+        "sign_index": 7,
+        "degrees_in_sign": 2.2823,
+        "lord": "Mars",
+        "nakshatra": "Visakha",
+        "nakshatra_index": 15,
+        "pada": 4
+      },
+      "Planets": {
+        "Sun": {
+          "degree": 31.4194,
+          "sign": "Taurus",
+          "sign_sanskrit": "Vrishabha",
+          "sign_index": 1,
+          "degrees_in_sign": 1.4194,
+          "house": 6,
+          "house_lord": "Venus",
+          "nakshatra": "Krittika",
+          "nakshatra_index": 2,
+          "pada": 2,
+          "retro": false,
+          "speed": 0.963555
+        },
+        "Moon": {
+          "degree": 235.2503,
+          "sign": "Scorpio",
+          "sign_sanskrit": "Vrishchika",
+          "sign_index": 7,
+          "degrees_in_sign": 25.2503,
+          "house": 1,
+          "house_lord": "Mars",
+          "nakshatra": "Jyeshtha",
+          "nakshatra_index": 17,
+          "pada": 3,
+          "retro": false,
+          "speed": 15.117638
+        },
+        "Mercury": {
+          "degree": 52.1205,
+          "sign": "Taurus",
+          "sign_sanskrit": "Vrishabha",
+          "sign_index": 1,
+          "degrees_in_sign": 22.1205,
+          "house": 7,
+          "house_lord": "Venus",
+          "nakshatra": "Rohini",
+          "nakshatra_index": 3,
+          "pada": 4,
+          "retro": false,
+          "speed": 0.626525
+        },
+        "Venus": {
+          "degree": 5.699,
+          "sign": "Aries",
+          "sign_sanskrit": "Mesha",
+          "sign_index": 0,
+          "degrees_in_sign": 5.699,
+          "house": 6,
+          "house_lord": "Mars",
+          "nakshatra": "Ashwini",
+          "nakshatra_index": 0,
+          "pada": 2,
+          "retro": false,
+          "speed": 1.211753
+        },
+        "Mars": {
+          "degree": 122.2535,
+          "sign": "Leo",
+          "sign_sanskrit": "Simha",
+          "sign_index": 4,
+          "degrees_in_sign": 2.2535,
+          "house": 9,
+          "house_lord": "Sun",
+          "nakshatra": "Magha",
+          "nakshatra_index": 9,
+          "pada": 1,
+          "retro": false,
+          "speed": 0.414811
+        },
+        "Jupiter": {
+          "degree": 228.6842,
+          "sign": "Scorpio",
+          "sign_sanskrit": "Vrishchika",
+          "sign_index": 7,
+          "degrees_in_sign": 18.6842,
+          "house": 1,
+          "house_lord": "Mars",
+          "nakshatra": "Jyeshtha",
+          "nakshatra_index": 17,
+          "pada": 1,
+          "retro": true,
+          "speed": -0.115823
+        },
+        "Saturn": {
+          "degree": 328.9001,
+          "sign": "Aquarius",
+          "sign_sanskrit": "Kumbha",
+          "sign_index": 10,
+          "degrees_in_sign": 28.9001,
+          "house": 4,
+          "house_lord": "Saturn",
+          "nakshatra": "Purva Bhadrapada",
+          "nakshatra_index": 24,
+          "pada": 3,
+          "retro": false,
+          "speed": 0.077117
+        },
+        "Rahu": {
+          "degree": 191.7326,
+          "sign": "Libra",
+          "sign_sanskrit": "Tula",
+          "sign_index": 6,
+          "degrees_in_sign": 11.7326,
+          "house": 12,
+          "house_lord": "Venus",
+          "nakshatra": "Swati",
+          "nakshatra_index": 14,
+          "pada": 2,
+          "retro": true,
+          "speed": -0.036369
+        },
+        "Ketu": {
+          "degree": 11.7326,
+          "sign": "Aries",
+          "sign_sanskrit": "Mesha",
+          "sign_index": 0,
+          "degrees_in_sign": 11.7326,
+          "house": 6,
+          "house_lord": "Mars",
+          "nakshatra": "Ashwini",
+          "nakshatra_index": 0,
+          "pada": 4,
+          "retro": true,
+          "speed": 0.036369
+        }
+      },
+      "Houses": [
+        {
+          "house": 1,
+          "degree": 212.2823,
+          "sign": "Scorpio",
+          "sign_sanskrit": "Vrishchika",
+          "sign_index": 7,
+          "degrees_in_sign": 2.2823,
+          "lord": "Mars"
+        },
+        {
+          "house": 2,
+          "degree": 241.224,
+          "sign": "Sagittarius",
+          "sign_sanskrit": "Dhanu",
+          "sign_index": 8,
+          "degrees_in_sign": 1.224,
+          "lord": "Jupiter"
+        },
+        {
+          "house": 3,
+          "degree": 270.948,
+          "sign": "Capricorn",
+          "sign_sanskrit": "Makara",
+          "sign_index": 9,
+          "degrees_in_sign": 0.948,
+          "lord": "Saturn"
+        },
+        {
+          "house": 4,
+          "degree": 302.338,
+          "sign": "Aquarius",
+          "sign_sanskrit": "Kumbha",
+          "sign_index": 10,
+          "degrees_in_sign": 2.338,
+          "lord": "Saturn"
+        },
+        {
+          "house": 5,
+          "degree": 334.4929,
+          "sign": "Pisces",
+          "sign_sanskrit": "Meena",
+          "sign_index": 11,
+          "degrees_in_sign": 4.4929,
+          "lord": "Jupiter"
+        },
+        {
+          "house": 6,
+          "degree": 4.8983,
+          "sign": "Aries",
+          "sign_sanskrit": "Mesha",
+          "sign_index": 0,
+          "degrees_in_sign": 4.8983,
+          "lord": "Mars"
+        },
+        {
+          "house": 7,
+          "degree": 32.2823,
+          "sign": "Taurus",
+          "sign_sanskrit": "Vrishabha",
+          "sign_index": 1,
+          "degrees_in_sign": 2.2823,
+          "lord": "Venus"
+        },
+        {
+          "house": 8,
+          "degree": 61.224,
+          "sign": "Gemini",
+          "sign_sanskrit": "Mithuna",
+          "sign_index": 2,
+          "degrees_in_sign": 1.224,
+          "lord": "Mercury"
+        },
+        {
+          "house": 9,
+          "degree": 90.948,
+          "sign": "Cancer",
+          "sign_sanskrit": "Karka",
+          "sign_index": 3,
+          "degrees_in_sign": 0.948,
+          "lord": "Moon"
+        },
+        {
+          "house": 10,
+          "degree": 122.338,
+          "sign": "Leo",
+          "sign_sanskrit": "Simha",
+          "sign_index": 4,
+          "degrees_in_sign": 2.338,
+          "lord": "Sun"
+        },
+        {
+          "house": 11,
+          "degree": 154.4929,
+          "sign": "Virgo",
+          "sign_sanskrit": "Kanya",
+          "sign_index": 5,
+          "degrees_in_sign": 4.4929,
+          "lord": "Mercury"
+        },
+        {
+          "house": 12,
+          "degree": 184.8983,
+          "sign": "Libra",
+          "sign_sanskrit": "Tula",
+          "sign_index": 6,
+          "degrees_in_sign": 4.8983,
+          "lord": "Venus"
+        }
+      ]
+    },
+    "interpretation": {
+      "planets": {
+        "Sun": {
+          "house": 6,
+          "sign": "Taurus",
+          "nakshatra": "Krittika",
+          "dignity": "neutral",
+          "strength": 50,
+          "house_interpretation": "Sun in 6th House (Health, enemies, service, debts, diseases):\n\nPlanetary Nature:\nSun naturally represents: Soul, Vitality, Authority\n\nPosition Analysis:\n• House: 6th house represents health, enemies, service, debts, diseases\n• Dignity: Neutral - Moderate strength. Planet gives mixed results.\n• Strength: 50.0/100 - Moderate - mixed results\n• Nakshatra: Krittika (Lord: Sun)\n• Nakshatra Qualities: Sharpness, cutting through obstacles, purification\n\nInterpretation:",
+          "sign_interpretation": "Sun in Taurus Sign:\n\nSign Qualities:\nTaurus represents earth, stability, material comfort, patience\n\nPlanet-Sign Combination:\nSun expresses its energy through Taurus qualities.",
+          "combustion": {
+            "planet": "Sun",
+            "is_combust": true,
+            "sun_distance": 0.0,
+            "interpretation": "Sun is Combust (within 10° of Sun):\n\nEffect:\nCombustion weakens Sun's natural significations. The planet's energy is overshadowed by the Sun's powerful influence.\n\nImpact:\n• Sun's karakatva (natural significations) are reduced\n• Planet struggles to express its positive qualities\n• Results related to Sun may be delayed or weakened\n\nRemedies:\n• Chant Sun mantras\n• Perform Sun remedies\n• Wear gemstone for Sun (if recommended by astrologer)",
+            "severity": "high"
+          },
+          "retrograde": {
+            "planet": "Sun",
+            "is_retrograde": false,
+            "interpretation": "Sun is direct. Planet functions normally."
+          },
+          "overall": "Sun in 6th house (Taurus) - neutral - Strength: 50/100"
+        },
+        "Moon": {
+          "house": 1,
+          "sign": "Scorpio",
+          "nakshatra": "Jyeshtha",
+          "dignity": "neutral",
+          "strength": 50,
+          "house_interpretation": "Moon in 1th House (Self, personality, physical appearance, head):\n\nPlanetary Nature:\nMoon naturally represents: Mind, Emotions, Mother\n\nPosition Analysis:\n• House: 1th house represents self, personality, physical appearance, head\n• Dignity: Neutral - Moderate strength. Planet gives mixed results.\n• Strength: 50.0/100 - Moderate - mixed results\n• Nakshatra: Jyeshtha (Lord: Mercury)\n• Nakshatra Qualities: Eldership, authority, protection, seniority\n\nInterpretation:\nMoon in Ascendant shapes your personality and self-expression.",
+          "sign_interpretation": "Moon in Scorpio Sign:\n\nSign Qualities:\nScorpio represents water, transformation, intensity, secrets\n\nPlanet-Sign Combination:\nMoon expresses its energy through Scorpio qualities.",
+          "combustion": {
+            "planet": "Moon",
+            "is_combust": false,
+            "interpretation": "Moon is not combust. Planet functions normally."
+          },
+          "retrograde": {
+            "planet": "Moon",
+            "is_retrograde": false,
+            "interpretation": "Moon is direct. Planet functions normally."
+          },
+          "overall": "Moon in 1th house (Scorpio) - neutral - Strength: 50/100"
+        },
+        "Mercury": {
+          "house": 7,
+          "sign": "Taurus",
+          "nakshatra": "Rohini",
+          "dignity": "neutral",
+          "strength": 50,
+          "house_interpretation": "Mercury in 7th House (Marriage, partnerships, spouse, business):\n\nPlanetary Nature:\nMercury naturally represents: Speech, Intellect, Business\n\nPosition Analysis:\n• House: 7th house represents marriage, partnerships, spouse, business\n• Dignity: Neutral - Moderate strength. Planet gives mixed results.\n• Strength: 50.0/100 - Moderate - mixed results\n• Nakshatra: Rohini (Lord: Moon)\n• Nakshatra Qualities: Growth, fertility, material prosperity, beauty\n\nInterpretation:\nMercury in 7th house affects marriage and partnerships.",
+          "sign_interpretation": "Mercury in Taurus Sign:\n\nSign Qualities:\nTaurus represents earth, stability, material comfort, patience\n\nPlanet-Sign Combination:\nMercury expresses its energy through Taurus qualities.",
+          "combustion": {
+            "planet": "Mercury",
+            "is_combust": false,
+            "interpretation": "Mercury is not combust. Planet functions normally."
+          },
+          "retrograde": {
+            "planet": "Mercury",
+            "is_retrograde": false,
+            "interpretation": "Mercury is direct. Planet functions normally."
+          },
+          "overall": "Mercury in 7th house (Taurus) - neutral - Strength: 50/100"
+        },
+        "Venus": {
+          "house": 6,
+          "sign": "Aries",
+          "nakshatra": "Ashwini",
+          "dignity": "neutral",
+          "strength": 50,
+          "house_interpretation": "Venus in 6th House (Health, enemies, service, debts, diseases):\n\nPlanetary Nature:\nVenus naturally represents: Love, Comfort, Beauty\n\nPosition Analysis:\n• House: 6th house represents health, enemies, service, debts, diseases\n• Dignity: Neutral - Moderate strength. Planet gives mixed results.\n• Strength: 50.0/100 - Moderate - mixed results\n• Nakshatra: Ashwini (Lord: Ketu)\n• Nakshatra Qualities: Quick healing, new beginnings, speed, vitality\n\nInterpretation:",
+          "sign_interpretation": "Venus in Aries Sign:\n\nSign Qualities:\nAries represents fire, leadership, initiative, courage\n\nPlanet-Sign Combination:\nVenus expresses its energy through Aries qualities.",
+          "combustion": {
+            "planet": "Venus",
+            "is_combust": false,
+            "interpretation": "Venus is not combust. Planet functions normally."
+          },
+          "retrograde": {
+            "planet": "Venus",
+            "is_retrograde": false,
+            "interpretation": "Venus is direct. Planet functions normally."
+          },
+          "overall": "Venus in 6th house (Aries) - neutral - Strength: 50/100"
+        },
+        "Mars": {
+          "house": 9,
+          "sign": "Leo",
+          "nakshatra": "Magha",
+          "dignity": "neutral",
+          "strength": 50,
+          "house_interpretation": "Mars in 9th House (Father, dharma, fortune, higher learning, luck):\n\nPlanetary Nature:\nMars naturally represents: Courage, Energy, Siblings\n\nPosition Analysis:\n• House: 9th house represents father, dharma, fortune, higher learning, luck\n• Dignity: Neutral - Moderate strength. Planet gives mixed results.\n• Strength: 50.0/100 - Moderate - mixed results\n• Nakshatra: Magha (Lord: Ketu)\n• Nakshatra Qualities: Royalty, authority, ancestors, power\n\nInterpretation:",
+          "sign_interpretation": "Mars in Leo Sign:\n\nSign Qualities:\nLeo represents fire, creativity, authority, self-expression\n\nPlanet-Sign Combination:\nMars expresses its energy through Leo qualities.",
+          "combustion": {
+            "planet": "Mars",
+            "is_combust": false,
+            "interpretation": "Mars is not combust. Planet functions normally."
+          },
+          "retrograde": {
+            "planet": "Mars",
+            "is_retrograde": false,
+            "interpretation": "Mars is direct. Planet functions normally."
+          },
+          "overall": "Mars in 9th house (Leo) - neutral - Strength: 50/100"
+        },
+        "Jupiter": {
+          "house": 1,
+          "sign": "Scorpio",
+          "nakshatra": "Jyeshtha",
+          "dignity": "neutral",
+          "strength": 50,
+          "house_interpretation": "Jupiter in 1th House (Self, personality, physical appearance, head):\n\nPlanetary Nature:\nJupiter naturally represents: Wisdom, Children, Fortune\n\nPosition Analysis:\n• House: 1th house represents self, personality, physical appearance, head\n• Dignity: Neutral - Moderate strength. Planet gives mixed results.\n• Strength: 50.0/100 - Moderate - mixed results\n• Nakshatra: Jyeshtha (Lord: Mercury)\n• Nakshatra Qualities: Eldership, authority, protection, seniority\n\nInterpretation:\nJupiter in Ascendant shapes your personality and self-expression.",
+          "sign_interpretation": "Jupiter in Scorpio Sign:\n\nSign Qualities:\nScorpio represents water, transformation, intensity, secrets\n\nPlanet-Sign Combination:\nJupiter expresses its energy through Scorpio qualities.",
+          "combustion": {
+            "planet": "Jupiter",
+            "is_combust": false,
+            "interpretation": "Jupiter is not combust. Planet functions normally."
+          },
+          "retrograde": {
+            "planet": "Jupiter",
+            "is_retrograde": false,
+            "interpretation": "Jupiter is direct. Planet functions normally."
+          },
+          "overall": "Jupiter in 1th house (Scorpio) - neutral - Strength: 50/100"
+        },
+        "Saturn": {
+          "house": 4,
+          "sign": "Aquarius",
+          "nakshatra": "Purva Bhadrapada",
+          "dignity": "neutral",
+          "strength": 50,
+          "house_interpretation": "Saturn in 4th House (Mother, home, education, chest, motherland):\n\nPlanetary Nature:\nSaturn naturally represents: Karma, Delay, Service\n\nPosition Analysis:\n• House: 4th house represents mother, home, education, chest, motherland\n• Dignity: Neutral - Moderate strength. Planet gives mixed results.\n• Strength: 50.0/100 - Moderate - mixed results\n• Nakshatra: Purva Bhadrapada (Lord: Jupiter)\n• Nakshatra Qualities: Transformation, purification, spiritual fire\n\nInterpretation:",
+          "sign_interpretation": "Saturn in Aquarius Sign:\n\nSign Qualities:\nAquarius represents air, innovation, freedom, humanitarianism\n\nPlanet-Sign Combination:\nSaturn expresses its energy through Aquarius qualities.",
+          "combustion": {
+            "planet": "Saturn",
+            "is_combust": false,
+            "interpretation": "Saturn is not combust. Planet functions normally."
+          },
+          "retrograde": {
+            "planet": "Saturn",
+            "is_retrograde": false,
+            "interpretation": "Saturn is direct. Planet functions normally."
+          },
+          "overall": "Saturn in 4th house (Aquarius) - neutral - Strength: 50/100"
+        }
+      },
+      "houses": {
+        "1": {
+          "house_number": 1,
+          "house_name": "Ascendant (Lagna)",
+          "significations": [
+            "Self",
+            "Personality",
+            "Physical appearance",
+            "Head",
+            "Overall life"
+          ],
+          "lord": "Mars",
+          "occupants": [
+            "Moon",
+            "Jupiter"
+          ],
+          "aspects_in": [],
+          "aspects_out": [],
+          "house_type": [
+            "Kendra (Angular) - Very important"
+          ],
+          "benefic_occupants": [
+            "Moon",
+            "Jupiter"
+          ],
+          "malefic_occupants": [],
+          "interpretation": "Ascendant (Lagna) (House 1):\n\nSignifications:\nSelf, Personality, Physical appearance, Head, Overall life\n\nKeywords: Identity, self-expression, vitality\nBody Part: Head\n\nHouse Lord:\nMars is the lord of 1th house. The position and strength of Mars determines the quality of this house.\n\nOccupants:\nPlanets in this house: Moon, Jupiter\nThese planets influence the significations of this house.\n\nPositive: Benefic planets (Moon, Jupiter) strengthen this house.\n\nHouse Type: Kendra (Angular) - Very important"
+        },
+        "2": {
+          "house_number": 2,
+          "house_name": "Wealth House (Dhana)",
+          "significations": [
+            "Wealth",
+            "Family",
+            "Speech",
+            "Food",
+            "Face",
+            "Eyes"
+          ],
+          "lord": "Jupiter",
+          "occupants": [],
+          "aspects_in": [],
+          "aspects_out": [],
+          "house_type": [],
+          "benefic_occupants": [],
+          "malefic_occupants": [],
+          "interpretation": "Wealth House (Dhana) (House 2):\n\nSignifications:\nWealth, Family, Speech, Food, Face, Eyes\n\nKeywords: Money, resources, family, communication\nBody Part: Face, eyes\n\nHouse Lord:\nJupiter is the lord of 2th house. The position and strength of Jupiter determines the quality of this house.\n\nOccupants:\nNo planets in this house. House significations depend on the lord's position."
+        },
+        "3": {
+          "house_number": 3,
+          "house_name": "Siblings House (Sahaja)",
+          "significations": [
+            "Siblings",
+            "Courage",
+            "Communication",
+            "Short journeys",
+            "Hands"
+          ],
+          "lord": "Saturn",
+          "occupants": [],
+          "aspects_in": [],
+          "aspects_out": [],
+          "house_type": [
+            "Upachaya (Growth) - Improves over time"
+          ],
+          "benefic_occupants": [],
+          "malefic_occupants": [],
+          "interpretation": "Siblings House (Sahaja) (House 3):\n\nSignifications:\nSiblings, Courage, Communication, Short journeys, Hands\n\nKeywords: Siblings, courage, communication, travel\nBody Part: Hands, arms\n\nHouse Lord:\nSaturn is the lord of 3th house. The position and strength of Saturn determines the quality of this house.\n\nOccupants:\nNo planets in this house. House significations depend on the lord's position.\n\nHouse Type: Upachaya (Growth) - Improves over time"
+        },
+        "4": {
+          "house_number": 4,
+          "house_name": "Mother House (Matru)",
+          "significations": [
+            "Mother",
+            "Home",
+            "Education",
+            "Property",
+            "Chest",
+            "Heart"
+          ],
+          "lord": "Saturn",
+          "occupants": [
+            "Saturn"
+          ],
+          "aspects_in": [],
+          "aspects_out": [],
+          "house_type": [
+            "Kendra (Angular) - Very important"
+          ],
+          "benefic_occupants": [],
+          "malefic_occupants": [
+            "Saturn"
+          ],
+          "interpretation": "Mother House (Matru) (House 4):\n\nSignifications:\nMother, Home, Education, Property, Chest, Heart\n\nKeywords: Mother, home, property, education, comfort\nBody Part: Chest, heart\n\nHouse Lord:\nSaturn is the lord of 4th house. The position and strength of Saturn determines the quality of this house.\n\nOccupants:\nPlanets in this house: Saturn\nThese planets influence the significations of this house.\n\nChallenges: Malefic planets (Saturn) may create obstacles in this area.\n\nHouse Type: Kendra (Angular) - Very important"
+        },
+        "5": {
+          "house_number": 5,
+          "house_name": "Children House (Putra)",
+          "significations": [
+            "Children",
+            "Education",
+            "Creativity",
+            "Intelligence",
+            "Stomach"
+          ],
+          "lord": "Jupiter",
+          "occupants": [],
+          "aspects_in": [],
+          "aspects_out": [],
+          "house_type": [
+            "Trikona (Trine) - Highly auspicious"
+          ],
+          "benefic_occupants": [],
+          "malefic_occupants": [],
+          "interpretation": "Children House (Putra) (House 5):\n\nSignifications:\nChildren, Education, Creativity, Intelligence, Stomach\n\nKeywords: Children, education, creativity, speculation\nBody Part: Stomach\n\nHouse Lord:\nJupiter is the lord of 5th house. The position and strength of Jupiter determines the quality of this house.\n\nOccupants:\nNo planets in this house. House significations depend on the lord's position.\n\nHouse Type: Trikona (Trine) - Highly auspicious"
+        },
+        "6": {
+          "house_number": 6,
+          "house_name": "Enemies House (Ari)",
+          "significations": [
+            "Health",
+            "Enemies",
+            "Service",
+            "Debts",
+            "Diseases"
+          ],
+          "lord": "Mars",
+          "occupants": [
+            "Sun",
+            "Venus",
+            "Ketu"
+          ],
+          "aspects_in": [],
+          "aspects_out": [],
+          "house_type": [
+            "Dusthana (Inauspicious) - Challenges indicated",
+            "Upachaya (Growth) - Improves over time"
+          ],
+          "benefic_occupants": [
+            "Venus"
+          ],
+          "malefic_occupants": [
+            "Sun",
+            "Ketu"
+          ],
+          "interpretation": "Enemies House (Ari) (House 6):\n\nSignifications:\nHealth, Enemies, Service, Debts, Diseases\n\nKeywords: Health, enemies, service, obstacles\nBody Part: Lower abdomen\n\nHouse Lord:\nMars is the lord of 6th house. The position and strength of Mars determines the quality of this house.\n\nOccupants:\nPlanets in this house: Sun, Venus, Ketu\nThese planets influence the significations of this house.\n\nPositive: Benefic planets (Venus) strengthen this house.\n\nChallenges: Malefic planets (Sun, Ketu) may create obstacles in this area.\n\nHouse Type: Dusthana (Inauspicious) - Challenges indicated, Upachaya (Growth) - Improves over time"
+        },
+        "7": {
+          "house_number": 7,
+          "house_name": "Marriage House (Kalatra)",
+          "significations": [
+            "Marriage",
+            "Partnerships",
+            "Spouse",
+            "Business",
+            "Public"
+          ],
+          "lord": "Venus",
+          "occupants": [
+            "Mercury"
+          ],
+          "aspects_in": [],
+          "aspects_out": [],
+          "house_type": [
+            "Kendra (Angular) - Very important"
+          ],
+          "benefic_occupants": [
+            "Mercury"
+          ],
+          "malefic_occupants": [],
+          "interpretation": "Marriage House (Kalatra) (House 7):\n\nSignifications:\nMarriage, Partnerships, Spouse, Business, Public\n\nKeywords: Marriage, partnerships, business, relationships\nBody Part: Genitals\n\nHouse Lord:\nVenus is the lord of 7th house. The position and strength of Venus determines the quality of this house.\n\nOccupants:\nPlanets in this house: Mercury\nThese planets influence the significations of this house.\n\nPositive: Benefic planets (Mercury) strengthen this house.\n\nHouse Type: Kendra (Angular) - Very important"
+        },
+        "8": {
+          "house_number": 8,
+          "house_name": "Longevity House (Ayur)",
+          "significations": [
+            "Longevity",
+            "Transformation",
+            "Secrets",
+            "Sudden events",
+            "Occult"
+          ],
+          "lord": "Mercury",
+          "occupants": [],
+          "aspects_in": [],
+          "aspects_out": [],
+          "house_type": [
+            "Dusthana (Inauspicious) - Challenges indicated"
+          ],
+          "benefic_occupants": [],
+          "malefic_occupants": [],
+          "interpretation": "Longevity House (Ayur) (House 8):\n\nSignifications:\nLongevity, Transformation, Secrets, Sudden events, Occult\n\nKeywords: Longevity, transformation, secrets, sudden changes\nBody Part: Anus\n\nHouse Lord:\nMercury is the lord of 8th house. The position and strength of Mercury determines the quality of this house.\n\nOccupants:\nNo planets in this house. House significations depend on the lord's position.\n\nHouse Type: Dusthana (Inauspicious) - Challenges indicated"
+        },
+        "9": {
+          "house_number": 9,
+          "house_name": "Fortune House (Bhagya)",
+          "significations": [
+            "Father",
+            "Dharma",
+            "Fortune",
+            "Higher learning",
+            "Luck",
+            "Religion"
+          ],
+          "lord": "Moon",
+          "occupants": [
+            "Mars"
+          ],
+          "aspects_in": [],
+          "aspects_out": [],
+          "house_type": [
+            "Trikona (Trine) - Highly auspicious"
+          ],
+          "benefic_occupants": [],
+          "malefic_occupants": [
+            "Mars"
+          ],
+          "interpretation": "Fortune House (Bhagya) (House 9):\n\nSignifications:\nFather, Dharma, Fortune, Higher learning, Luck, Religion\n\nKeywords: Fortune, dharma, father, higher learning, spirituality\nBody Part: Thighs\n\nHouse Lord:\nMoon is the lord of 9th house. The position and strength of Moon determines the quality of this house.\n\nOccupants:\nPlanets in this house: Mars\nThese planets influence the significations of this house.\n\nChallenges: Malefic planets (Mars) may create obstacles in this area.\n\nHouse Type: Trikona (Trine) - Highly auspicious"
+        },
+        "10": {
+          "house_number": 10,
+          "house_name": "Career House (Karma)",
+          "significations": [
+            "Career",
+            "Profession",
+            "Reputation",
+            "Status",
+            "Knees"
+          ],
+          "lord": "Sun",
+          "occupants": [],
+          "aspects_in": [],
+          "aspects_out": [],
+          "house_type": [
+            "Kendra (Angular) - Very important",
+            "Upachaya (Growth) - Improves over time"
+          ],
+          "benefic_occupants": [],
+          "malefic_occupants": [],
+          "interpretation": "Career House (Karma) (House 10):\n\nSignifications:\nCareer, Profession, Reputation, Status, Knees\n\nKeywords: Career, profession, reputation, public image\nBody Part: Knees\n\nHouse Lord:\nSun is the lord of 10th house. The position and strength of Sun determines the quality of this house.\n\nOccupants:\nNo planets in this house. House significations depend on the lord's position.\n\nHouse Type: Kendra (Angular) - Very important, Upachaya (Growth) - Improves over time"
+        },
+        "11": {
+          "house_number": 11,
+          "house_name": "Gains House (Labha)",
+          "significations": [
+            "Gains",
+            "Income",
+            "Friends",
+            "Elder siblings",
+            "Ambitions"
+          ],
+          "lord": "Mercury",
+          "occupants": [],
+          "aspects_in": [],
+          "aspects_out": [],
+          "house_type": [
+            "Upachaya (Growth) - Improves over time"
+          ],
+          "benefic_occupants": [],
+          "malefic_occupants": [],
+          "interpretation": "Gains House (Labha) (House 11):\n\nSignifications:\nGains, Income, Friends, Elder siblings, Ambitions\n\nKeywords: Gains, income, friends, aspirations\nBody Part: Shins\n\nHouse Lord:\nMercury is the lord of 11th house. The position and strength of Mercury determines the quality of this house.\n\nOccupants:\nNo planets in this house. House significations depend on the lord's position.\n\nHouse Type: Upachaya (Growth) - Improves over time"
+        },
+        "12": {
+          "house_number": 12,
+          "house_name": "Losses House (Vyaya)",
+          "significations": [
+            "Losses",
+            "Expenses",
+            "Foreign lands",
+            "Spirituality",
+            "Liberation"
+          ],
+          "lord": "Venus",
+          "occupants": [
+            "Rahu"
+          ],
+          "aspects_in": [],
+          "aspects_out": [],
+          "house_type": [
+            "Dusthana (Inauspicious) - Challenges indicated"
+          ],
+          "benefic_occupants": [],
+          "malefic_occupants": [
+            "Rahu"
+          ],
+          "interpretation": "Losses House (Vyaya) (House 12):\n\nSignifications:\nLosses, Expenses, Foreign lands, Spirituality, Liberation\n\nKeywords: Losses, expenses, foreign, spirituality, moksha\nBody Part: Feet\n\nHouse Lord:\nVenus is the lord of 12th house. The position and strength of Venus determines the quality of this house.\n\nOccupants:\nPlanets in this house: Rahu\nThese planets influence the significations of this house.\n\nChallenges: Malefic planets (Rahu) may create obstacles in this area.\n\nHouse Type: Dusthana (Inauspicious) - Challenges indicated"
+        }
+      },
+      "yogas": {
+        "summary": {
+          "total_yogas": 0,
+          "summary": "No significant yogas detected in the chart.",
+          "categories": {}
+        },
+        "detailed": [],
+        "total": 0
+      },
+      "dasha": {},
+      "transits": {},
+      "life_themes": {
+        "career": {
+          "house_10_lord": "Sun",
+          "planets_in_10": [],
+          "analysis": "Career & Profession Analysis:\n\n10th House (Career):\n• House Lord: Sun\n• Planets in 10th: None\n\n6th House (Service): Mars lord - indicates service-oriented work.",
+          "career_indicators": 0
+        },
+        "relationships": {
+          "house_7_lord": "Venus",
+          "planets_in_7": [
+            "Mercury"
+          ],
+          "venus_house": 6,
+          "analysis": "Relationships & Marriage Analysis:\n\n7th House (Marriage):\n• House Lord: Venus\n• Planets in 7th: Mercury\n\nVenus (Relationships):\n• Venus in 6th house\n\nStrong Venus: Excellent for relationships and marriage. Harmonious partnerships."
+        },
+        "finances": {
+          "house_2_lord": "Jupiter",
+          "planets_in_2": [],
+          "house_11_lord": "Mercury",
+          "analysis": "Finances & Wealth Analysis:\n\n2nd House (Wealth):\n• House Lord: Jupiter\n• Planets in 2nd: None\n\n11th House (Gains):\n• House Lord: Mercury\n\nJupiter influence: Favorable for wealth accumulation. Prosperity through wisdom."
+        },
+        "health": {
+          "house_6_lord": "Mars",
+          "planets_in_6": [
+            "Sun",
+            "Venus",
+            "Ketu"
+          ],
+          "planets_in_1": [
+            "Moon",
+            "Jupiter"
+          ],
+          "analysis": "Health Analysis:\n\n6th House (Health):\n• House Lord: Mars\n• Planets in 6th: Sun, Venus, Ketu\n\n1st House (Physical Body):\n• Planets in 1st: Moon, Jupiter"
+        },
+        "spirituality": {
+          "house_9_lord": "Moon",
+          "planets_in_9": [
+            "Mars"
+          ],
+          "planets_in_12": [
+            "Rahu"
+          ],
+          "ketu_house": 6,
+          "analysis": "Spirituality Analysis:\n\n9th House (Dharma, Spirituality):\n• House Lord: Moon\n• Planets in 9th: Mars\n\n12th House (Moksha, Liberation):\n• Planets in 12th: Rahu\n\nKetu (Spirituality):\n• Ketu in 6th house"
+        },
+        "family": {
+          "house_4_lord": "Saturn",
+          "planets_in_4": [
+            "Saturn"
+          ],
+          "house_9_lord": "Moon",
+          "analysis": "Family Analysis:\n\n4th House (Mother, Family):\n• House Lord: Saturn\n• Planets in 4th: Saturn\n\n9th House (Father):\n• House Lord: Moon"
+        },
+        "children": {
+          "house_5_lord": "Jupiter",
+          "planets_in_5": [],
+          "jupiter_house": 1,
+          "analysis": "Children Analysis:\n\n5th House (Children):\n• House Lord: Jupiter\n• Planets in 5th: None\n\nJupiter (Children Karaka):\n• Jupiter in 1th house"
+        },
+        "property": {
+          "house_4_lord": "Saturn",
+          "planets_in_4": [
+            "Saturn"
+          ],
+          "analysis": "Property & Assets Analysis:\n\n4th House (Property):\n• House Lord: Saturn\n• Planets in 4th: Saturn"
+        },
+        "education": {
+          "planets_in_4": [
+            "Saturn"
+          ],
+          "house_5_lord": "Jupiter",
+          "planets_in_5": [],
+          "mercury_house": 7,
+          "analysis": "Education Analysis:\n\n4th House (Education):\n• Planets in 4th: Saturn\n\n5th House (Intelligence):\n• House Lord: Jupiter\n• Planets in 5th: None\n\nMercury (Education Karaka):\n• Mercury in 7th house"
+        }
+      },
+      "remedies": {
+        "gemstones": [],
+        "mantras": [],
+        "pujas": [],
+        "habits": [
+          {
+            "habit": "Meditation",
+            "frequency": "Daily",
+            "benefit": "Reduces stress and improves mental clarity"
+          },
+          {
+            "habit": "Prayer",
+            "frequency": "Daily morning and evening",
+            "benefit": "Connects with divine and brings peace"
+          },
+          {
+            "habit": "Charity",
+            "frequency": "Regular",
+            "benefit": "Reduces negative karma and brings blessings"
+          }
+        ],
+        "donations": [],
+        "general": []
+      },
+      "summary": "COMPLETE JYOTISH INTERPRETATION SUMMARY\n\nChart Overview:\nThis is a comprehensive Vedic Astrology interpretation based on your birth chart.\n\nPlanetary Analysis:\n7 planets analyzed with their positions, strengths, and significations.\n\nYogas Detected:\n0 yogas found in the chart, including 0 highly auspicious combinations.\n\nDasha Period:\n\nLife Themes Analyzed:\n• Career: Career & Profession Analysis:\n\n10th House (Career):\n• House Lord: Sun\n• Planets in 10th: None\n\n6th H...\n• Relationships: Relationships & Marriage Analysis:\n\n7th House (Marriage):\n• House Lord: Venus\n• Planets in 7th: Merc...\n• Finances: Finances & Wealth Analysis:\n\n2nd House (Wealth):\n• House Lord: Jupiter\n• Planets in 2nd: None\n\n11th ...\n• Health: Health Analysis:\n\n6th House (Health):\n• House Lord: Mars\n• Planets in 6th: Sun, Venus, Ketu\n\n1st Hou...\n\nRemedies:\n0 gemstone recommendations\n0 mantra recommendations\n0 puja recommendations\n\nThis interpretation provides a complete analysis of your birth chart based on classical Vedic Astrology principles."
+    },
+    "summary": "Complete birth chart analysis with detailed interpretation"
+  },
+  "generated_at": "2025-12-08T19:25:42.359309"
+}

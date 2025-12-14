@@ -1,0 +1,44 @@
+Guru Astrology API - Phase 2
+Complete Project Tree
+========================
+
+guru-astro-api/
+├── src/
+│   ├── astro-core/
+│   │   ├── birthdata/
+│   │   │   ├── parseBirthData.ts      ✅ Birth data parsing, Julian Day, LST
+│   │   │   ├── validateBirthData.ts   ✅ Input validation
+│   │   │   └── geoLookup.ts          ✅ City/country coordinates
+│   │   ├── ephemeris/
+│   │   │   ├── sweInit.ts            ✅ Swiss Ephemeris init
+│   │   │   └── getPlanetPositions.ts  ✅ Planet positions (sidereal)
+│   │   ├── calculators/
+│   │   │   ├── planetCalculator.ts   ✅ Sign, nakshatra, retrograde
+│   │   │   ├── houseCalculator.ts    ✅ Placidus & Whole Sign
+│   │   │   └── nakshatraCalculator.ts ✅ Nakshatra, pada, lord
+│   │   ├── charts/
+│   │   │   ├── rashiChartNorth.ts    ✅ North Indian chart
+│   │   │   ├── rashiChartSouth.ts    ✅ South Indian chart
+│   │   │   └── divisional/
+│   │   │       └── d9Navamsa.ts      ✅ Navamsa (D9)
+│   │   └── utils/
+│   │       └── constants.ts          ✅ Vedic constants
+│   ├── api/
+│   │   └── routes.ts                 ✅ Express routes
+│   ├── services/
+│   │   └── astroService.ts           ✅ Main orchestrator
+│   ├── types/
+│   │   └── index.ts                  ✅ TypeScript types
+│   ├── tests/
+│   │   └── example.test.ts           ✅ Tests
+│   └── index.ts                      ✅ Express server
+├── package.json                       ✅ Dependencies
+├── tsconfig.json                      ✅ TS config
+├── .gitignore                         ✅ Git ignore
+├── README.md                          ✅ Main docs
+├── INSTALLATION.md                    ✅ Setup guide
+├── PROJECT_STRUCTURE.md               ✅ Structure
+├── PHASE2_SUMMARY.md                  ✅ Summary
+└── example-output.json                ✅ Sample output
+
+Total Files: 21 TypeScript files + config files

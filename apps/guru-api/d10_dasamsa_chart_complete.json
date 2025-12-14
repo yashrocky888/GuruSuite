@@ -1,0 +1,112 @@
+{
+  "chart": "D10 (Dasamsa)",
+  "description": "Dasamsa chart for career and profession",
+  "birth_details": {
+    "date": "1995-05-16",
+    "time": "18:38",
+    "place": "Bangalore",
+    "latitude": 12.9716,
+    "longitude": 77.5946
+  },
+  "planets": {
+    "Sun": {
+      "d1_degree": 31.4194,
+      "d1_sign": "Taurus",
+      "d10_degree": 44.194,
+      "sign": "Taurus",
+      "sign_sanskrit": "Taurus",
+      "sign_index": 1,
+      "degrees_in_sign": 14.194,
+      "lord": "Venus",
+      "division": 1
+    },
+    "Moon": {
+      "d1_degree": 235.2503,
+      "d1_sign": "Scorpio",
+      "d10_degree": 342.503,
+      "sign": "Pisces",
+      "sign_sanskrit": "Pisces",
+      "sign_index": 11,
+      "degrees_in_sign": 12.503,
+      "lord": "Jupiter",
+      "division": 9
+    },
+    "Mercury": {
+      "d1_degree": 52.1205,
+      "d1_sign": "Taurus",
+      "d10_degree": 191.205,
+      "sign": "Libra",
+      "sign_sanskrit": "Libra",
+      "sign_index": 6,
+      "degrees_in_sign": 11.205,
+      "lord": "Venus",
+      "division": 8
+    },
+    "Venus": {
+      "d1_degree": 5.699,
+      "d1_sign": "Aries",
+      "d10_degree": 56.99,
+      "sign": "Taurus",
+      "sign_sanskrit": "Taurus",
+      "sign_index": 1,
+      "degrees_in_sign": 26.99,
+      "lord": "Venus",
+      "division": 2
+    },
+    "Mars": {
+      "d1_degree": 122.2535,
+      "d1_sign": "Leo",
+      "d10_degree": 142.535,
+      "sign": "Leo",
+      "sign_sanskrit": "Leo",
+      "sign_index": 4,
+      "degrees_in_sign": 22.535,
+      "lord": "Sun",
+      "division": 1
+    },
+    "Jupiter": {
+      "d1_degree": 228.6842,
+      "d1_sign": "Scorpio",
+      "d10_degree": 36.842,
+      "sign": "Taurus",
+      "sign_sanskrit": "Taurus",
+      "sign_index": 1,
+      "degrees_in_sign": 6.842,
+      "lord": "Venus",
+      "division": 7
+    },
+    "Saturn": {
+      "d1_degree": 328.9001,
+      "d1_sign": "Aquarius",
+      "d10_degree": 229.001,
+      "sign": "Scorpio",
+      "sign_sanskrit": "Scorpio",
+      "sign_index": 7,
+      "degrees_in_sign": 19.001,
+      "lord": "Mars",
+      "division": 10
+    },
+    "Rahu": {
+      "d1_degree": 191.7326,
+      "d1_sign": "Libra",
+      "d10_degree": 297.326,
+      "sign": "Capricorn",
+      "sign_sanskrit": "Capricorn",
+      "sign_index": 9,
+      "degrees_in_sign": 27.326,
+      "lord": "Saturn",
+      "division": 4
+    },
+    "Ketu": {
+      "d1_degree": 11.7326,
+      "d1_sign": "Aries",
+      "d10_degree": 117.326,
+      "sign": "Cancer",
+      "sign_sanskrit": "Cancer",
+      "sign_index": 3,
+      "degrees_in_sign": 27.326,
+      "lord": "Moon",
+      "division": 4
+    }
+  }
+}

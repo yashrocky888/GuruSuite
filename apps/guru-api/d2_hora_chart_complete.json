@@ -1,0 +1,103 @@
+{
+  "chart": "D2 (Hora)",
+  "description": "Hora chart for wealth and finances",
+  "birth_details": {
+    "date": "1995-05-16",
+    "time": "18:38",
+    "place": "Bangalore",
+    "latitude": 12.9716,
+    "longitude": 77.5946
+  },
+  "planets": {
+    "Sun": {
+      "d1_degree": 31.4194,
+      "d1_sign": "Taurus",
+      "d2_degree": 92.8388,
+      "sign": "Cancer",
+      "sign_sanskrit": "Cancer",
+      "sign_index": 3,
+      "degrees_in_sign": 2.8388,
+      "lord": "Moon"
+    },
+    "Moon": {
+      "d1_degree": 235.2503,
+      "d1_sign": "Scorpio",
+      "d2_degree": 140.5006,
+      "sign": "Leo",
+      "sign_sanskrit": "Leo",
+      "sign_index": 4,
+      "degrees_in_sign": 20.5006,
+      "lord": "Sun"
+    },
+    "Mercury": {
+      "d1_degree": 52.1205,
+      "d1_sign": "Taurus",
+      "d2_degree": 134.241,
+      "sign": "Leo",
+      "sign_sanskrit": "Leo",
+      "sign_index": 4,
+      "degrees_in_sign": 14.241,
+      "lord": "Sun"
+    },
+    "Venus": {
+      "d1_degree": 5.699,
+      "d1_sign": "Aries",
+      "d2_degree": 131.398,
+      "sign": "Leo",
+      "sign_sanskrit": "Leo",
+      "sign_index": 4,
+      "degrees_in_sign": 11.398,
+      "lord": "Sun"
+    },
+    "Mars": {
+      "d1_degree": 122.2535,
+      "d1_sign": "Leo",
+      "d2_degree": 124.507,
+      "sign": "Leo",
+      "sign_sanskrit": "Leo",
+      "sign_index": 4,
+      "degrees_in_sign": 4.507,
+      "lord": "Sun"
+    },
+    "Jupiter": {
+      "d1_degree": 228.6842,
+      "d1_sign": "Scorpio",
+      "d2_degree": 127.3684,
+      "sign": "Leo",
+      "sign_sanskrit": "Leo",
+      "sign_index": 4,
+      "degrees_in_sign": 7.3684,
+      "lord": "Sun"
+    },
+    "Saturn": {
+      "d1_degree": 328.9001,
+      "d1_sign": "Aquarius",
+      "d2_degree": 117.8002,
+      "sign": "Cancer",
+      "sign_sanskrit": "Cancer",
+      "sign_index": 3,
+      "degrees_in_sign": 27.8002,
+      "lord": "Moon"
+    },
+    "Rahu": {
+      "d1_degree": 191.7326,
+      "d1_sign": "Libra",
+      "d2_degree": 143.4652,
+      "sign": "Leo",
+      "sign_sanskrit": "Leo",
+      "sign_index": 4,
+      "degrees_in_sign": 23.4652,
+      "lord": "Sun"
+    },
+    "Ketu": {
+      "d1_degree": 11.7326,
+      "d1_sign": "Aries",
+      "d2_degree": 143.4652,
+      "sign": "Leo",
+      "sign_sanskrit": "Leo",
+      "sign_index": 4,
+      "degrees_in_sign": 23.4652,
+      "lord": "Sun"
+    }
+  }
+}

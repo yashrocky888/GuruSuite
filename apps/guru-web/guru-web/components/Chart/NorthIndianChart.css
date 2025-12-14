@@ -1,0 +1,55 @@
+.north-chart-wrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.north-chart-svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Chart background - glassmorphic */
+.north-chart-svg rect[width="410"] {
+  fill: rgba(255, 255, 255, 0.05) !important;
+  stroke: rgba(212, 175, 55, 0.4) !important;
+  stroke-width: 2 !important;
+}
+
+/* House polygons - modern glass */
+.north-chart-svg polygon {
+  fill: rgba(255, 255, 255, 0.08) !important;
+  stroke: rgba(212, 175, 55, 0.5) !important;
+  stroke-width: 1.5 !important;
+  transition: all 0.3s ease;
+}
+
+.north-chart-svg polygon:hover {
+  fill: rgba(212, 175, 55, 0.1) !important;
+  stroke: rgba(212, 175, 55, 0.8) !important;
+}
+
+.ascendant-house {
+  fill: rgba(212, 175, 55, 0.15) !important;
+  stroke: #d4af37 !important;
+  stroke-width: 2.5 !important;
+  filter: drop-shadow(0 0 8px rgba(212, 175, 55, 0.4));
+}
+
+.sign-number {
+  font: bold 20px sans-serif;
+  fill: #d4af37 !important;
+  font-weight: 600;
+}
+
+.planet-text {
+  font: bold 18px sans-serif;
+  fill: #3b82f6 !important;
+  font-weight: 500;
+}

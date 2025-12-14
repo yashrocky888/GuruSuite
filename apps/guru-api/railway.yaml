@@ -1,0 +1,19 @@
+# Railway deployment configuration for Guru API
+
+build:
+  builder: NIXPACKS
+  buildCommand: pip install -r requirements.txt
+
+deploy:
+  startCommand: uvicorn src.main:app --host 0.0.0.0 --port $PORT
+  healthcheckPath: /health
+  healthcheckTimeout: 100
+  restartPolicyType: ON_FAILURE
+  restartPolicyMaxRetries: 10
+
+# Environment variables (set these in Railway dashboard)
+# DATABASE_URL=postgresql://user:password@host:port/database
+# API_PORT=8000
+# DEBUG=False
+# OPENAI_API_KEY=your_key_here (optional)
+

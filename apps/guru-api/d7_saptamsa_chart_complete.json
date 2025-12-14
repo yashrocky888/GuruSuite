@@ -1,0 +1,126 @@
+{
+  "chart": "D7 (Saptamsa)",
+  "description": "Saptamsa chart for children and progeny",
+  "birth_details": {
+    "date": "1995-05-16",
+    "time": "18:38",
+    "place": "Bangalore",
+    "latitude": 12.9716,
+    "longitude": 77.5946
+  },
+  "ascendant": {
+    "d1_degree": 212.2823,
+    "d7_degree": 45.9761,
+    "d7_sign": "Taurus"
+  },
+  "planets": {
+    "Sun": {
+      "d1_degree": 31.4194,
+      "d1_sign": "Taurus",
+      "d7_degree": 219.9358,
+      "sign": "Scorpio",
+      "sign_sanskrit": "Scorpio",
+      "sign_index": 7,
+      "degrees_in_sign": 9.9358,
+      "house": 7,
+      "lord": "Mars",
+      "abbreviation": "Su"
+    },
+    "Moon": {
+      "d1_degree": 235.2503,
+      "d1_sign": "Scorpio",
+      "d7_degree": 206.7521,
+      "sign": "Libra",
+      "sign_sanskrit": "Libra",
+      "sign_index": 6,
+      "degrees_in_sign": 26.7521,
+      "house": 6,
+      "lord": "Venus",
+      "abbreviation": "Mo"
+    },
+    "Mercury": {
+      "d1_degree": 52.1205,
+      "d1_sign": "Taurus",
+      "d7_degree": 4.8435,
+      "sign": "Aries",
+      "sign_sanskrit": "Aries",
+      "sign_index": 0,
+      "degrees_in_sign": 4.8435,
+      "house": 12,
+      "lord": "Mars",
+      "abbreviation": "Me"
+    },
+    "Venus": {
+      "d1_degree": 5.699,
+      "d1_sign": "Aries",
+      "d7_degree": 39.893,
+      "sign": "Taurus",
+      "sign_sanskrit": "Taurus",
+      "sign_index": 1,
+      "degrees_in_sign": 9.893,
+      "house": 1,
+      "lord": "Venus",
+      "abbreviation": "Ve"
+    },
+    "Mars": {
+      "d1_degree": 122.2535,
+      "d1_sign": "Leo",
+      "d7_degree": 135.7745,
+      "sign": "Leo",
+      "sign_sanskrit": "Leo",
+      "sign_index": 4,
+      "degrees_in_sign": 15.7745,
+      "house": 4,
+      "lord": "Sun",
+      "abbreviation": "Ma"
+    },
+    "Jupiter": {
+      "d1_degree": 228.6842,
+      "d1_sign": "Scorpio",
+      "d7_degree": 160.7894,
+      "sign": "Virgo",
+      "sign_sanskrit": "Virgo",
+      "sign_index": 5,
+      "degrees_in_sign": 10.7894,
+      "house": 5,
+      "lord": "Mercury",
+      "abbreviation": "Ju"
+    },
+    "Saturn": {
+      "d1_degree": 328.9001,
+      "d1_sign": "Aquarius",
+      "d7_degree": 142.3007,
+      "sign": "Leo",
+      "sign_sanskrit": "Leo",
+      "sign_index": 4,
+      "degrees_in_sign": 22.3007,
+      "house": 4,
+      "lord": "Sun",
+      "abbreviation": "Sa"
+    },
+    "Rahu": {
+      "d1_degree": 191.7326,
+      "d1_sign": "Libra",
+      "d7_degree": 262.1282,
+      "sign": "Sagittarius",
+      "sign_sanskrit": "Sagittarius",
+      "sign_index": 8,
+      "degrees_in_sign": 22.1282,
+      "house": 8,
+      "lord": "Jupiter",
+      "abbreviation": "Ra"
+    },
+    "Ketu": {
+      "d1_degree": 11.7326,
+      "d1_sign": "Aries",
+      "d7_degree": 82.1282,
+      "sign": "Gemini",
+      "sign_sanskrit": "Gemini",
+      "sign_index": 2,
+      "degrees_in_sign": 22.1282,
+      "house": 2,
+      "lord": "Mercury",
+      "abbreviation": "Ke"
+    }
+  }
+}

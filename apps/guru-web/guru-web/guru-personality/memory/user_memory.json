@@ -1,0 +1,35 @@
+{
+  "schema": {
+    "description": "User memory structure for personalizing Guru responses",
+    "version": "1.0.0"
+  },
+  "example": {
+    "userId": "user_123",
+    "preferences": {
+      "communicationStyle": "detailed",
+      "spiritualLevel": "intermediate",
+      "language": "en"
+    },
+    "interactions": {
+      "totalSessions": 0,
+      "lastInteraction": null,
+      "favoriteTopics": [],
+      "askedQuestions": []
+    },
+    "birthDetails": {
+      "stored": false,
+      "lastUpdated": null
+    },
+    "insights": {
+      "keyFindings": [],
+      "remediesSuggested": [],
+      "predictionsRequested": []
+    }
+  },
+  "notes": [
+    "This file serves as a schema/example",
+    "Actual user memory will be stored per user",
+    "Can be stored in localStorage, IndexedDB, or backend"
+  ]
+}
+
