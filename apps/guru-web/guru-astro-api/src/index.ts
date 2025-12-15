@@ -27,6 +27,51 @@ app.get('/health', (req, res) => {
 app.use('/api/astro', astroRoutes);
 app.use('/api/location', locationRoutes);
 
+// Global error handler middleware (must be after routes)
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  // If response already sent, delegate to default handler
+  if (res.headersSent) {
+    return next(err);
+  }
+  
+  const statusCode = err.status || err.statusCode || 500;
+  const errorResponse = err.response || err;
+  
+  // Log error in development
+  if (process.env.NODE_ENV === 'development') {
+    console.error('Unhandled error:', {
+      path: req.path,
+      method: req.method,
+      status: statusCode,
+      message: err.message,
+      stack: err.stack
+    });
+  }
+  
+  res.status(statusCode).json({
+    success: false,
+    status: statusCode,
+    error: {
+      message: err.message || errorResponse?.error?.message || 'Internal server error',
+      type: errorResponse?.error?.type || err.name || 'ServerError',
+      source: 'guru-astro-api'
+    }
+  });
+});
+
+// 404 handler
+app.use((req: express.Request, res: express.Response) => {
+  res.status(404).json({
+    success: false,
+    status: 404,
+    error: {
+      message: `Route not found: ${req.method} ${req.path}`,
+      type: 'NotFoundError',
+      source: 'guru-astro-api'
+    }
+  });
+});
+
 // Start server
 app.listen(PORT, () => {
   console.log(`🚀 Guru Astrology API running on port ${PORT}`);

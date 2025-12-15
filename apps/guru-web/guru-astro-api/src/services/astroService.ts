@@ -128,10 +128,25 @@ export async function calculateAstroChart(
       navamsaChart,
     };
   } catch (error: any) {
+    // Preserve error structure from backend API
     if (error.response) {
-      throw new Error(`API Error: ${error.response.status} - ${error.response.data?.detail || error.message}`);
+      const status = error.response.status;
+      const data = error.response.data;
+      
+      // If backend returns structured error, preserve it
+      if (data?.error || data?.success === false) {
+        const apiError = new Error(data?.error?.message || data?.error || data?.detail || 'API request failed');
+        (apiError as any).status = status;
+        (apiError as any).response = data;
+        throw apiError;
+      }
+      
+      // Fallback for non-structured errors
+      throw new Error(`API Error: ${status} - ${data?.detail || data?.error || error.message}`);
     }
-    throw new Error(`Failed to fetch kundli from API: ${error.message}`);
+    
+    // Network or other errors
+    throw new Error(`Failed to fetch kundli from API: ${error.message || 'Unknown error'}`);
   }
 }
 

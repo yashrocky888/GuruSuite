@@ -36,10 +36,29 @@ router.post('/calculate', async (req: Request, res: Response) => {
       data: result,
     });
   } catch (error: any) {
-    res.status(400).json({
+    // Preserve status code from backend API if available
+    const statusCode = error.status || error.response?.status || 400;
+    
+    // Preserve structured error from backend if available
+    const errorResponse = error.response || error;
+    
+    // Build structured error response
+    const errorPayload: any = {
       success: false,
-      error: error.message || 'Calculation failed',
-    });
+      status: statusCode,
+      error: {
+        message: error.message || errorResponse?.error?.message || 'Calculation failed',
+        type: errorResponse?.error?.type || 'CalculationError',
+        source: 'guru-astro-api'
+      }
+    };
+    
+    // Add raw error details in development
+    if (process.env.NODE_ENV === 'development' && errorResponse?.error?.details) {
+      errorPayload.error.details = errorResponse.error.details;
+    }
+    
+    res.status(statusCode).json(errorPayload);
   }
 });
 
@@ -75,9 +94,17 @@ router.post('/chart', async (req: Request, res: Response) => {
       },
     });
   } catch (error: any) {
-    res.status(400).json({
+    const statusCode = error.status || error.response?.status || 400;
+    const errorResponse = error.response || error;
+    
+    res.status(statusCode).json({
       success: false,
-      error: error.message || 'Chart calculation failed',
+      status: statusCode,
+      error: {
+        message: error.message || errorResponse?.error?.message || 'Chart calculation failed',
+        type: errorResponse?.error?.type || 'ChartError',
+        source: 'guru-astro-api'
+      }
     });
   }
 });
@@ -123,9 +150,17 @@ router.post('/divisional', async (req: Request, res: Response) => {
       });
     }
   } catch (error: any) {
-    res.status(400).json({
+    const statusCode = error.status || error.response?.status || 400;
+    const errorResponse = error.response || error;
+    
+    res.status(statusCode).json({
       success: false,
-      error: error.message || 'Divisional chart calculation failed',
+      status: statusCode,
+      error: {
+        message: error.message || errorResponse?.error?.message || 'Divisional chart calculation failed',
+        type: errorResponse?.error?.type || 'DivisionalChartError',
+        source: 'guru-astro-api'
+      }
     });
   }
 });

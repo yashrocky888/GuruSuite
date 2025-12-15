@@ -5,10 +5,12 @@ This module initializes the FastAPI app, includes all route modules,
 and sets up middleware and error handling.
 """
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
 from contextlib import asynccontextmanager
+import traceback
 
 from src.config import settings
 from src.db.database import engine, Base
@@ -189,12 +191,66 @@ async def health_check():
     return {"status": "healthy"}
 
 
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    """Handle HTTPException with structured JSON response."""
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "success": False,
+            "status": exc.status_code,
+            "error": {
+                "message": exc.detail if isinstance(exc.detail, str) else str(exc.detail),
+                "type": "HTTPException",
+                "source": "guru-api"
+            }
+        }
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """Handle Pydantic validation errors with structured JSON response."""
+    errors = []
+    for error in exc.errors():
+        field = ".".join(str(loc) for loc in error.get("loc", []))
+        message = error.get("msg", "Validation error")
+        errors.append(f"{field}: {message}")
+    
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        content={
+            "success": False,
+            "status": status.HTTP_422_UNPROCESSABLE_ENTITY,
+            "error": {
+                "message": "; ".join(errors) if errors else "Validation error",
+                "type": "ValidationError",
+                "source": "guru-api",
+                "details": exc.errors()
+            }
+        }
+    )
+
+
 @app.exception_handler(Exception)
-async def global_exception_handler(request, exc):
-    """Global exception handler for unhandled errors."""
+async def global_exception_handler(request: Request, exc: Exception):
+    """Global exception handler for unhandled errors - always returns structured JSON."""
+    # Log full traceback in development
+    if settings.debug:
+        print(f"Unhandled exception: {type(exc).__name__}: {str(exc)}")
+        print(traceback.format_exc())
+    
     return JSONResponse(
         status_code=500,
-        content={"error": "Internal server error", "detail": str(exc)}
+        content={
+            "success": False,
+            "status": 500,
+            "error": {
+                "message": str(exc) if str(exc) else "Internal server error",
+                "type": type(exc).__name__,
+                "source": "guru-api"
+            }
+        }
     )
 
 

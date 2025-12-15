@@ -33,88 +33,99 @@ apiClient.interceptors.request.use(
   }
 );
 
-// Response interceptor with better error handling
+// Response interceptor with standardized error handling
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Special handling for 404 on specific endpoints
-    // Skip all error logging - let the calling functions handle it gracefully
-    const is404OnHandledEndpoint = error.response?.status === 404 && 
-      (error.config?.url?.includes('/birth-details') || error.config?.url?.includes('/dashboard'));
+    // Normalize error to always have status and message
+    const normalizedError: {
+      status: number;
+      message: string;
+      raw?: any;
+    } = {
+      status: error.response?.status || 0,
+      message: 'Unknown error',
+      raw: error
+    };
     
-    if (is404OnHandledEndpoint) {
-      // Return the error as-is so calling functions can handle it
-      // Don't log, transform, or throw here - just pass it through
-      return Promise.reject(error);
-    }
+    // Extract error message from various response formats
+    const responseData = error.response?.data;
     
-    // Handle Pydantic validation errors
-    let errorMessage = 'Unknown error';
-    if (error.response?.data?.detail) {
-      if (Array.isArray(error.response.data.detail)) {
-        // Pydantic validation errors
-        const validationErrors = error.response.data.detail.map((err: any) => 
-          `${err.loc?.join('.')}: ${err.msg}`
-        ).join(', ');
-        errorMessage = `Validation error: ${validationErrors}`;
-      } else if (typeof error.response.data.detail === 'string') {
-        errorMessage = error.response.data.detail;
-      } else if (error.response.data.detail?.message) {
-        errorMessage = error.response.data.detail.message;
-      } else {
-        errorMessage = JSON.stringify(error.response.data.detail);
+    if (responseData) {
+      // Structured error from backend (our new format)
+      if (responseData.error?.message) {
+        normalizedError.message = responseData.error.message;
+        normalizedError.status = responseData.status || error.response?.status || 500;
       }
-    } else if (error.response?.data?.error) {
-      errorMessage = error.response.data.error;
-    } else if (error.message) {
-      errorMessage = error.message;
+      // FastAPI HTTPException format
+      else if (responseData.detail) {
+        if (Array.isArray(responseData.detail)) {
+          // Pydantic validation errors
+          normalizedError.message = responseData.detail.map((err: any) => 
+            `${err.loc?.join('.')}: ${err.msg}`
+          ).join('; ');
+        } else if (typeof responseData.detail === 'string') {
+          normalizedError.message = responseData.detail;
+        } else if (responseData.detail?.message) {
+          normalizedError.message = responseData.detail.message;
+        } else {
+          normalizedError.message = JSON.stringify(responseData.detail);
+        }
+        normalizedError.status = error.response?.status || 500;
+      }
+      // Legacy error format
+      else if (typeof responseData.error === 'string') {
+        normalizedError.message = responseData.error;
+        normalizedError.status = error.response?.status || 500;
+      }
+      // Plain text response
+      else if (typeof responseData === 'string') {
+        normalizedError.message = responseData;
+        normalizedError.status = error.response?.status || 500;
+      }
     }
     
-    // Ensure we always have an error message
-    if (!errorMessage || errorMessage === '{}' || errorMessage === '') {
-      if (error.response?.status === 404) {
-        errorMessage = 'Resource not found. Please check if birth details are submitted.';
-      } else if (error.response?.status === 500) {
-        errorMessage = 'Server error. Please try again later.';
+    // Fallback error messages based on status code
+    if (normalizedError.message === 'Unknown error' || normalizedError.message === '{}' || !normalizedError.message) {
+      if (normalizedError.status === 404) {
+        normalizedError.message = 'Resource not found. Please check if birth details are submitted.';
+      } else if (normalizedError.status === 500) {
+        normalizedError.message = 'Server error. Please try again later.';
       } else if (error.code === 'ECONNREFUSED') {
-        errorMessage = 'Cannot connect to backend server. Please ensure the backend is running.';
+        normalizedError.message = 'Cannot connect to backend server. Please ensure the backend is running.';
+        normalizedError.status = 0;
       } else if (error.message) {
-        errorMessage = error.message;
+        normalizedError.message = error.message;
       } else {
-        errorMessage = 'An unknown error occurred.';
+        normalizedError.message = 'An unknown error occurred.';
       }
     }
     
-    // Skip logging for 404/422 on specific endpoints (handled gracefully)
+    // Skip logging for gracefully handled endpoints
     const requestUrl = error.config?.url || '';
     const shouldSkipErrorLogging = 
-      (error.response?.status === 404 && 
+      (normalizedError.status === 404 && 
         (requestUrl.includes('/birth-details') || requestUrl.includes('/dashboard'))) ||
-      (error.response?.status === 422 && requestUrl.includes('/kundli'));
+      (normalizedError.status === 422 && requestUrl.includes('/kundli')) ||
+      (normalizedError.status === 404 && requestUrl.includes('/kundli/divisional'));
     
-    // Only log errors that aren't handled gracefully and have meaningful data
-    if (!shouldSkipErrorLogging) {
-      // Build error summary only if we have meaningful data
-      const errorSummary: any = {};
-      if (error.config?.url) errorSummary.url = error.config.url;
-      if (error.config?.method) errorSummary.method = error.config.method;
-      if (error.response?.status) errorSummary.status = error.response.status;
-      if (errorMessage && errorMessage !== '{}' && errorMessage !== 'Unknown error') {
-        errorSummary.message = errorMessage;
-      }
-      if (error.code) errorSummary.code = error.code;
-      
-      // Skip logging for 404 on /kundli/divisional (endpoint doesn't exist, expected)
-      const isDivisional404 = error?.response?.status === 404 && 
-                               error?.config?.url?.includes('/kundli/divisional');
-      
-      // Only log if we have meaningful error information and it's not an expected 404
-      if (Object.keys(errorSummary).length > 0 && !isDivisional404 && process.env.NODE_ENV === 'development') {
-        console.error('API Error:', errorSummary);
-      }
+    // Log errors in development (with structured format)
+    if (!shouldSkipErrorLogging && process.env.NODE_ENV === 'development') {
+      console.error('API Error:', {
+        url: error.config?.url,
+        method: error.config?.method,
+        status: normalizedError.status,
+        message: normalizedError.message,
+        code: error.code
+      });
     }
     
-    return Promise.reject(new Error(errorMessage));
+    // Create error object that always has status and message
+    const errorObj = new Error(normalizedError.message);
+    (errorObj as any).status = normalizedError.status;
+    (errorObj as any).raw = normalizedError.raw;
+    
+    return Promise.reject(errorObj);
   }
 );
 
@@ -237,11 +248,14 @@ export const submitBirthDetails = async (details: BirthDetails): Promise<BirthDe
   } catch (error: any) {
     // Check for 404 FIRST - this means /birth-details endpoint doesn't exist
     // Handle this gracefully without throwing an error
-    if (error?.response?.status === 404) {
+    // Also handle network errors and empty error objects
+    if (error?.response?.status === 404 || !error?.response) {
       // Generate user_id locally
       const userId = `user_${Date.now()}`;
       
       // Return success response - birth details are already stored in Zustand store
+      // The /birth-details endpoint doesn't exist, but we can still proceed
+      // The kundli will be fetched directly when needed
       return {
         success: true,
         message: 'Birth details stored locally (API /birth-details endpoint not available)',

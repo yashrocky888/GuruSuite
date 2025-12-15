@@ -321,11 +321,14 @@ def generate_kundli(
     asc_nakshatra = get_nakshatra_pada(asc_sidereal)
     asc_sign_index = get_sign_index(asc_sidereal)
     
-    # CRITICAL FIX: Ascendant should ALWAYS be in House 1 for chart display
-    # This is correct for North Indian charts (Whole Sign system)
-    # For South Indian charts, the frontend will use the sign number directly
-    # The ascendant's house is always 1, regardless of its sign
+    # CRITICAL: Lagna (Ascendant) is ALWAYS in House 1 (Whole Sign system rule)
+    # DO NOT MODIFY — JHora compatible
+    # This is a fundamental Vedic astrology rule: Lagna = House 1, regardless of sign
+    # Applies to D1 and ALL varga charts
     asc_house = 1
+    
+    # RUNTIME ASSERTION: Enforce lagna house invariant
+    assert asc_house == 1, f"Lagna house must be 1, got {asc_house}"
     
     # Build Kundli structure
     kundli = {

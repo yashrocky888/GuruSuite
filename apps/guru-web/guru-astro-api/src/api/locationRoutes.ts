@@ -98,9 +98,17 @@ router.get('/search', async (req: Request, res: Response) => {
       });
     }
   } catch (error: any) {
-    res.status(500).json({
+    const statusCode = error.status || error.response?.status || 500;
+    const errorResponse = error.response || error;
+    
+    res.status(statusCode).json({
       success: false,
-      error: error.message || 'Location search failed',
+      status: statusCode,
+      error: {
+        message: error.message || errorResponse?.error?.message || 'Location search failed',
+        type: errorResponse?.error?.type || 'LocationSearchError',
+        source: 'guru-astro-api'
+      }
     });
   }
 });
@@ -174,9 +182,17 @@ router.get('/coordinates', async (req: Request, res: Response) => {
       error: 'Location not found',
     });
   } catch (error: any) {
-    res.status(500).json({
+    const statusCode = error.status || error.response?.status || 500;
+    const errorResponse = error.response || error;
+    
+    res.status(statusCode).json({
       success: false,
-      error: error.message || 'Failed to get coordinates',
+      status: statusCode,
+      error: {
+        message: error.message || errorResponse?.error?.message || 'Failed to get coordinates',
+        type: errorResponse?.error?.type || 'CoordinatesError',
+        source: 'guru-astro-api'
+      }
     });
   }
 });
