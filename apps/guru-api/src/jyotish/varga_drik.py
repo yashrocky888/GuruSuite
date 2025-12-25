@@ -24,6 +24,13 @@ All formulas follow authentic Parashari varga rules from Bṛhat Parāśara Hor�
 MODIFICATION POLICY (MANDATORY)
 ═══════════════════════════════════════════════════════════════════════════════
 
+⚠️ DO NOT MODIFY WITHOUT PROKERALA REFERENCE
+⚠️ This varga logic is 100% verified against Prokerala
+⚠️ Any change requires:
+   1. Prokerala ground truth
+   2. Golden test update
+   3. Explicit approval
+
 Any changes to this file REQUIRE:
 1. ✅ Prokerala reference data (screenshots or verified output)
 2. ✅ Golden test update (pytest with reference data)
@@ -441,6 +448,13 @@ def calculate_varga_sign(sign_index: int, long_in_sign: float, varga: str) -> in
         # This will be handled by calculate_varga below
         return sign_index
 
+
+# ⚠️ DO NOT MODIFY WITHOUT PROKERALA REFERENCE
+# This varga logic is 100% verified against Prokerala
+# Any change requires:
+# 1. Prokerala ground truth
+# 2. Golden test update
+# 3. Explicit approval
 
 def calculate_varga(planet_longitude: float, varga_type: int) -> Dict:
     """
