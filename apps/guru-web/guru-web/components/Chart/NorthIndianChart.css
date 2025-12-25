@@ -53,3 +53,15 @@
   fill: #3b82f6 !important;
   font-weight: 500;
 }
+
+.asc-text {
+  font: bold 18px sans-serif;
+  fill: #ffffff !important;
+  font-weight: 700;
+}
+
+.asc-degree {
+  fill: #ffffff !important;
+  font-size: 10px;
+  opacity: 0.9;
+}

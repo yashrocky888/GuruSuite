@@ -1,20 +1,42 @@
 /**
- * North Indian Chart - Using Exact Python Coordinates
- * Modern glassmorphic styling
- * FIXED: Planets stay well inside polygon bounds, away from edges
+ * North Indian Chart - Pure Renderer (NO CALCULATIONS)
+ * 
+ * 🔒 ASTROLOGY LOCK
+ * UI must NEVER calculate astrology.
+ * API is the single source of truth.
+ * 
+ * CRITICAL RULES:
+ * 1. House positions are STATIC (house 1 = center, house 2 = NE, etc.)
+ * 2. Use API Houses[] array directly
+ * 3. Use API Planets[].house directly
+ * 4. NO rotation. NO remapping. NO calculation.
  */
 
 'use client';
 
 import React from 'react';
-import { HouseData, getSignNum, getSignName } from './utils';
 import { getNorthCoordinates, northPolygonPoints } from './coordinates';
 import './NorthIndianChart.css';
 
+interface HouseData {
+  houseNumber: number;
+  signNumber: number;
+  signName: string;
+  planets: Array<{ 
+    name: string; 
+    abbr: string; 
+    sign: string;
+    degree?: number;
+    degree_dms?: number;
+    degree_minutes?: number;
+    degree_seconds?: number;
+  }>;
+}
+
 interface NorthIndianChartProps {
-  houses: HouseData[];
-  ascendantSign?: string; // Optional: Direct ascendant sign from API
-  ascendantHouse?: number; // Optional: Ascendant house from API (for varga charts: house = sign)
+  houses: HouseData[]; // REQUIRED - this component is ONLY for house charts
+  ascendantSign?: string;
+  ascendantHouse?: number;
 }
 
 /**
@@ -53,7 +75,6 @@ function getMinDistanceToEdge(point: { x: number; y: number }, polygonPoints: st
     const p1 = points[i];
     const p2 = points[(i + 1) % points.length];
     
-    // Distance from point to line segment
     const A = point.x - p1.x;
     const B = point.y - p1.y;
     const C = p2.x - p1.x;
@@ -96,24 +117,21 @@ function getSafePlanetPosition(
   totalPlanets: number,
   polygonPoints: string
 ): { x: number; y: number } {
-  const MIN_DISTANCE_FROM_EDGE = 20; // Minimum distance from edge in pixels
+  const MIN_DISTANCE_FROM_EDGE = 20;
   
-  // Check if original position is far enough from edge
   const distanceFromEdge = getMinDistanceToEdge(originalCoords, polygonPoints);
   if (distanceFromEdge >= MIN_DISTANCE_FROM_EDGE) {
     return originalCoords;
   }
 
-  // Position planets in a ring around the center, ensuring they're away from edges
   const angle = (planetIdx / totalPlanets) * 2 * Math.PI;
-  let radius = 20; // Start with smaller radius
+  let radius = 20;
   let safeCoords = { x: 0, y: 0 };
   let attempts = 0;
   
-  // Try different radii until we find a position far enough from edge
   while (attempts < 15) {
     const testX = centroid.x + Math.cos(angle) * radius;
-    const testY = centroid.y + Math.sin(angle) * radius + 10; // Offset down to avoid house number
+    const testY = centroid.y + Math.sin(angle) * radius + 10;
     
     const distToEdge = getMinDistanceToEdge({ x: testX, y: testY }, polygonPoints);
     if (distToEdge >= MIN_DISTANCE_FROM_EDGE) {
@@ -124,7 +142,6 @@ function getSafePlanetPosition(
     attempts++;
   }
   
-  // If still not found, use a position very close to centroid
   if (safeCoords.x === 0 && safeCoords.y === 0) {
     safeCoords = {
       x: centroid.x + (Math.cos(angle) * 10),
@@ -135,59 +152,40 @@ function getSafePlanetPosition(
   return safeCoords;
 }
 
-export function NorthIndianChart({ houses, ascendantSign: propAscendantSign, ascendantHouse }: NorthIndianChartProps) {
-  // CRITICAL FIX: For varga charts, use API's ascendant_house directly (house = sign)
-  // For D1 charts, use Whole Sign system (House 1 = Ascendant sign)
-  
-  // Detect if this is a varga chart (fixed sign grid: house = sign)
-  const isVargaChart = houses.length > 0 && houses[0].signNumber === houses[0].houseNumber;
-  
-  let recalculatedHouses: HouseData[];
-  let ascendantHouseNumber: number;
-  
-  if (isVargaChart && ascendantHouse !== undefined) {
-    // CRITICAL: For varga charts - NO ROTATION, NO LAGNA-BASED SHIFTING
-    // Use API's ascendant_house directly (house = sign, Whole Sign system)
-    // Houses are already in fixed sign grid (House 1 = Mesha, House 2 = Vrishabha, etc.)
-    // Lagna is DISPLAY-ONLY (label), NOT a rotation anchor
-    // DO NOT rotate - use houses as-is from API
-    recalculatedHouses = houses.map(house => ({ ...house })); // Copy to avoid mutations
-    ascendantHouseNumber = ascendantHouse; // Use API's ascendant_house
-    
-    // RUNTIME ASSERTION: Verify no rotation occurred
-    if (recalculatedHouses.length > 0 && recalculatedHouses[0].signNumber !== 1) {
-      console.error('❌ VARGA VIOLATION: Houses were rotated - varga charts must use fixed sign grid');
-    }
-  } else {
-    // For D1 charts: Recalculate house signs using Whole Sign system (House 1 = Ascendant sign)
-    // Get ascendant sign from prop (API) or from houses (fallback)
-    const ascendantPlanet = houses.find(h => 
-      h.planets.some(p => p.name === 'Ascendant' || p.abbr === 'Asc')
-    )?.planets.find(p => p.name === 'Ascendant' || p.abbr === 'Asc');
-    
-    // Priority: 1. propAscendantSign (from API), 2. ascendantPlanet.sign, 3. house 1 sign, 4. Mesha
-    const ascendantSignName = propAscendantSign || ascendantPlanet?.sign || houses.find(h => h.houseNumber === 1)?.signName || 'Mesha';
-    const ascendantSignNum = getSignNum(ascendantSignName) - 1; // Convert to 0-11
-    
-    // Recalculate house signs using Whole Sign system (House 1 = Ascendant sign)
-    recalculatedHouses = houses.map((house, index) => {
-      const houseNum = index + 1;
-      // Calculate sign for this house: (ascendantSignNum + houseNum - 1) % 12
-      const signNum = (ascendantSignNum + houseNum - 1) % 12;
-      const signName = getSignName(signNum + 1); // getSignName uses 1-12
-      
-      return {
-        ...house,
-        signNumber: signNum + 1,
-        signName: signName,
-      };
-    });
-    
-    // House 1 always contains ascendant in North Indian style for D1
-    ascendantHouseNumber = 1;
+export function NorthIndianChart({ 
+  houses, 
+  ascendantSign: propAscendantSign, 
+  ascendantHouse
+}: NorthIndianChartProps) {
+  // GUARD RAIL: This component is ONLY for house-based charts (D1-D20)
+  // Sign charts (D24-D60) must use NorthIndianSignChart component
+  if (!houses || houses.length !== 12) {
+    throw new Error(
+      `FATAL: NorthIndianChart used incorrectly. ` +
+      `Expected 12 houses, got ${houses?.length || 0}. ` +
+      `Sign charts (D24-D60) must use NorthIndianSignChart component instead.`
+    );
+  }
+
+  // RUNTIME ASSERTION: Ascendant house must be 1
+  const ascendantHouseNumber = ascendantHouse !== undefined ? ascendantHouse : 1;
+  if (ascendantHouseNumber !== 1) {
+    throw new Error(`FATAL: Ascendant house must be 1, got ${ascendantHouseNumber}`);
   }
   
-  const houseMap = new Map(recalculatedHouses.map(h => [h.houseNumber, h]));
+  // CRITICAL: Normalize ASC abbreviation to "ASC" for all houses
+  // ASC must be rendered exactly like a planet - same styling, same placement
+  const normalizedHouses = houses.map(house => ({
+    ...house,
+    planets: house.planets.map(planet => {
+      if (planet.name === 'Ascendant' || planet.abbr === 'Asc' || planet.abbr === 'ASC') {
+        return { ...planet, abbr: 'ASC' }; // Normalize to "ASC"
+      }
+      return planet;
+    })
+  }));
+  
+  const houseMap = new Map(normalizedHouses.map(h => [h.houseNumber, h]));
 
   return (
     <div className="north-chart-wrapper">
@@ -210,14 +208,22 @@ export function NorthIndianChart({ houses, ascendantSign: propAscendantSign, asc
           rx="8"
         />
 
-        {/* House Polygons with Centered Text */}
+        {/* House Polygons - STATIC POSITIONS (NO ROTATION) */}
         {Object.entries(northPolygonPoints).map(([houseNum, points]) => {
           const house = houseMap.get(parseInt(houseNum));
-          // Check if this house contains Ascendant (use API house value, not hardcoded 1)
-          const isAscendant = ascendantHouseNumber !== undefined && parseInt(houseNum) === ascendantHouseNumber;
-
-          // Don't display houses with "Unknown" sign or no sign
-          if (!house || house.signName === 'Unknown' || !house.signName) return null;
+          
+          // RUNTIME ASSERTION: House must exist
+          if (!house) {
+            throw new Error(`FATAL: House ${houseNum} missing in houseMap`);
+          }
+          
+          // RUNTIME ASSERTION: House must have sign
+          if (!house.signName) {
+            throw new Error(`FATAL: House ${houseNum} missing sign`);
+          }
+          
+          // House 1 always contains Ascendant (static position)
+          const isAscendant = parseInt(houseNum) === 1;
 
           const centroid = getPolygonCentroid(points);
 
@@ -235,7 +241,7 @@ export function NorthIndianChart({ houses, ascendantSign: propAscendantSign, asc
                 }}
               />
               
-              {/* House Number - Top center */}
+              {/* House Number */}
               <text
                 x={centroid.x}
                 y={centroid.y - 30}
@@ -253,7 +259,7 @@ export function NorthIndianChart({ houses, ascendantSign: propAscendantSign, asc
                 {house.houseNumber}
               </text>
 
-              {/* Rashi Name - Center */}
+              {/* Rashi Name */}
               <text
                 x={centroid.x}
                 y={centroid.y}
@@ -274,45 +280,45 @@ export function NorthIndianChart({ houses, ascendantSign: propAscendantSign, asc
           );
         })}
 
-        {/* Planets - Positioned safely well inside polygon, away from edges */}
-        {/* Use recalculated houses with correct signs for North Indian style */}
-        {recalculatedHouses.map((house) => {
+        {/* Planets - Use API house numbers directly */}
+        {/* CRITICAL: ASC is rendered here as a planet (no separate label) - ASC rendered using shared style for consistency */}
+        {normalizedHouses.map((house) => {
           const polygonPoints = northPolygonPoints[house.houseNumber];
           const centroid = getPolygonCentroid(polygonPoints);
           
-          // Filter out Ascendant planet - it's shown by house 1 highlighting, not as a badge
-          return house.planets.filter(planet => planet.name !== 'Ascendant' && planet.abbr !== 'Asc').map((planet, planetIdx) => {
-            // Get original coordinates
+          return house.planets.map((planet, planetIdx) => {
             const originalCoords = getNorthCoordinates(house.houseNumber, planetIdx + 1);
             
             if (originalCoords.x === 0 && originalCoords.y === 0) {
               return null;
             }
 
-            // Get safe position that stays well inside polygon, away from edges
-            const filteredPlanets = house.planets.filter(p => p.name !== 'Ascendant' && p.abbr !== 'Asc');
             const safeCoords = getSafePlanetPosition(
               centroid,
               originalCoords,
               planetIdx,
-              filteredPlanets.length,
+              house.planets.length,
               polygonPoints
             );
 
-            // Format degree - use exact DMS from API (degree_dms, arcminutes, arcseconds)
             const degreeText = planet.degree_dms !== undefined && planet.degree_dms !== null
               ? (planet.degree_minutes !== undefined && planet.degree_minutes !== null
                   ? (planet.degree_seconds !== undefined && planet.degree_seconds !== null && planet.degree_seconds > 0
-                      ? `${planet.degree_dms}° ${planet.degree_minutes}' ${planet.degree_seconds}"` // e.g., "1° 25' 30""
-                      : `${planet.degree_dms}° ${planet.degree_minutes}'`) // e.g., "1° 25'"
-                  : `${planet.degree_dms}°`) // e.g., "1°"
+                      ? `${planet.degree_dms}° ${planet.degree_minutes}' ${planet.degree_seconds}"`
+                      : `${planet.degree_dms}° ${planet.degree_minutes}'`)
+                  : `${planet.degree_dms}°`)
               : (planet.degree !== undefined && planet.degree !== null
-                  ? `${planet.degree.toFixed(2)}°` // Fallback: use float degree
+                  ? `${planet.degree.toFixed(2)}°`
                   : '');
+
+            // CRITICAL: Detect ASC regardless of case or exact abbreviation
+            const isAscendant = planet.name === 'Ascendant' || 
+                              planet.abbr === 'ASC' || 
+                              planet.abbr === 'Asc' || 
+                              planet.abbr?.toUpperCase() === 'ASC';
 
             return (
               <g key={`${house.houseNumber}-${planet.name}-${planetIdx}`}>
-                {/* Planet badge background */}
                 <circle
                   cx={safeCoords.x}
                   cy={safeCoords.y - 6}
@@ -322,14 +328,12 @@ export function NorthIndianChart({ houses, ascendantSign: propAscendantSign, asc
                   strokeWidth="1"
                 />
                 
-                {/* Planet abbreviation */}
                 <text
                   x={safeCoords.x}
                   y={safeCoords.y}
-                  fill="#3b82f6"
                   textAnchor="middle"
                   dominantBaseline="middle"
-                  className="planet-text"
+                  className={isAscendant ? 'asc-text' : 'planet-text'}
                   style={{ 
                     fontSize: '12px',
                     fontWeight: 700,
@@ -339,15 +343,13 @@ export function NorthIndianChart({ houses, ascendantSign: propAscendantSign, asc
                   {planet.abbr}
                 </text>
                 
-                {/* Planet degree (below, smaller) */}
                 {degreeText && (
                   <text
                     x={safeCoords.x}
                     y={safeCoords.y + 15}
-                    fill="#60a5fa"
                     textAnchor="middle"
                     dominantBaseline="middle"
-                    className="planet-degree"
+                    className={isAscendant ? 'asc-degree' : 'planet-degree'}
                     style={{ 
                       fontSize: '9px',
                       fontWeight: 500,
@@ -362,6 +364,8 @@ export function NorthIndianChart({ houses, ascendantSign: propAscendantSign, asc
             );
           });
         })}
+
+        {/* NO SEPARATE ASCENDANT LABEL - Ascendant is rendered as a planet inside its sign */}
       </svg>
     </div>
   );

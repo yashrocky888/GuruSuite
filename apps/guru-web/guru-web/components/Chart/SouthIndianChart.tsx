@@ -1,56 +1,113 @@
 /**
- * South Indian Chart - Using Exact Python Coordinates
- * Modern glassmorphic styling
- * FIXED: No overlapping - planets positioned at bottom, clean modern layout
+ * South Indian Chart - Pure Renderer (NO CALCULATIONS)
+ * 
+ * 🔒 ASTROLOGY LOCK
+ * UI must NEVER calculate astrology.
+ * API is the single source of truth.
+ * 
+ * CRITICAL RULES FOR SOUTH INDIAN CHARTS:
+ * 1. Signs are in FIXED positions (Aries top-left, etc.) - NEVER MOVE
+ * 2. Each sign box shows which HOUSE occupies that sign (from API Houses[] array)
+ * 3. Planets are placed by HOUSE NUMBER from API (not by sign lookup)
+ * 4. NO sign→house lookup. NO house calculation. Use API data directly.
+ * 
+ * SOUTH INDIAN CHART LAYOUT (FIXED):
+ * Row 1:  capricorn | aquarius | pisces | aries
+ * Row 2:  sagittarius |        |        | taurus
+ * Row 3:  scorpio     |        |        | gemini
+ * Row 4:  libra       | virgo   | leo    | cancer
  */
 
 'use client';
 
-import React from 'react';
-import { HouseData } from './utils';
-import { southRectPositions, SouthChart_AscendantPositionAries, SouthChart_offsets4mAries } from './coordinates';
+import React, { useMemo } from 'react';
+import { southRectPositions } from './coordinates';
+import { normalizeSignName } from './houseUtils';
 import './SouthIndianChart.css';
 
+interface HouseData {
+  houseNumber: number;
+  signNumber: number;
+  signName: string;
+  planets: Array<{ 
+    name: string; 
+    abbr: string; 
+    sign: string;
+    degree?: number;
+    degree_dms?: number;
+    degree_minutes?: number;
+    degree_seconds?: number;
+  }>;
+}
+
 interface SouthIndianChartProps {
-  houses: HouseData[];
+  houses: HouseData[]; // REQUIRED - this component is ONLY for house charts
 }
 
 export default function SouthIndianChart({ houses }: SouthIndianChartProps) {
-  const houseMap = new Map(houses.map(h => [h.houseNumber, h]));
-
-  // Find the house containing Ascendant (from API, not hardcoded House 1)
+  // GUARD RAIL: This component is ONLY for house-based charts (D1-D20)
+  // Sign charts (D24-D60) must use SouthIndianSignChart component
+  if (!houses || houses.length !== 12) {
+    throw new Error(
+      `FATAL: SouthIndianChart used incorrectly. ` +
+      `Expected 12 houses, got ${houses?.length || 0}. ` +
+      `Sign charts (D24-D60) must use SouthIndianSignChart component instead.`
+    );
+  }
+  
+  // RUNTIME ASSERTION: Ascendant must be in house 1
   const ascendantHouse = houses.find(h => 
     h.planets.some(p => p.name === 'Ascendant' || p.abbr === 'Asc')
   );
-  const ascendantHouseNumber = ascendantHouse?.houseNumber;
   
-  // CRITICAL FIX: Get ascendant sign from the Ascendant PLANET, not the house cusp sign
-  // In Placidus system, house cusp sign (Mithuna) can differ from planet sign (Vrishchika)
-  const ascendantPlanet = ascendantHouse?.planets.find(p => p.name === 'Ascendant' || p.abbr === 'Asc');
-  let ascendantSign = ascendantPlanet?.sign?.toLowerCase() || ascendantHouse?.signName.toLowerCase() || 'mesha';
+  if (!ascendantHouse) {
+    throw new Error('FATAL: Ascendant must be present in houses array');
+  }
   
-  // Handle sign name variations (vrischika vs vrishchika)
-  if (ascendantSign === 'vrishchika') {
-    ascendantSign = 'vrischika'; // Use the key from coordinates
+  if (ascendantHouse.houseNumber !== 1) {
+    throw new Error(`FATAL: Ascendant must be in house 1, found in house ${ascendantHouse.houseNumber}`);
   }
 
-  // Calculate ascendant position for yellow "Asc" label
-  const ascOffset = SouthChart_offsets4mAries[ascendantSign] || SouthChart_offsets4mAries[ascendantSign.replace('h', '')] || { x: 0, y: 0 };
-  const ascX = SouthChart_AscendantPositionAries.x + ascOffset.x;
-  const ascY = SouthChart_AscendantPositionAries.y + ascOffset.y;
+  // CRITICAL: Ascendant sign must come ONLY from Ascendant planet in house 1
+  // NO fallbacks. NO derivation from house signName. NO defaults.
+  const ascendantPlanet = ascendantHouse.planets.find(p => p.name === 'Ascendant' || p.abbr === 'Asc');
+  
+  if (!ascendantPlanet || !ascendantPlanet.sign) {
+    throw new Error('FATAL: Ascendant sign is missing - cannot render chart');
+  }
+  
+  // Use ascendant sign directly from API (no fallbacks)
+  const ascendantSignRaw = ascendantPlanet.sign.toLowerCase();
+  const normalizedAscendantSign = normalizeSignName(ascendantSignRaw);
+  
+  // RUNTIME LOG: Verify ascendant sign is correct
+  console.log("ASC SIGN USED:", ascendantSignRaw, "→ normalized:", normalizedAscendantSign);
 
-  // Sign to house mapping (signs are fixed, houses rotate)
-  const signToHouse: Record<string, HouseData> = {};
+  // CRITICAL: Build house→sign map ONLY from API response
+  // NO calculations. NO rotations. NO hardcoded grids.
+  // PURE RENDERER: Use API data directly
+  const houseSignMap = new Map<number, string>();
+  const signToHouseMap = new Map<string, number>();
   houses.forEach(house => {
-    let signKey = house.signName.toLowerCase();
-    // Handle sign name variations
-    if (signKey === 'vrishchika') {
-      signKey = 'vrischika'; // Use the key from coordinates
-    }
-    signToHouse[signKey] = house;
-    // Also map with original name for lookup
-    signToHouse[house.signName.toLowerCase()] = house;
+    houseSignMap.set(house.houseNumber, house.signName);
+    // Also build reverse map: sign → house number (for finding which house has a given sign)
+    const normalizedSign = normalizeSignName(house.signName);
+    signToHouseMap.set(normalizedSign, house.houseNumber);
   });
+  
+  console.log("HOUSE→SIGN MAP (from API):", Array.from(houseSignMap.entries()).map(([h, s]) => `H${h}=${s}`).join(', '));
+
+  // CRITICAL: Normalize ASC abbreviation to "ASC" for all houses
+  // ASC must be rendered exactly like a planet - same styling, same placement
+  const normalizedHouses = houses.map(house => ({
+    ...house,
+    planets: house.planets.map(planet => {
+      if (planet.name === 'Ascendant' || planet.abbr === 'Asc' || planet.abbr === 'ASC') {
+        return { ...planet, abbr: 'ASC' }; // Normalize to "ASC"
+      }
+      return planet;
+    })
+  }));
 
   return (
     <div className="south-chart-wrapper">
@@ -87,24 +144,45 @@ export default function SouthIndianChart({ houses }: SouthIndianChartProps) {
           rx="4"
         />
 
-        {/* Sign Rectangles with House Numbers and Rashi Names */}
-        {Object.entries(southRectPositions).map(([signKey, rect]) => {
-          const house = signToHouse[signKey];
-          // Check if this house contains Ascendant (use API house value, not hardcoded 1)
-          const isAscendant = ascendantHouseNumber !== undefined && house?.houseNumber === ascendantHouseNumber;
+        {/* Sign Rectangles - PURE RENDERER (NO CALCULATIONS) */}
+        {/* Each fixed sign box position displays the house that has that sign (from API) */}
+        {/* NO rotation. NO hardcoded grids. Use API house→sign map directly. */}
+        {(['aries', 'taurus', 'gemini', 'cancer', 'leo', 'virgo', 
+           'libra', 'scorpio', 'sagittarius', 'capricorn', 'aquarius', 'pisces'] as const).map((fixedSignKey) => {
+          const rect = southRectPositions[fixedSignKey];
+          if (!rect) {
+            return null;
+          }
+          
+          // CRITICAL: Find which house has this sign using API house→sign map
+          // NO rotation. NO calculation. Just lookup which house API says has this sign.
+          const normalizedFixedSign = normalizeSignName(fixedSignKey);
+          const houseNumber = signToHouseMap.get(normalizedFixedSign);
+          
+          // SAFE RENDERING: If house not found for this sign, skip rendering
+          // This should never happen if API data is correct, but handle gracefully
+          if (!houseNumber) {
+            return null; // Skip this sign box silently
+          }
+          
+          // Get house data by house number (use normalized houses with ASC normalized)
+          const house = normalizedHouses.find(h => h.houseNumber === houseNumber);
+          if (!house) {
+            return null; // Skip if house data not found
+          }
 
-          // Don't display houses with "Unknown" sign or missing house
-          if (!house || house.signName === 'Unknown' || !house.signName) return null;
+          // Check if this is house 1 (Ascendant house)
+          const isAscendant = house.houseNumber === 1;
 
           const centerX = rect.x + rect.width / 2;
-          const topY = rect.y + 18; // Top for house number
-          const middleY = rect.y + rect.height / 2; // Middle for rashi name
-          const planetAreaStartY = rect.y + rect.height - 35; // Bottom area for planets
+          const topY = rect.y + 18;
+          const middleY = rect.y + rect.height / 2;
+          const planetAreaStartY = rect.y + rect.height - 35;
 
           return (
-            <g key={signKey}>
+            <g key={fixedSignKey}>
               <rect
-                id={signKey}
+                id={fixedSignKey}
                 x={rect.x}
                 y={rect.y}
                 width={rect.width}
@@ -154,30 +232,33 @@ export default function SouthIndianChart({ houses }: SouthIndianChartProps) {
                 {house.signName}
               </text>
 
-              {/* Planets - Positioned at bottom, horizontally distributed */}
-              {/* Filter out Ascendant planet - it will be shown as yellow "Asc" label, not blue badge */}
-              {house.planets.filter(planet => planet.name !== 'Ascendant' && planet.abbr !== 'Asc').map((planet, planetIdx) => {
-                const filteredPlanets = house.planets.filter(p => p.name !== 'Ascendant' && p.abbr !== 'Asc');
-                const totalPlanets = filteredPlanets.length;
+              {/* Planets - Positioned at bottom */}
+              {/* CRITICAL: ASC is rendered here as a planet (no separate label) - ASC rendered using shared style for consistency */}
+              {house.planets.map((planet, planetIdx) => {
+                const totalPlanets = house.planets.length;
                 const planetSpacing = Math.min(rect.width / (totalPlanets + 1), 30);
                 const startX = rect.x + planetSpacing;
                 const planetX = startX + (planetIdx * planetSpacing);
-                const planetY = planetAreaStartY - (planetIdx % 2) * 18; // Alternate rows if many planets
+                const planetY = planetAreaStartY - (planetIdx % 2) * 18;
 
-                // Format degree - use exact DMS from API (degree_dms, arcminutes, arcseconds)
                 const degreeText = planet.degree_dms !== undefined && planet.degree_dms !== null
                   ? (planet.degree_minutes !== undefined && planet.degree_minutes !== null
                       ? (planet.degree_seconds !== undefined && planet.degree_seconds !== null && planet.degree_seconds > 0
-                          ? `${planet.degree_dms}° ${planet.degree_minutes}' ${planet.degree_seconds}"` // e.g., "1° 25' 30""
-                          : `${planet.degree_dms}° ${planet.degree_minutes}'`) // e.g., "1° 25'"
-                      : `${planet.degree_dms}°`) // e.g., "1°"
+                          ? `${planet.degree_dms}° ${planet.degree_minutes}' ${planet.degree_seconds}"`
+                          : `${planet.degree_dms}° ${planet.degree_minutes}'`)
+                      : `${planet.degree_dms}°`)
                   : (planet.degree !== undefined && planet.degree !== null
-                      ? `${planet.degree.toFixed(2)}°` // Fallback: use float degree
+                      ? `${planet.degree.toFixed(2)}°`
                       : '');
+
+                // CRITICAL: Detect ASC regardless of case or exact abbreviation
+                const isAscendant = planet.name === 'Ascendant' || 
+                                  planet.abbr === 'ASC' || 
+                                  planet.abbr === 'Asc' || 
+                                  planet.abbr?.toUpperCase() === 'ASC';
 
                 return (
                   <g key={`${house.houseNumber}-${planet.name}-${planetIdx}`}>
-                    {/* Planet badge background */}
                     <circle
                       cx={planetX}
                       cy={planetY - 6}
@@ -187,14 +268,12 @@ export default function SouthIndianChart({ houses }: SouthIndianChartProps) {
                       strokeWidth="1"
                     />
                     
-                    {/* Planet abbreviation */}
                     <text
                       x={planetX}
                       y={planetY}
-                      fill="#3b82f6"
                       textAnchor="middle"
                       dominantBaseline="middle"
-                      className="planet-text"
+                      className={isAscendant ? 'asc-text' : 'planet-text'}
                       style={{ 
                         fontSize: '12px',
                         fontWeight: 700,
@@ -204,15 +283,13 @@ export default function SouthIndianChart({ houses }: SouthIndianChartProps) {
                       {planet.abbr}
                     </text>
                     
-                    {/* Planet degree (below) */}
                     {degreeText && (
                       <text
                         x={planetX}
                         y={planetY + 15}
-                        fill="#60a5fa"
                         textAnchor="middle"
                         dominantBaseline="middle"
-                        className="planet-degree"
+                        className={isAscendant ? 'asc-degree' : 'planet-degree'}
                         style={{ 
                           fontSize: '9px',
                           fontWeight: 500,
@@ -230,19 +307,7 @@ export default function SouthIndianChart({ houses }: SouthIndianChartProps) {
           );
         })}
 
-        {/* Ascendant Label - Yellow "Asc" text (correct, keep this) */}
-        {ascendantHouseNumber && (
-          <text
-            id={`${ascendantSign}Asc`}
-            x={ascX}
-            y={ascY}
-            fill="#d4af37"
-            className="ascendant-label"
-            style={{ fontWeight: 600, fontSize: '14px' }}
-          >
-            Asc
-          </text>
-        )}
+        {/* NO SEPARATE ASCENDANT LABEL - Ascendant is rendered as a planet inside its sign */}
       </svg>
     </div>
   );
