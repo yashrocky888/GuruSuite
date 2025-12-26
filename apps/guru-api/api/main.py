@@ -45,7 +45,8 @@ try:
         panchang_routes,
         strength_routes,
         yoga_routes,
-        ai_routes
+        ai_routes,
+        location_routes
     )
     # Payment routes - should work with setuptools in requirements
     from src.api import payment_routes
@@ -59,7 +60,7 @@ except ImportError as e:
     transit_prediction_routes = monthly_routes = yearly_routes = None
     kundli_routes = dasha_routes = daily_routes = None
     transit_routes = panchang_routes = strength_routes = None
-    yoga_routes = ai_routes = None
+    yoga_routes = ai_routes = location_routes = None
 
 
 @asynccontextmanager
@@ -162,6 +163,7 @@ app.include_router(dasha_routes.router, prefix="/api/v1", tags=["Dasha"])
 app.include_router(daily_routes.router, prefix="/api/v1", tags=["Daily"])
 app.include_router(transit_routes.router, prefix="/api/v1", tags=["Transits"])
 app.include_router(panchang_routes.router, prefix="/api/v1", tags=["Panchang"])
+app.include_router(location_routes.router, prefix="/api/v1", tags=["Location"])
 
 # Other routes
 app.include_router(strength_routes.router, prefix="/strength", tags=["Strength"])

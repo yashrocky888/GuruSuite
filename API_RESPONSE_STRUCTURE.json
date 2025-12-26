@@ -1,0 +1,584 @@
+{
+  "D1": {
+    "Ascendant": {
+      "degree": 212.2799,
+      "sign": "Scorpio",
+      "sign_sanskrit": "Vrishchika",
+      "sign_index": 7,
+      "degrees_in_sign": 2.2799,
+      "house": 1,
+      "lord": "Mars",
+      "nakshatra": "Vishakha",
+      "nakshatra_index": 15,
+      "pada": 4,
+      "degree_dms": 212,
+      "arcminutes": 16,
+      "arcseconds": 47
+    },
+    "Houses": [
+      {
+        "house": 1,
+        "degree": 212.2823,
+        "sign": "Scorpio",
+        "sign_sanskrit": "Vrishchika",
+        "sign_index": 7,
+        "degrees_in_sign": 2.2823,
+        "lord": "Mars"
+      },
+      {
+        "house": 2,
+        "degree": 241.224,
+        "sign": "Sagittarius",
+        "sign_sanskrit": "Dhanu",
+        "sign_index": 8,
+        "degrees_in_sign": 1.224,
+        "lord": "Jupiter"
+      },
+      {
+        "house": 3,
+        "degree": 270.948,
+        "sign": "Capricorn",
+        "sign_sanskrit": "Makara",
+        "sign_index": 9,
+        "degrees_in_sign": 0.948,
+        "lord": "Saturn"
+      },
+      {
+        "house": 4,
+        "degree": 302.338,
+        "sign": "Aquarius",
+        "sign_sanskrit": "Kumbha",
+        "sign_index": 10,
+        "degrees_in_sign": 2.338,
+        "lord": "Saturn"
+      },
+      {
+        "house": 5,
+        "degree": 334.4929,
+        "sign": "Pisces",
+        "sign_sanskrit": "Meena",
+        "sign_index": 11,
+        "degrees_in_sign": 4.4929,
+        "lord": "Jupiter"
+      },
+      {
+        "house": 6,
+        "degree": 4.8983,
+        "sign": "Aries",
+        "sign_sanskrit": "Mesha",
+        "sign_index": 0,
+        "degrees_in_sign": 4.8983,
+        "lord": "Mars"
+      },
+      {
+        "house": 7,
+        "degree": 32.2823,
+        "sign": "Taurus",
+        "sign_sanskrit": "Vrishabha",
+        "sign_index": 1,
+        "degrees_in_sign": 2.2823,
+        "lord": "Venus"
+      },
+      {
+        "house": 8,
+        "degree": 61.224,
+        "sign": "Gemini",
+        "sign_sanskrit": "Mithuna",
+        "sign_index": 2,
+        "degrees_in_sign": 1.224,
+        "lord": "Mercury"
+      },
+      {
+        "house": 9,
+        "degree": 90.948,
+        "sign": "Cancer",
+        "sign_sanskrit": "Karka",
+        "sign_index": 3,
+        "degrees_in_sign": 0.948,
+        "lord": "Moon"
+      },
+      {
+        "house": 10,
+        "degree": 122.338,
+        "sign": "Leo",
+        "sign_sanskrit": "Simha",
+        "sign_index": 4,
+        "degrees_in_sign": 2.338,
+        "lord": "Sun"
+      },
+      {
+        "house": 11,
+        "degree": 154.4929,
+        "sign": "Virgo",
+        "sign_sanskrit": "Kanya",
+        "sign_index": 5,
+        "degrees_in_sign": 4.4929,
+        "lord": "Mercury"
+      },
+      {
+        "house": 12,
+        "degree": 184.8983,
+        "sign": "Libra",
+        "sign_sanskrit": "Tula",
+        "sign_index": 6,
+        "degrees_in_sign": 4.8983,
+        "lord": "Venus"
+      }
+    ],
+    "Planets": {
+      "Sun": {
+        "degree": 31.4138,
+        "sign": "Taurus",
+        "sign_sanskrit": "Vrishabha",
+        "sign_index": 1,
+        "degrees_in_sign": 1.4138,
+        "house": 2,
+        "house_lord": "Venus"
+      },
+      "Moon": {
+        "degree": 235.2501,
+        "sign": "Scorpio",
+        "sign_sanskrit": "Vrishchika",
+        "sign_index": 7,
+        "degrees_in_sign": 25.2501,
+        "house": 8,
+        "house_lord": "Mars"
+      },
+      "Mars": {
+        "degree": 122.2504,
+        "sign": "Leo",
+        "sign_sanskrit": "Simha",
+        "sign_index": 4,
+        "degrees_in_sign": 2.2504,
+        "house": 5,
+        "house_lord": "Sun"
+      },
+      "Mercury": {
+        "degree": 52.1178,
+        "sign": "Taurus",
+        "sign_sanskrit": "Vrishabha",
+        "sign_index": 1,
+        "degrees_in_sign": 22.1178,
+        "house": 2,
+        "house_lord": "Venus"
+      },
+      "Jupiter": {
+        "degree": 228.6872,
+        "sign": "Scorpio",
+        "sign_sanskrit": "Vrishchika",
+        "sign_index": 7,
+        "degrees_in_sign": 18.6872,
+        "house": 8,
+        "house_lord": "Mars"
+      },
+      "Venus": {
+        "degree": 5.6886,
+        "sign": "Aries",
+        "sign_sanskrit": "Mesha",
+        "sign_index": 0,
+        "degrees_in_sign": 5.6886,
+        "house": 1,
+        "house_lord": "Mars"
+      },
+      "Saturn": {
+        "degree": 328.8956,
+        "sign": "Aquarius",
+        "sign_sanskrit": "Kumbha",
+        "sign_index": 10,
+        "degrees_in_sign": 28.8956,
+        "house": 11,
+        "house_lord": "Saturn"
+      },
+      "Rahu": {
+        "degree": 190.7944,
+        "sign": "Libra",
+        "sign_sanskrit": "Tula",
+        "sign_index": 6,
+        "degrees_in_sign": 10.7944,
+        "house": 7,
+        "house_lord": "Venus"
+      },
+      "Ketu": {
+        "degree": 10.7944,
+        "sign": "Aries",
+        "sign_sanskrit": "Mesha",
+        "sign_index": 0,
+        "degrees_in_sign": 10.7944,
+        "house": 1,
+        "house_lord": "Mars"
+      }
+    }
+  },
+  "D9": {
+    "Ascendant": {
+      "degree": 110.5191,
+      "sign": "Cancer",
+      "sign_sanskrit": "Karka",
+      "sign_index": 3,
+      "degrees_in_sign": 20.5191,
+      "house": 1,
+      "lord": "Moon"
+    },
+    "Houses": [
+      {
+        "house": 1,
+        "sign": "Aries",
+        "sign_sanskrit": "Mesha",
+        "sign_index": 0,
+        "degree": 0.0,
+        "degrees_in_sign": 0.0,
+        "lord": "Mars"
+      },
+      {
+        "house": 2,
+        "sign": "Taurus",
+        "sign_sanskrit": "Vrishabha",
+        "sign_index": 1,
+        "degree": 0.0,
+        "degrees_in_sign": 0.0,
+        "lord": "Venus"
+      },
+      {
+        "house": 3,
+        "sign": "Gemini",
+        "sign_sanskrit": "Mithuna",
+        "sign_index": 2,
+        "degree": 0.0,
+        "degrees_in_sign": 0.0,
+        "lord": "Mercury"
+      },
+      {
+        "house": 4,
+        "sign": "Cancer",
+        "sign_sanskrit": "Karka",
+        "sign_index": 3,
+        "degree": 0.0,
+        "degrees_in_sign": 0.0,
+        "lord": "Moon"
+      },
+      {
+        "house": 5,
+        "sign": "Leo",
+        "sign_sanskrit": "Simha",
+        "sign_index": 4,
+        "degree": 0.0,
+        "degrees_in_sign": 0.0,
+        "lord": "Sun"
+      },
+      {
+        "house": 6,
+        "sign": "Virgo",
+        "sign_sanskrit": "Kanya",
+        "sign_index": 5,
+        "degree": 0.0,
+        "degrees_in_sign": 0.0,
+        "lord": "Mercury"
+      },
+      {
+        "house": 7,
+        "sign": "Libra",
+        "sign_sanskrit": "Tula",
+        "sign_index": 6,
+        "degree": 0.0,
+        "degrees_in_sign": 0.0,
+        "lord": "Venus"
+      },
+      {
+        "house": 8,
+        "sign": "Scorpio",
+        "sign_sanskrit": "Vrishchika",
+        "sign_index": 7,
+        "degree": 0.0,
+        "degrees_in_sign": 0.0,
+        "lord": "Mars"
+      },
+      {
+        "house": 9,
+        "sign": "Sagittarius",
+        "sign_sanskrit": "Dhanu",
+        "sign_index": 8,
+        "degree": 0.0,
+        "degrees_in_sign": 0.0,
+        "lord": "Jupiter"
+      },
+      {
+        "house": 10,
+        "sign": "Capricorn",
+        "sign_sanskrit": "Makara",
+        "sign_index": 9,
+        "degree": 0.0,
+        "degrees_in_sign": 0.0,
+        "lord": "Saturn"
+      },
+      {
+        "house": 11,
+        "sign": "Aquarius",
+        "sign_sanskrit": "Kumbha",
+        "sign_index": 10,
+        "degree": 0.0,
+        "degrees_in_sign": 0.0,
+        "lord": "Saturn"
+      },
+      {
+        "house": 12,
+        "sign": "Pisces",
+        "sign_sanskrit": "Meena",
+        "sign_index": 11,
+        "degree": 0.0,
+        "degrees_in_sign": 0.0,
+        "lord": "Jupiter"
+      }
+    ],
+    "Planets": {
+      "Sun": {
+        "degree": 282.7242,
+        "sign": "Capricorn",
+        "sign_index": 9,
+        "degrees_in_sign": 12.7242,
+        "house": 10
+      },
+      "Moon": {
+        "degree": 317.2509,
+        "sign": "Aquarius",
+        "sign_index": 10,
+        "degrees_in_sign": 17.2509,
+        "house": 11
+      },
+      "Mars": {
+        "degree": 20.2536,
+        "sign": "Aries",
+        "sign_index": 0,
+        "degrees_in_sign": 20.2536,
+        "house": 1
+      },
+      "Mercury": {
+        "degree": 109.0602,
+        "sign": "Cancer",
+        "sign_index": 3,
+        "degrees_in_sign": 19.0602,
+        "house": 4
+      },
+      "Jupiter": {
+        "degree": 258.1848,
+        "sign": "Sagittarius",
+        "sign_index": 8,
+        "degrees_in_sign": 18.1848,
+        "house": 9
+      },
+      "Venus": {
+        "degree": 51.1974,
+        "sign": "Taurus",
+        "sign_index": 1,
+        "degrees_in_sign": 21.1974,
+        "house": 2
+      },
+      "Saturn": {
+        "degree": 80.0604,
+        "sign": "Gemini",
+        "sign_index": 2,
+        "degrees_in_sign": 20.0604,
+        "house": 3
+      },
+      "Rahu": {
+        "degree": 277.1496,
+        "sign": "Capricorn",
+        "sign_index": 9,
+        "degrees_in_sign": 7.1496,
+        "house": 10
+      },
+      "Ketu": {
+        "degree": 97.1496,
+        "sign": "Cancer",
+        "sign_index": 3,
+        "degrees_in_sign": 7.1496,
+        "house": 4
+      }
+    }
+  },
+  "D10": {
+    "Ascendant": {
+      "degree": 112.799,
+      "sign": "Cancer",
+      "sign_sanskrit": "Karka",
+      "sign_index": 3,
+      "degrees_in_sign": 22.799,
+      "house": 1,
+      "lord": "Moon"
+    },
+    "Houses": [
+      {
+        "house": 1,
+        "sign": "Aries",
+        "sign_sanskrit": "Mesha",
+        "sign_index": 0,
+        "degree": 0.0,
+        "degrees_in_sign": 0.0,
+        "lord": "Mars"
+      },
+      {
+        "house": 2,
+        "sign": "Taurus",
+        "sign_sanskrit": "Vrishabha",
+        "sign_index": 1,
+        "degree": 0.0,
+        "degrees_in_sign": 0.0,
+        "lord": "Venus"
+      },
+      {
+        "house": 3,
+        "sign": "Gemini",
+        "sign_sanskrit": "Mithuna",
+        "sign_index": 2,
+        "degree": 0.0,
+        "degrees_in_sign": 0.0,
+        "lord": "Mercury"
+      },
+      {
+        "house": 4,
+        "sign": "Cancer",
+        "sign_sanskrit": "Karka",
+        "sign_index": 3,
+        "degree": 0.0,
+        "degrees_in_sign": 0.0,
+        "lord": "Moon"
+      },
+      {
+        "house": 5,
+        "sign": "Leo",
+        "sign_sanskrit": "Simha",
+        "sign_index": 4,
+        "degree": 0.0,
+        "degrees_in_sign": 0.0,
+        "lord": "Sun"
+      },
+      {
+        "house": 6,
+        "sign": "Virgo",
+        "sign_sanskrit": "Kanya",
+        "sign_index": 5,
+        "degree": 0.0,
+        "degrees_in_sign": 0.0,
+        "lord": "Mercury"
+      },
+      {
+        "house": 7,
+        "sign": "Libra",
+        "sign_sanskrit": "Tula",
+        "sign_index": 6,
+        "degree": 0.0,
+        "degrees_in_sign": 0.0,
+        "lord": "Venus"
+      },
+      {
+        "house": 8,
+        "sign": "Scorpio",
+        "sign_sanskrit": "Vrishchika",
+        "sign_index": 7,
+        "degree": 0.0,
+        "degrees_in_sign": 0.0,
+        "lord": "Mars"
+      },
+      {
+        "house": 9,
+        "sign": "Sagittarius",
+        "sign_sanskrit": "Dhanu",
+        "sign_index": 8,
+        "degree": 0.0,
+        "degrees_in_sign": 0.0,
+        "lord": "Jupiter"
+      },
+      {
+        "house": 10,
+        "sign": "Capricorn",
+        "sign_sanskrit": "Makara",
+        "sign_index": 9,
+        "degree": 0.0,
+        "degrees_in_sign": 0.0,
+        "lord": "Saturn"
+      },
+      {
+        "house": 11,
+        "sign": "Aquarius",
+        "sign_sanskrit": "Kumbha",
+        "sign_index": 10,
+        "degree": 0.0,
+        "degrees_in_sign": 0.0,
+        "lord": "Saturn"
+      },
+      {
+        "house": 12,
+        "sign": "Pisces",
+        "sign_sanskrit": "Meena",
+        "sign_index": 11,
+        "degree": 0.0,
+        "degrees_in_sign": 0.0,
+        "lord": "Jupiter"
+      }
+    ],
+    "Planets": {
+      "Sun": {
+        "degree": 224.138,
+        "sign": "Scorpio",
+        "sign_index": 7,
+        "degrees_in_sign": 14.138,
+        "house": 8
+      },
+      "Moon": {
+        "degree": 252.501,
+        "sign": "Sagittarius",
+        "sign_index": 8,
+        "degrees_in_sign": 12.501,
+        "house": 9
+      },
+      "Mars": {
+        "degree": 352.504,
+        "sign": "Pisces",
+        "sign_index": 11,
+        "degrees_in_sign": 22.504,
+        "house": 12
+      },
+      "Mercury": {
+        "degree": 341.178,
+        "sign": "Pisces",
+        "sign_index": 11,
+        "degrees_in_sign": 11.178,
+        "house": 12
+      },
+      "Jupiter": {
+        "degree": 216.872,
+        "sign": "Scorpio",
+        "sign_index": 7,
+        "degrees_in_sign": 6.872,
+        "house": 8
+      },
+      "Venus": {
+        "degree": 326.886,
+        "sign": "Aquarius",
+        "sign_index": 10,
+        "degrees_in_sign": 26.886,
+        "house": 11
+      },
+      "Saturn": {
+        "degree": 228.956,
+        "sign": "Scorpio",
+        "sign_index": 7,
+        "degrees_in_sign": 18.956,
+        "house": 8
+      },
+      "Rahu": {
+        "degree": 227.944,
+        "sign": "Scorpio",
+        "sign_index": 7,
+        "degrees_in_sign": 17.944,
+        "house": 8
+      },
+      "Ketu": {
+        "degree": 107.944,
+        "sign": "Cancer",
+        "sign_index": 3,
+        "degrees_in_sign": 17.944,
+        "house": 4
+      }
+    }
+  }
+}

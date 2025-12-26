@@ -10,7 +10,8 @@ import { motion } from 'framer-motion';
 import { ArrowsRightLeftIcon } from '@heroicons/react/24/outline';
 import { SouthChart } from './SouthChart';
 import { NorthChart } from './NorthChart';
-import { normalizeKundliToHouses, RawKundliData } from '../types/kundli';
+import { RawKundliData } from '../types/kundli';
+import { ChartContainer } from '../Chart/ChartContainer';
 
 interface ChartBoxProps {
   chartData: RawKundliData | null | undefined;
@@ -22,12 +23,9 @@ type ChartStyle = 'north' | 'south';
 export const ChartBox: React.FC<ChartBoxProps> = ({ chartData, chartType = 'rasi' }) => {
   const [chartStyle, setChartStyle] = useState<ChartStyle>('south');
 
-  // Normalize chart data to houses
-  const houses = useMemo(() => {
-    return normalizeKundliToHouses(chartData);
-  }, [chartData]);
-
-  if (!chartData || houses.length === 0) {
+  // DEPRECATED: This component should use ChartContainer directly
+  // ChartContainer handles API format with proper structure
+  if (!chartData) {
     return (
       <div className="flex items-center justify-center h-[500px] glass rounded-xl border border-white/20">
         <p className="text-gray-500 dark:text-gray-400">No chart data available</p>
@@ -69,11 +67,7 @@ export const ChartBox: React.FC<ChartBoxProps> = ({ chartData, chartType = 'rasi
 
       {/* Chart Display Container */}
       <div className="w-full bg-gradient-to-br from-amber-50/30 to-orange-50/30 dark:from-amber-900/10 dark:to-orange-900/10 rounded-lg p-6 border border-amber-200/30 dark:border-amber-800/30 flex justify-center items-center min-h-[500px]">
-        {chartStyle === 'north' ? (
-          <NorthChart houses={houses} />
-        ) : (
-          <SouthChart houses={houses} />
-        )}
+        <ChartContainer chartData={chartData} chartType={chartType} />
       </div>
 
       {/* Chart Info */}

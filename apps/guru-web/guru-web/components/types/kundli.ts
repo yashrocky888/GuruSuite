@@ -1,12 +1,15 @@
 /**
  * Kundli Chart Types - Single Source of Truth
  * Clean data model for Vedic astrology charts
+ * 
+ * CRITICAL: This file contains NO astrology calculations.
+ * All data must come from API.
  */
 
 export interface HouseData {
-  houseNumber: number;      // 1–12 from Ascendant
-  signName: string;         // 'Mesha', 'Vrishabha', ...
-  signIndex: number;        // 0–11 (Aries..Pisces)
+  houseNumber: number;      // 1–12 from API
+  signName: string;         // From API Houses[] array
+  signIndex: number;        // 0–11 (Aries..Pisces) from API
   planets: string[];        // ['Su', 'Mo', 'Ma', ...]
 }
 
@@ -82,55 +85,11 @@ export function getSignIndex(signName: string): number {
 }
 
 /**
- * Normalize raw API kundli data to HouseData array
- * This is the single source of truth for chart rendering
+ * DEPRECATED: normalizeKundliToHouses() DELETED
  * 
- * ALL planets from API are included - no filtering
+ * This function was calculating house signs from lagna using modulo arithmetic.
+ * This violates the "NO CALCULATIONS" rule.
+ * 
+ * Use normalizeKundliData() from components/Chart/utils.ts instead,
+ * which uses API Houses[] array directly.
  */
-export function normalizeKundliToHouses(raw: RawKundliData | null | undefined): HouseData[] {
-  if (!raw || !raw.planets || !Array.isArray(raw.planets)) {
-    return [];
-  }
-
-  // Get lagna sign index (0-11)
-  let lagnaSignIndex = 0;
-  if (raw.lagnaSign) {
-    lagnaSignIndex = getSignIndex(raw.lagnaSign);
-  } else if (raw.lagna !== undefined) {
-    lagnaSignIndex = (raw.lagna - 1) % 12;
-  }
-
-  // Initialize 12 houses
-  const houses: HouseData[] = Array.from({ length: 12 }, (_, i) => {
-    const houseNumber = i + 1;
-    // Calculate sign for this house
-    // House 1 = Lagna sign, then clockwise
-    const signIndex = (lagnaSignIndex + houseNumber - 1) % 12;
-    const signName = VEDIC_RASHIS[signIndex];
-
-    return {
-      houseNumber,
-      signName,
-      signIndex,
-      planets: [],
-    };
-  });
-
-  // Map ALL planets to houses - NO FILTERING
-  raw.planets.forEach((planet) => {
-    // Handle different API response formats
-    const planetName = planet.name || (planet as any).planet || 'Unknown';
-    const houseNumber = planet.house || 1;
-    const planetAbbr = mapPlanetName(planetName);
-
-    // Ensure house number is valid (1-12)
-    const validHouse = ((houseNumber - 1) % 12) + 1;
-    const houseIndex = validHouse - 1;
-
-    if (houses[houseIndex]) {
-      houses[houseIndex].planets.push(planetAbbr);
-    }
-  });
-
-  return houses;
-}

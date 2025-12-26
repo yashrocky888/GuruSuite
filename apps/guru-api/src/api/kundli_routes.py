@@ -173,11 +173,19 @@ async def get_navamsa(request: KundliRequest):
         # Generate D1 kundli
         base_kundli = generate_kundli(jd, request.birth_latitude, request.birth_longitude)
         
-        # Prepare D1 data for varga engine
-        d1_ascendant = base_kundli["Ascendant"]["degree"]
+        # 🔒 CRITICAL: Use RAW unrounded sidereal longitudes for varga calculations
+        # DO NOT use rounded degrees from D1 output - rounding causes varga mismatches
+        from src.ephemeris.planets_jhora_exact import calculate_ascendant_jhora_exact, calculate_all_planets_jhora_exact
+        
+        # Get RAW ascendant longitude (unrounded, exact sidereal)
+        asc_jhora_raw = calculate_ascendant_jhora_exact(jd, lat, lon)
+        d1_ascendant = asc_jhora_raw["longitude"]  # Raw unrounded sidereal longitude
+        
+        # Get RAW planet longitudes (unrounded, exact sidereal)
+        planets_jhora_raw = calculate_all_planets_jhora_exact(jd)
         d1_planets = {
-            planet_name: planet_info["degree"]
-            for planet_name, planet_info in base_kundli["Planets"].items()
+            planet_name: planet_data["longitude"]  # Raw unrounded sidereal longitude
+            for planet_name, planet_data in planets_jhora_raw.items()
         }
         
         # Build D9 chart using authoritative engine
@@ -188,10 +196,14 @@ async def get_navamsa(request: KundliRequest):
         assert d9_chart["ascendant"]["house"] == 1, \
             f"D9 lagna house must be 1, got {d9_chart['ascendant']['house']}"
         
-        # Build houses array (Whole Sign: fixed sign grid)
+        # Build houses array (Whole Sign: relative to ascendant sign)
+        # 🔒 DO NOT MODIFY — JHora compatible
+        # Whole Sign: House 1 = Ascendant sign, House 2 = next sign clockwise, etc.
+        # Formula: sign_index = (asc_sign_index + house_num - 1) % 12
+        asc_sign_index = d9_chart["ascendant"]["sign_index"]
         houses_array = []
         for house_num in range(1, 13):
-            sign_index = house_num - 1
+            sign_index = (asc_sign_index + house_num - 1) % 12
             houses_array.append({
                 "house": house_num,
                 "sign": get_sign_name(sign_index),
@@ -259,11 +271,19 @@ async def get_dasamsa(request: KundliRequest):
         # Generate D1 kundli
         base_kundli = generate_kundli(jd, request.birth_latitude, request.birth_longitude)
         
-        # Prepare D1 data for varga engine
-        d1_ascendant = base_kundli["Ascendant"]["degree"]
+        # 🔒 CRITICAL: Use RAW unrounded sidereal longitudes for varga calculations
+        # DO NOT use rounded degrees from D1 output - rounding causes varga mismatches
+        from src.ephemeris.planets_jhora_exact import calculate_ascendant_jhora_exact, calculate_all_planets_jhora_exact
+        
+        # Get RAW ascendant longitude (unrounded, exact sidereal)
+        asc_jhora_raw = calculate_ascendant_jhora_exact(jd, lat, lon)
+        d1_ascendant = asc_jhora_raw["longitude"]  # Raw unrounded sidereal longitude
+        
+        # Get RAW planet longitudes (unrounded, exact sidereal)
+        planets_jhora_raw = calculate_all_planets_jhora_exact(jd)
         d1_planets = {
-            planet_name: planet_info["degree"]
-            for planet_name, planet_info in base_kundli["Planets"].items()
+            planet_name: planet_data["longitude"]  # Raw unrounded sidereal longitude
+            for planet_name, planet_data in planets_jhora_raw.items()
         }
         
         # Build D10 chart using authoritative engine (with verified Prokerala/JHora logic)
@@ -274,10 +294,14 @@ async def get_dasamsa(request: KundliRequest):
         assert d10_chart["ascendant"]["house"] == 1, \
             f"D10 lagna house must be 1, got {d10_chart['ascendant']['house']}"
         
-        # Build houses array (Whole Sign: fixed sign grid)
+        # Build houses array (Whole Sign: relative to ascendant sign)
+        # 🔒 DO NOT MODIFY — JHora compatible
+        # Whole Sign: House 1 = Ascendant sign, House 2 = next sign clockwise, etc.
+        # Formula: sign_index = (asc_sign_index + house_num - 1) % 12
+        asc_sign_index = d10_chart["ascendant"]["sign_index"]
         houses_array = []
         for house_num in range(1, 13):
-            sign_index = house_num - 1
+            sign_index = (asc_sign_index + house_num - 1) % 12
             houses_array.append({
                 "house": house_num,
                 "sign": get_sign_name(sign_index),
@@ -312,13 +336,22 @@ async def kundli_get(
     time: str = Query(..., description="Time of birth in HH:MM format"),
     lat: float = Query(..., description="Latitude"),
     lon: float = Query(..., description="Longitude"),
-    timezone: str = Query("Asia/Kolkata", description="Timezone (default: Asia/Kolkata)")
+    timezone: str = Query("Asia/Kolkata", description="Timezone (default: Asia/Kolkata)"),
+    d24_chart_method: Optional[int] = Query(None, description="D24 chart method (1, 2, or 3). Default: 3 (JHora default)")
 ):
     """
-    Calculate complete Kundli (D1) with D2 (Hora), D3 (Drekkana), D4 (Chaturthamsa), D7 (Saptamsa), D9 (Navamsa), D10 (Dasamsa), and D12 (Dwadasamsa) varga charts.
+    Calculate complete Kundli (D1) with all varga charts (D2-D60).
     
     Phase 2 Core Kundli Engine endpoint.
     Uses Swiss Ephemeris for all calculations with Lahiri ayanamsa.
+    
+    Supported varga charts:
+    - D1: Rasi (Main birth chart)
+    - D2: Hora, D3: Drekkana, D4: Chaturthamsa, D7: Saptamsa
+    - D9: Navamsa, D10: Dasamsa, D12: Dwadasamsa
+    - D16: Shodasamsa, D20: Vimsamsa, D24: Chaturvimsamsa
+    - D27: Saptavimsamsa, D30: Trimsamsa, D40: Khavedamsa
+    - D45: Akshavedamsa, D60: Shashtiamsa
     
     Args:
         dob: Date of birth (YYYY-MM-DD)
@@ -328,7 +361,7 @@ async def kundli_get(
         timezone: Timezone (default: Asia/Kolkata)
     
     Returns:
-        Complete Kundli with D1, D2 (Hora), D3 (Drekkana), D4 (Chaturthamsa), D7 (Saptamsa), D9 (Navamsa), D10 (Dasamsa), and D12 (Dwadasamsa)
+        Complete Kundli with D1 and all varga charts (D2-D60)
     """
     try:
         # Parse date and time
@@ -400,15 +433,25 @@ async def kundli_get(
         from src.jyotish.varga_engine import build_varga_chart, get_varga_ascendant_only
         from src.utils.converters import get_sign_name_sanskrit
         
-        # Prepare D1 planet longitudes for varga engine
-        d1_ascendant = base_kundli["Ascendant"]["degree"]
+        # 🔒 CRITICAL: Use RAW unrounded sidereal longitudes for varga calculations
+        # DO NOT use rounded degrees from D1 output - rounding causes varga mismatches
+        # Extract raw longitudes directly from ephemeris calculations
+        from src.ephemeris.planets_jhora_exact import calculate_ascendant_jhora_exact, calculate_all_planets_jhora_exact
+        
+        # Get RAW ascendant longitude (unrounded, exact sidereal)
+        asc_jhora_raw = calculate_ascendant_jhora_exact(jd, lat, lon)
+        d1_ascendant = asc_jhora_raw["longitude"]  # Raw unrounded sidereal longitude
+        
+        # Get RAW planet longitudes (unrounded, exact sidereal)
+        planets_jhora_raw = calculate_all_planets_jhora_exact(jd)
         d1_planets = {
-            planet_name: planet_info["degree"]
-            for planet_name, planet_info in base_kundli["Planets"].items()
+            planet_name: planet_data["longitude"]  # Raw unrounded sidereal longitude
+            for planet_name, planet_data in planets_jhora_raw.items()
         }
         
         # Build all varga charts using authoritative engine
         # This ensures sign and house are computed together atomically
+        # All vargas D1-D60 are supported
         d2_chart = build_varga_chart(d1_planets, d1_ascendant, 2)
         d3_chart = build_varga_chart(d1_planets, d1_ascendant, 3)
         d4_chart = build_varga_chart(d1_planets, d1_ascendant, 4)
@@ -419,6 +462,20 @@ async def kundli_get(
         # D12 (Dwadasamsa) - Special handling for ascendant (base formula, no +3 correction)
         # But planets still use standard varga formula
         d12_chart = build_varga_chart(d1_planets, d1_ascendant, 12)
+        
+        # Additional varga charts (D16-D60)
+        d16_chart = build_varga_chart(d1_planets, d1_ascendant, 16)
+        d20_chart = build_varga_chart(d1_planets, d1_ascendant, 20)
+        # D24 supports chart_method parameter (1, 2, or 3) - default is 3 (JHora default)
+        # Validate chart_method if provided
+        if d24_chart_method is not None and d24_chart_method not in (1, 2, 3):
+            d24_chart_method = None  # Fallback to default
+        d24_chart = build_varga_chart(d1_planets, d1_ascendant, 24, chart_method=d24_chart_method)
+        d27_chart = build_varga_chart(d1_planets, d1_ascendant, 27)
+        d30_chart = build_varga_chart(d1_planets, d1_ascendant, 30)
+        d40_chart = build_varga_chart(d1_planets, d1_ascendant, 40)
+        d45_chart = build_varga_chart(d1_planets, d1_ascendant, 45)
+        d60_chart = build_varga_chart(d1_planets, d1_ascendant, 60)
         
         # D12 ascendant uses BASE formula (no +3 correction) - recalculate
         d1_asc_sign = int(d1_ascendant / 30)
@@ -459,48 +516,70 @@ async def kundli_get(
         # Helper function to build standardized varga chart response
         def build_standardized_varga_response(varga_chart: Dict, chart_type: str) -> Dict:
             """Build standardized varga chart response matching D1 structure."""
-            # RUNTIME ASSERTION: Lagna house must be 1
-            assert varga_chart["ascendant"]["house"] == 1, \
-                f"{chart_type} lagna house must be 1, got {varga_chart['ascendant']['house']}"
-            
             # Import required functions
             from src.utils.converters import get_sign_name
             from src.jyotish.kundli_engine import get_house_lord_from_sign
             
-            # Build houses array for varga (Whole Sign: house = sign, fixed grid)
-            # House 1 = Mesha, House 2 = Vrishabha, ..., House 12 = Meena
-            houses_array = []
-            for house_num in range(1, 13):
-                sign_index = house_num - 1  # 0-11
-                houses_array.append({
-                    "house": house_num,
-                    "sign": get_sign_name(sign_index),
-                    "sign_sanskrit": get_sign_name_sanskrit(sign_index),
-                    "sign_index": sign_index,
-                    "degree": 0.0,  # Varga houses don't have cusps
-                    "degrees_in_sign": 0.0,
-                    "lord": get_house_lord_from_sign(sign_index)
-                })
+            # Extract varga number from chart_type (e.g., "D24" -> 24)
+            varga_num = int(chart_type[1:]) if chart_type[1:].isdigit() else 0
             
-            # RUNTIME ASSERTION: Must have exactly 12 houses
-            assert len(houses_array) == 12, f"{chart_type} must have exactly 12 houses"
+            # For D24-D60: NO HOUSE LOGIC (pure sign charts)
+            # For D1-D20: Build houses array using Whole Sign system
+            if varga_num in (24, 27, 30, 40, 45, 60):
+                # Pure sign chart - no houses
+                houses_array = None
+                ascendant_house = None
+            else:
+                # RUNTIME ASSERTION: Lagna house must be 1 for D1-D20
+                assert varga_chart["ascendant"]["house"] == 1, \
+                    f"{chart_type} lagna house must be 1, got {varga_chart['ascendant']['house']}"
+                
+                # Build houses array for varga using Whole Sign system
+                # 🔒 DO NOT MODIFY — JHora compatible
+                # Whole Sign: House 1 = Varga ascendant sign, House 2 = next sign clockwise, etc.
+                asc_sign_index = varga_chart["ascendant"]["sign_index"]
+                houses_array = []
+                for house_num in range(1, 13):
+                    # Calculate sign for this house: (asc_sign + house_num - 1) % 12
+                    # House 1 = ascendant sign, House 2 = next sign, etc.
+                    sign_index = (asc_sign_index + house_num - 1) % 12
+                    houses_array.append({
+                        "house": house_num,
+                        "sign": get_sign_name(sign_index),
+                        "sign_sanskrit": get_sign_name_sanskrit(sign_index),
+                        "sign_index": sign_index,
+                        "degree": 0.0,  # Varga houses don't have cusps
+                        "degrees_in_sign": 0.0,
+                        "lord": get_house_lord_from_sign(sign_index)
+                    })
+                
+                # RUNTIME ASSERTION: Must have exactly 12 houses
+                assert len(houses_array) == 12, f"{chart_type} must have exactly 12 houses"
+                ascendant_house = varga_chart["ascendant"]["house"]  # Always 1 for D1-D20
+            
+            # Build Ascendant response
+            ascendant_response = {
+                "degree": varga_chart["ascendant"]["degree"],
+                "sign": varga_chart["ascendant"]["sign"],
+                "sign_sanskrit": get_sign_name_sanskrit(varga_chart["ascendant"]["sign_index"]),
+                "sign_index": varga_chart["ascendant"]["sign_index"],
+                "degrees_in_sign": varga_chart["ascendant"]["degrees_in_sign"],
+                "lord": get_house_lord_from_sign(varga_chart["ascendant"]["sign_index"])
+            }
+            
+            # Only add house field for D1-D20
+            if ascendant_house is not None:
+                ascendant_response["house"] = ascendant_house
             
             return {
-                "Ascendant": {
-                    "degree": varga_chart["ascendant"]["degree"],
-                    "sign": varga_chart["ascendant"]["sign"],
-                    "sign_sanskrit": get_sign_name_sanskrit(varga_chart["ascendant"]["sign_index"]),
-                    "sign_index": varga_chart["ascendant"]["sign_index"],
-                    "degrees_in_sign": varga_chart["ascendant"]["degrees_in_sign"],
-                    "house": varga_chart["ascendant"]["house"],  # Always 1
-                    "lord": get_house_lord_from_sign(varga_chart["ascendant"]["sign_index"])
-                },
-                "Houses": houses_array,
+                "Ascendant": ascendant_response,
+                "Houses": houses_array,  # None for D24-D60
                 "Planets": varga_chart["planets"],
                 "chartType": chart_type
             }
         
         # Build standardized response with consistent structure
+        # Include ALL varga charts (D1-D60)
         response = {
             "julian_day": round(jd, 6),
             "D1": base_kundli,
@@ -510,7 +589,16 @@ async def kundli_get(
             "D7": build_standardized_varga_response(d7_chart, "D7"),
             "D9": build_standardized_varga_response(d9_chart, "D9"),
             "D10": build_standardized_varga_response(d10_chart, "D10"),
-            "D12": build_standardized_varga_response(d12_chart, "D12")
+            "D12": build_standardized_varga_response(d12_chart, "D12"),
+            # Additional varga charts (D16-D60)
+            "D16": build_standardized_varga_response(d16_chart, "D16"),
+            "D20": build_standardized_varga_response(d20_chart, "D20"),
+            "D24": build_standardized_varga_response(d24_chart, "D24"),
+            "D27": build_standardized_varga_response(d27_chart, "D27"),
+            "D30": build_standardized_varga_response(d30_chart, "D30"),
+            "D40": build_standardized_varga_response(d40_chart, "D40"),
+            "D45": build_standardized_varga_response(d45_chart, "D45"),
+            "D60": build_standardized_varga_response(d60_chart, "D60")
         }
         
         # CRITICAL: Log final payload for D10 verification (Prokerala match)
@@ -518,11 +606,24 @@ async def kundli_get(
         if "D10" in response:
             d10_data = response["D10"]
             logger.info(f"📊 D10 FINAL PAYLOAD (Authoritative Engine):")
-            logger.info(f"   Ascendant: {d10_data.get('ascendant_sign_sanskrit')} (sign_index={d10_data.get('ascendant_sign')}) → House {d10_data.get('ascendant_house')}")
+            logger.info(f"   Ascendant: {d10_data.get('Ascendant', {}).get('sign_sanskrit')} (sign_index={d10_data.get('Ascendant', {}).get('sign_index')}) → House {d10_data.get('Ascendant', {}).get('house')}")
             for planet_name in ["Venus", "Mars"]:
-                if planet_name in d10_data.get("planets", {}):
-                    planet_data = d10_data["planets"][planet_name]
-                    logger.info(f"   {planet_name}: {planet_data.get('sign')} (sign_index={planet_data.get('sign_index')}) → House {planet_data.get('house')} [house==sign: {planet_data.get('house') == planet_data.get('sign_index') + 1}]")
+                if planet_name in d10_data.get("Planets", {}):
+                    planet_data = d10_data["Planets"][planet_name]
+                    logger.info(f"   {planet_name}: {planet_data.get('sign')} (sign_index={planet_data.get('sign_index')}) → House {planet_data.get('house')}")
+        
+        # Log all varga charts included in response
+        varga_keys = [key for key in response.keys() if key.startswith("D") and key != "D1"]
+        logger.info(f"✅ VARGA CHARTS INCLUDED IN RESPONSE: {sorted(varga_keys, key=lambda x: int(x[1:]) if x[1:].isdigit() else 999)}")
+        logger.info(f"   Total varga charts: {len(varga_keys)}")
+        
+        # Verify D16-D60 are present
+        required_vargas = ["D16", "D20", "D24", "D27", "D30", "D40", "D45", "D60"]
+        missing_vargas = [v for v in required_vargas if v not in response]
+        if missing_vargas:
+            logger.warning(f"⚠️  MISSING VARGA CHARTS: {missing_vargas}")
+        else:
+            logger.info(f"✅ All extended varga charts (D16-D60) are included in response")
         
         # Add current dasha information if available
         if current_dasha_info:
@@ -587,15 +688,20 @@ async def get_yogas(request: KundliRequest, include_explanation: bool = Query(Fa
         houses_sidereal = [normalize_degrees(h - ayanamsa) for h in houses_list]
         
         # Prepare planets with house information
+        # 🔒 DO NOT MODIFY — JHora compatible
+        # Whole Sign House System: house = ((planet_sign_index - ascendant_sign_index + 12) % 12) + 1
         planets = {}
+        asc_sign_index = int(asc_sidereal / 30.0)
         for planet_name, planet_degree in planets_sidereal.items():
             if planet_name in ["Rahu", "Ketu"]:
                 continue
             sign_num, _ = degrees_to_sign(planet_degree)
-            relative_pos = normalize_degrees(planet_degree - asc_sidereal)
-            house_num = int(relative_pos / 30) + 1
-            if house_num > 12:
-                house_num = 1
+            # Get sign indices (0-11) for house calculation
+            planet_sign_index = int(planet_degree / 30.0)
+            # Whole Sign house calculation using ONLY sign indices
+            house_num = ((planet_sign_index - asc_sign_index + 12) % 12) + 1
+            # RUNTIME ASSERTION: House must be 1-12
+            assert 1 <= house_num <= 12, f"House must be 1-12, got {house_num} (planet_sign={planet_sign_index}, asc_sign={asc_sign_index})"
             planets[planet_name] = {
                 "degree": planet_degree,
                 "sign": sign_num,

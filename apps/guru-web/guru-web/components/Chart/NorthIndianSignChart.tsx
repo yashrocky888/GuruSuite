@@ -6,20 +6,21 @@
  * API is the single source of truth.
  * 
  * CRITICAL RULES FOR PURE SIGN CHARTS (D24-D60):
- * 1. Signs are in FIXED positions (same as NorthIndianChart layout) - NEVER MOVE
+ * 1. Signs are LAGNA-RELATIVE: Ascendant sign → House 1, other signs rotate
  * 2. Planets are placed by SIGN ONLY (from API Planets[].sign)
  * 3. NO houses - these are pure sign charts
  * 4. NO house numbers, NO house labels, NO house calculations
  * 
- * NORTH INDIAN CHART LAYOUT (FIXED):
+ * NORTH INDIAN CHART LAYOUT (LAGNA-RELATIVE):
  * House positions are static (house 1 = center, house 2 = NE, etc.)
- * For sign charts: sign_index + 1 = house polygon position
+ * Signs rotate so Ascendant sign occupies House 1
+ * For sign charts: rotatedSigns[0] → House 1, rotatedSigns[1] → House 2, etc.
  */
 
 'use client';
 
 import React, { useMemo } from 'react';
-import { northPolygonPoints } from './coordinates';
+import { getNorthCoordinates, northPolygonPoints } from './coordinates';
 import { normalizeSignName, SIGN_INDEX } from './houseUtils';
 import { RASHI_NAMES } from './utils';
 import './NorthIndianChart.css';
@@ -36,11 +37,13 @@ interface NorthIndianSignChartProps {
   ascendant: {
     sign: string;
     sign_sanskrit?: string;
+    sign_index?: number; // 0-11, required for Lagna rotation
     degree?: number;
   };
   planets: Record<string, {
     sign: string;
     sign_sanskrit?: string;
+    sign_index?: number;
     degree?: number;
     [key: string]: any;
   }>;
@@ -48,6 +51,7 @@ interface NorthIndianSignChartProps {
 
 /**
  * Calculate centroid (center point) of a polygon
+ * REUSED FROM NorthIndianChart.tsx - DO NOT MODIFY
  */
 function getPolygonCentroid(pointsString: string): { x: number; y: number } {
   const points = pointsString.split(' ').map(point => {
@@ -68,39 +72,187 @@ function getPolygonCentroid(pointsString: string): { x: number; y: number } {
   };
 }
 
-export default function NorthIndianSignChart({ ascendant, planets }: NorthIndianSignChartProps) {
-  // GUARD RAIL: This component must NEVER accept houses
-  // Sign charts have NO house structure
+/**
+ * Get minimum distance from point to polygon edge
+ * REUSED FROM NorthIndianChart.tsx - DO NOT MODIFY
+ */
+function getMinDistanceToEdge(point: { x: number; y: number }, polygonPoints: string): number {
+  const points = polygonPoints.split(' ').map(p => {
+    const [x, y] = p.split(',').map(Number);
+    return { x, y };
+  });
+
+  let minDist = Infinity;
+  for (let i = 0; i < points.length; i++) {
+    const p1 = points[i];
+    const p2 = points[(i + 1) % points.length];
+    
+    const A = point.x - p1.x;
+    const B = point.y - p1.y;
+    const C = p2.x - p1.x;
+    const D = p2.y - p1.y;
+    
+    const dot = A * C + B * D;
+    const lenSq = C * C + D * D;
+    let param = -1;
+    
+    if (lenSq !== 0) param = dot / lenSq;
+    
+    let xx, yy;
+    if (param < 0) {
+      xx = p1.x;
+      yy = p1.y;
+    } else if (param > 1) {
+      xx = p2.x;
+      yy = p2.y;
+    } else {
+      xx = p1.x + param * C;
+      yy = p1.y + param * D;
+    }
+    
+    const dx = point.x - xx;
+    const dy = point.y - yy;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    minDist = Math.min(minDist, dist);
+  }
   
-  // Extract ascendant sign (prefer Sanskrit, fallback to English)
+  return minDist;
+}
+
+/**
+ * Calculate safe planet position - stay well inside polygon, away from edges
+ * REUSED FROM NorthIndianChart.tsx - DO NOT MODIFY
+ */
+function getSafePlanetPosition(
+  centroid: { x: number; y: number },
+  originalCoords: { x: number; y: number },
+  planetIdx: number,
+  totalPlanets: number,
+  polygonPoints: string
+): { x: number; y: number } {
+  const MIN_DISTANCE_FROM_EDGE = 20;
+  
+  const distanceFromEdge = getMinDistanceToEdge(originalCoords, polygonPoints);
+  if (distanceFromEdge >= MIN_DISTANCE_FROM_EDGE) {
+    return originalCoords;
+  }
+
+  const angle = (planetIdx / totalPlanets) * 2 * Math.PI;
+  let radius = 20;
+  let safeCoords = { x: 0, y: 0 };
+  let attempts = 0;
+  
+  while (attempts < 15) {
+    const testX = centroid.x + Math.cos(angle) * radius;
+    const testY = centroid.y + Math.sin(angle) * radius + 10;
+    
+    const distToEdge = getMinDistanceToEdge({ x: testX, y: testY }, polygonPoints);
+    if (distToEdge >= MIN_DISTANCE_FROM_EDGE) {
+      safeCoords = { x: testX, y: testY };
+      break;
+    }
+    radius -= 2;
+    attempts++;
+  }
+  
+  if (safeCoords.x === 0 && safeCoords.y === 0) {
+    safeCoords = {
+      x: centroid.x + (Math.cos(angle) * 10),
+      y: centroid.y + (Math.sin(angle) * 10) + 15,
+    };
+  }
+
+  return safeCoords;
+}
+
+export default function NorthIndianSignChart({ ascendant, planets }: NorthIndianSignChartProps) {
+  // ============================================================================
+  // 🔒 CRITICAL: NORTH INDIAN CHARTS MUST BE LAGNA-RELATIVE
+  // Ascendant sign MUST appear in House 1 (top center diamond)
+  // This is a NON-NEGOTIABLE Jyotish rule
+  // ============================================================================
+  
+  console.log('🔵 NorthIndianSignChart INIT:', { 
+    ascendantSign: ascendant.sign, 
+    ascendantSignSanskrit: ascendant.sign_sanskrit,
+    ascendantSignIndex: ascendant.sign_index 
+  });
+  
+  // STEP 1: Extract ascendant sign (prefer Sanskrit, fallback to English)
   const ascendantSign = ascendant.sign_sanskrit || ascendant.sign;
   if (!ascendantSign) {
     throw new Error('FATAL: Ascendant sign is missing - cannot render sign chart');
   }
   
-  // Group planets by sign
-  // CRITICAL: Treat Ascendant as a planet - add it to the planets list
+  // STEP 2: Normalize ascendant sign name (CRITICAL for matching)
+  const normalizedAscendantSign = normalizeSignName(ascendantSign.toLowerCase());
+  const expectedIndex = SIGN_INDEX[normalizedAscendantSign];
+  
+  if (expectedIndex === undefined) {
+    throw new Error(`FATAL: Cannot normalize ascendant sign "${ascendantSign}" - invalid sign name. Normalized: "${normalizedAscendantSign}"`);
+  }
+  
+  console.log(`📊 STEP 2: Normalized ascendant sign "${ascendantSign}" → "${normalizedAscendantSign}" (index ${expectedIndex})`);
+  
+  // STEP 3: Get ascendant sign index (0-11) for Lagna rotation
+  // Priority: API sign_index (if valid) → Derived from sign name
+  let ascendantSignIndex: number;
+  
+  if (ascendant.sign_index !== undefined && ascendant.sign_index >= 0 && ascendant.sign_index <= 11) {
+    // API provided index - verify it matches sign name
+    if (ascendant.sign_index !== expectedIndex) {
+      console.warn(`⚠️ API ascendantSignIndex (${ascendant.sign_index}) does not match sign "${ascendantSign}" (expected ${expectedIndex}). Using derived index.`);
+      ascendantSignIndex = expectedIndex;
+    } else {
+      ascendantSignIndex = ascendant.sign_index;
+      console.log(`✅ Using API ascendantSignIndex: ${ascendantSignIndex}`);
+    }
+  } else {
+    // Derive from sign name
+    ascendantSignIndex = expectedIndex;
+    console.log(`🔧 Derived ascendantSignIndex ${ascendantSignIndex} from sign "${ascendantSign}"`);
+  }
+  
+  // STEP 4: Final validation - index must be valid
+  if (ascendantSignIndex < 0 || ascendantSignIndex > 11) {
+    throw new Error(`FATAL: Invalid ascendantSignIndex ${ascendantSignIndex} - must be 0-11`);
+  }
+  
+  console.log(`✅ FINAL: Ascendant sign="${ascendantSign}" (normalized="${normalizedAscendantSign}"), index=${ascendantSignIndex}`);
+  
+  // ============================================================================
+  // CRITICAL: GROUP PLANETS BY SIGN (PURE SIGN CHART LOGIC)
+  // ============================================================================
+  // For D24-D60: Planets are placed ONLY by planet.sign from API
+  // API planet.sign is the SINGLE SOURCE OF TRUTH
+  // We MUST normalize correctly to match rotated signs
+  // ============================================================================
   const planetsBySign = useMemo(() => {
     const grouped: Record<string, PlanetData[]> = {};
     
+    console.log('📦 GROUPING PLANETS BY SIGN (from API data):');
+    console.log('   Raw API planets:', Object.keys(planets));
+    
     // Add Ascendant as a planet in its sign
-    const normalizedAscendantSign = normalizeSignName(ascendantSign.toLowerCase());
-    if (!grouped[normalizedAscendantSign]) {
-      grouped[normalizedAscendantSign] = [];
+    const normalizedAscendantSignForGrouping = normalizeSignName(ascendantSign.toLowerCase());
+    if (!grouped[normalizedAscendantSignForGrouping]) {
+      grouped[normalizedAscendantSignForGrouping] = [];
     }
-    grouped[normalizedAscendantSign].push({
+    grouped[normalizedAscendantSignForGrouping].push({
       name: 'Ascendant',
-      abbr: 'Asc', // Match D1-D20 casing (not ALL CAPS)
+      abbr: 'Asc',
       sign: ascendantSign,
       sign_sanskrit: ascendant.sign_sanskrit,
-      degree: ascendant.degree, // Will be hidden for sign charts
+      degree: ascendant.degree,
     });
+    console.log(`   ✅ Ascendant → sign="${ascendantSign}" (normalized="${normalizedAscendantSignForGrouping}")`);
     
-    // Add all other planets
+    // Add all other planets - CRITICAL: Use EXACT sign from API
     Object.entries(planets).forEach(([name, planet]) => {
       // Extract sign from planet (prefer sign_sanskrit, fallback to sign)
       const planetSign = planet.sign_sanskrit || planet.sign;
       if (!planetSign) {
+        console.warn(`   ⚠️ ${name}: Missing sign data, skipping`);
         return; // Skip planets without sign
       }
       
@@ -109,26 +261,103 @@ export default function NorthIndianSignChart({ ascendant, planets }: NorthIndian
         grouped[normalizedSign] = [];
       }
       
-      // Build planet data with abbreviation - match D1-D20 format (2 chars, normal case)
+      // Build planet data with abbreviation
       grouped[normalizedSign].push({
         name,
-        abbr: name.substring(0, 2), // Sun -> Su, Moon -> Mo (match D1-D20)
+        abbr: name.substring(0, 2),
         sign: planetSign,
         sign_sanskrit: planet.sign_sanskrit,
-        degree: planet.degree, // Will be hidden for sign charts
+        degree: planet.degree,
       });
+      
+      console.log(`   ✅ ${name} → sign="${planetSign}" (normalized="${normalizedSign}")`);
+    });
+    
+    // Log final grouping for verification
+    console.log('📊 PLANETS BY SIGN (final grouping - verify against Prokerala):');
+    Object.entries(grouped).forEach(([sign, planetList]) => {
+      const planetNames = planetList.map(p => p.name).join(', ');
+      console.log(`   ${sign}: [${planetNames}]`);
     });
     
     return grouped;
   }, [planets, ascendantSign, ascendant]);
   
-  // Normalize ascendant sign (for highlighting the sign box)
-  const normalizedAscendantSign = normalizeSignName(ascendantSign.toLowerCase());
-  
-  // Map signs to house polygon positions (sign_index + 1 = house number)
-  // Sign 0 (Aries) → House 1, Sign 1 (Taurus) → House 2, etc.
+  // CRITICAL: Create rotated sign array for Lagna-relative North Indian chart
+  // Ascendant sign must be at index 0 (House 1), other signs rotate accordingly
   const signNames = ['aries', 'taurus', 'gemini', 'cancer', 'leo', 'virgo',
                      'libra', 'scorpio', 'sagittarius', 'capricorn', 'aquarius', 'pisces'];
+  
+  // ============================================================================
+  // STEP 5: ROTATE SIGNS ARRAY (CRITICAL - LAGNA-RELATIVE LAYOUT)
+  // ============================================================================
+  // Formula: rotatedSigns[i] = signNames[(ascendantSignIndex + i) % 12]
+  // This ensures Ascendant sign (at ascendantSignIndex) becomes rotatedSigns[0]
+  // rotatedSigns[0] → House 1, rotatedSigns[1] → House 2, etc.
+  // Example: If Ascendant is Leo (index 4):
+  //   rotatedSigns[0] = signNames[(4+0)%12] = signNames[4] = "leo" → House 1 ✅
+  //   rotatedSigns[1] = signNames[(4+1)%12] = signNames[5] = "virgo" → House 2
+  // ============================================================================
+  const rotatedSigns = useMemo(() => {
+    if (ascendantSignIndex < 0 || ascendantSignIndex > 11) {
+      throw new Error(`FATAL: Invalid ascendantSignIndex ${ascendantSignIndex} for rotation`);
+    }
+    
+    console.log(`🔄 ROTATION START: ascendantSignIndex=${ascendantSignIndex}, signNames[${ascendantSignIndex}]="${signNames[ascendantSignIndex]}"`);
+    
+    const rotated: string[] = [];
+    for (let i = 0; i < 12; i++) {
+      const rotatedIndex = (ascendantSignIndex + i) % 12;
+      const signName = signNames[rotatedIndex];
+      rotated.push(signName);
+      if (i < 3) {
+        console.log(`   rotatedSigns[${i}] = signNames[${rotatedIndex}] = "${signName}" → House ${i + 1}`);
+      }
+    }
+    
+    // CRITICAL VERIFICATION: rotatedSigns[0] MUST be the ascendant sign
+    const firstSignNormalized = normalizeSignName(rotated[0]);
+    if (firstSignNormalized !== normalizedAscendantSign) {
+      const errorMsg = `FATAL: Rotation failed! rotatedSigns[0]="${rotated[0]}" (normalized="${firstSignNormalized}") ` +
+        `does not match ascendant sign "${ascendantSign}" (normalized="${normalizedAscendantSign}") ` +
+        `with ascendantSignIndex=${ascendantSignIndex}. ` +
+        `Expected signNames[${ascendantSignIndex}]="${signNames[ascendantSignIndex]}" but got "${rotated[0]}"`;
+      console.error(`❌ ${errorMsg}`);
+      throw new Error(errorMsg);
+    }
+    
+    console.log(`✅ ROTATION VERIFIED: rotatedSigns[0]="${rotated[0]}" (normalized="${firstSignNormalized}") matches ascendant → House 1`);
+    return rotated;
+  }, [ascendantSignIndex, normalizedAscendantSign, ascendantSign]);
+  
+  // ============================================================================
+  // PROKERALA VERIFICATION CHECKPOINT (After rotation and grouping)
+  // ============================================================================
+  // Expected for D24 (1995-05-16, 18:38 IST, Bangalore):
+  // - Ascendant: Leo (Simha) → House 1 ✅
+  // - Saturn: Cancer (Karka) → Should appear in rotated house containing Cancer
+  // - Moon: Aries (Mesha) → Should appear in rotated house containing Aries
+  // ============================================================================
+  console.log('🔍 PROKERALA VERIFICATION CHECKPOINT:');
+  console.log(`   Expected Ascendant: Leo (Simha) → House 1`);
+  console.log(`   Expected Saturn: Cancer (Karka) → Check if Cancer sign has Saturn`);
+  const cancerNormalized = normalizeSignName('cancer');
+  const saturnInCancer = planetsBySign[cancerNormalized]?.find(p => p.name === 'Saturn');
+  if (saturnInCancer) {
+    console.log(`   ✅ Saturn found in Cancer sign (normalized="${cancerNormalized}")`);
+  } else {
+    console.error(`   ❌ Saturn NOT found in Cancer sign! Check API data.`);
+    console.error(`   Available signs with planets:`, Object.keys(planetsBySign));
+  }
+  
+  // Log full rotation map
+  console.log('🔄 FULL ROTATION MAP (verify against Prokerala):');
+  rotatedSigns.forEach((sign, idx) => {
+    const normalized = normalizeSignName(sign);
+    const planetsInThisSign = planetsBySign[normalized] || [];
+    const planetNames = planetsInThisSign.map(p => p.name).join(', ') || 'NONE';
+    console.log(`   House ${idx + 1}: ${sign} (normalized="${normalized}") → [${planetNames}]`);
+  });
   
   return (
     <div className="north-chart-wrapper">
@@ -151,18 +380,60 @@ export default function NorthIndianSignChart({ ascendant, planets }: NorthIndian
           rx="8"
         />
 
-        {/* Sign Polygons - STATIC POSITIONS (NO ROTATION) */}
-        {/* Each sign occupies its natural house polygon position (sign_index + 1) */}
-        {signNames.map((signName, index) => {
-          const houseNum = index + 1; // sign_index + 1 = house polygon position
+        {/* ============================================================================ */}
+        {/* SIGN POLYGONS - LAGNA-RELATIVE POSITIONS (CRITICAL) */}
+        {/* Ascendant sign → House 1, other signs rotate accordingly */}
+        {/* ============================================================================ */}
+        {rotatedSigns.map((signName, rotatedIndex) => {
+          // CRITICAL: House number = rotatedIndex + 1 (NOT original zodiac index)
+          const houseNum = rotatedIndex + 1;
           const points = northPolygonPoints[houseNum];
           if (!points) {
+            console.error(`❌ FATAL: No polygon points for house ${houseNum}`);
             return null;
           }
           
+          // Normalize sign name for matching
           const normalizedSign = normalizeSignName(signName);
           const isAscendantSign = normalizedSign === normalizedAscendantSign;
           const planetsInSign = planetsBySign[normalizedSign] || [];
+          
+          // CRITICAL DEBUG: Log planet placement for each sign (verify against Prokerala)
+          if (planetsInSign.length > 0) {
+            const planetNames = planetsInSign.map(p => `${p.name}(${p.sign})`).join(', ');
+            console.log(`📍 House ${houseNum} (${signName}, normalized="${normalizedSign}"): Planets=[${planetNames}]`);
+          } else {
+            // Log empty signs for debugging
+            if (houseNum <= 4) {
+              console.log(`📍 House ${houseNum} (${signName}, normalized="${normalizedSign}"): NO PLANETS`);
+            }
+          }
+          
+          // ============================================================================
+          // CRITICAL SAFETY GUARD: Ascendant sign MUST be in House 1
+          // This is a NON-NEGOTIABLE Jyotish rule for North Indian charts
+          // ============================================================================
+          if (houseNum === 1) {
+            if (!isAscendantSign) {
+              const errorMsg = `FATAL: House 1 does NOT contain Ascendant sign! ` +
+                `House 1 has "${signName}" (normalized: "${normalizedSign}"), ` +
+                `but Ascendant is "${ascendantSign}" (normalized: "${normalizedAscendantSign}") ` +
+                `with ascendantSignIndex=${ascendantSignIndex}. ` +
+                `rotatedSigns[0]="${rotatedSigns[0]}" should be the ascendant sign.`;
+              console.error(`❌ ${errorMsg}`);
+              throw new Error(errorMsg);
+            } else {
+              console.log(`✅ House 1 VERIFIED: Contains Ascendant sign "${signName}" (normalized: "${normalizedSign}")`);
+            }
+          }
+          
+          if (isAscendantSign && houseNum !== 1) {
+            const errorMsg = `FATAL: Ascendant sign "${signName}" is in House ${houseNum}, but MUST be in House 1! ` +
+              `This violates North Indian chart Lagna-relative rule. ` +
+              `rotatedSigns[${rotatedIndex}]="${signName}" should only be at rotatedIndex=0.`;
+            console.error(`❌ ${errorMsg}`);
+            throw new Error(errorMsg);
+          }
           const centroid = getPolygonCentroid(points);
           
           return (
@@ -205,81 +476,41 @@ export default function NorthIndianSignChart({ ascendant, planets }: NorthIndian
                 })()}
               </text>
 
-              {/* Planets - Unlimited data-driven layout with polygon-aware boundaries */}
-              {/* CRITICAL: Render exactly what API provides - no recalculation, no normalization */}
-              {/* CRITICAL: Ascendant is rendered here as a planet (no separate label) */}
-              {(() => {
-                const totalPlanets = planetsInSign.length;
-                if (totalPlanets === 0) return null;
+              {/* Planets - REUSE EXACT SAME LOGIC AS NorthIndianChart.tsx */}
+              {/* CRITICAL: Render EXACTLY the planets received from API - no caps, no filtering, no reordering */}
+              {/* CRITICAL: Ascendant behaves exactly like a planet ("Asc") */}
+              {/* CRITICAL: Use rotated house number for planet placement */}
+              {planetsInSign.map((planet, planetIdx) => {
+                // Use rotated house number (from Lagna-relative mapping)
+                const polygonPoints = northPolygonPoints[houseNum];
+                const centroid = getPolygonCentroid(polygonPoints);
                 
-                // CRITICAL: Polygon-aware SAFE PLACEMENT ZONE
-                // Calculate polygon bounding box from points string
-                const polygonBounds = (() => {
-                  const pointArray = points.split(' ').map(p => {
-                    const [x, y] = p.split(',').map(Number);
-                    return { x, y };
-                  });
-                  const xs = pointArray.map(p => p.x);
-                  const ys = pointArray.map(p => p.y);
-                  return {
-                    minX: Math.min(...xs),
-                    maxX: Math.max(...xs),
-                    minY: Math.min(...ys),
-                    maxY: Math.max(...ys),
-                  };
-                })();
+                // REUSE EXACT SAME LOGIC AS NorthIndianChart.tsx
+                const originalCoords = getNorthCoordinates(houseNum, planetIdx + 1);
                 
-                // Safe placement zone with 14px padding
-                // minY allows overlap with sign name if space is tight (boundary correctness > sign-name cleanliness)
-                const padding = 14;
-                const safeRect = {
-                  minX: polygonBounds.minX + padding,
-                  maxX: polygonBounds.maxX - padding,
-                  minY: polygonBounds.minY + 18, // Allow overlap with sign name if needed
-                  maxY: polygonBounds.maxY - padding,
-                };
-                
-                // Unlimited, data-driven planet layout (NO LIMITS)
-                const spacingX = 24;
-                const spacingY = 24;
-                const availableWidth = safeRect.maxX - safeRect.minX;
-                // Adaptive grid based on available width
-                const cols = Math.max(1, Math.floor(availableWidth / spacingX));
-                
-                // Calculate grid positions for ALL planets (unlimited, exactly as API provides)
-                const planetPositions = planetsInSign.map((planet, planetIdx) => {
-                  const row = Math.floor(planetIdx / cols);
-                  const col = planetIdx % cols;
-                  
-                  // Fill left → right, wrap downward
-                  let planetX = safeRect.minX + (col * spacingX);
-                  let planetY = safeRect.minY + (row * spacingY);
-                  
-                  // HARD BOUNDARY ENFORCEMENT: Every planet position MUST be clamped to safeRect
-                  // If even ONE planet escapes → this is a BUG
-                  planetX = Math.min(Math.max(planetX, safeRect.minX), safeRect.maxX);
-                  planetY = Math.min(Math.max(planetY, safeRect.minY), safeRect.maxY);
-                  
-                  // CRITICAL: Detect ASC (normalized to 'Asc' to match D1-D20)
-                  // ASC behaves exactly like a planet - same layout rules, no special handling
-                  const isAscendant = planet.name === 'Ascendant' || planet.abbr === 'Asc';
-                  
-                  return {
-                    planet,
-                    planetX,
-                    planetY,
-                    isAscendant,
-                  };
-                });
-                
-                // DATA TRUTH GUARANTEE: Render exactly what API provides
-                // Same planet list, same signs, same varga output
-                // No recalculation, no normalization, no correction attempts
-                return planetPositions.map(({ planet, planetX, planetY, isAscendant }, idx) => (
-                  <g key={`${signName}-${planet.name}-${idx}`}>
+                if (originalCoords.x === 0 && originalCoords.y === 0) {
+                  return null;
+                }
+
+                const safeCoords = getSafePlanetPosition(
+                  centroid,
+                  originalCoords,
+                  planetIdx,
+                  planetsInSign.length,
+                  polygonPoints
+                );
+
+                // CRITICAL: Detect ASC regardless of case or exact abbreviation (EXACT SAME AS D1-D20)
+                const isAscendant = planet.name === 'Ascendant' || 
+                                  planet.abbr === 'ASC' || 
+                                  planet.abbr === 'Asc' || 
+                                  planet.abbr?.toUpperCase() === 'ASC';
+
+                return (
+                  <g key={`${signName}-${planet.name}-${planetIdx}`}>
                     <circle
-                      cx={planetX}
-                      cy={planetY - 6}
+                      cx={safeCoords.x}
+                      cy={safeCoords.y - 6}
                       r="11"
                       fill="rgba(59, 130, 246, 0.15)"
                       stroke="rgba(59, 130, 246, 0.3)"
@@ -287,8 +518,8 @@ export default function NorthIndianSignChart({ ascendant, planets }: NorthIndian
                     />
                     
                     <text
-                      x={planetX}
-                      y={planetY}
+                      x={safeCoords.x}
+                      y={safeCoords.y}
                       textAnchor="middle"
                       dominantBaseline="middle"
                       className={isAscendant ? 'asc-text' : 'planet-text'}
@@ -303,8 +534,8 @@ export default function NorthIndianSignChart({ ascendant, planets }: NorthIndian
                     
                     {/* NO DEGREE TEXT FOR SIGN CHARTS (D24-D60) */}
                   </g>
-                ));
-              })()}
+                );
+              })}
             </g>
           );
         })}

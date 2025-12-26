@@ -118,15 +118,15 @@ export async function calculateAstroChart(
     const rashiChartSouth = generateSouthIndianChartFromAPI(d1Data);
     const navamsaChart = apiData.D9 ? generateNavamsaChartFromAPI(apiData.D9) : undefined;
 
-    return {
-      birthData: parsedData,
-      planets,
+  return {
+    birthData: parsedData,
+    planets,
       houses,
       lagna,
-      rashiChartNorth,
-      rashiChartSouth,
-      navamsaChart,
-    };
+    rashiChartNorth,
+    rashiChartSouth,
+    navamsaChart,
+  };
   } catch (error: any) {
     // Preserve error structure from backend API
     if (error.response) {

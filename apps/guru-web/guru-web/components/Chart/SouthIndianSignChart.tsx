@@ -20,6 +20,9 @@
 
 'use client';
 
+// 🔥 VERIFICATION LOG - If this appears for D24, routing is correct
+console.log("🔥 SouthIndianSignChart LOADED", Date.now());
+
 import React, { useMemo } from 'react';
 import { southRectPositions } from './coordinates';
 import { normalizeSignName, SIGN_INDEX } from './houseUtils';

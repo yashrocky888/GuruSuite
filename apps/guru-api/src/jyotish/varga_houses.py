@@ -50,14 +50,17 @@ def get_planet_house_whole_sign(planet_longitude: float, ascendant_longitude: fl
     """
     Get house using Whole Sign system for divisional charts.
     
-    In Whole Sign houses:
+    🔒 DO NOT MODIFY — JHora compatible
+    Whole Sign House System:
     - House 1 = Ascendant sign
     - House 2 = Next sign clockwise
     - etc.
     
+    Formula: house = ((planet_sign_index - ascendant_sign_index + 12) % 12) + 1
+    
     Args:
-        planet_longitude: Planet's longitude in the varga chart
-        ascendant_longitude: Ascendant longitude in the varga chart
+        planet_longitude: Planet's longitude in the varga chart (0-360)
+        ascendant_longitude: Ascendant longitude in the varga chart (0-360)
     
     Returns:
         House number (1-12)
@@ -65,12 +68,20 @@ def get_planet_house_whole_sign(planet_longitude: float, ascendant_longitude: fl
     planet_deg = normalize_degrees(planet_longitude)
     asc_deg = normalize_degrees(ascendant_longitude)
     
-    planet_sign = int(planet_deg / 30)
-    asc_sign = int(asc_deg / 30)
+    # Get sign indices (0-11): Aries=0, Taurus=1, ..., Pisces=11
+    planet_sign_index = int(planet_deg / 30.0)
+    asc_sign_index = int(asc_deg / 30.0)
     
+    # Whole Sign house calculation:
     # House 1 = ascendant sign
-    # House 2 = next sign, etc.
-    house_num = ((planet_sign - asc_sign) % 12) + 1
+    # House 2 = next sign clockwise from ascendant
+    # Formula: ((planet_sign - asc_sign + 12) % 12) + 1
+    # The +12 ensures positive result before modulo
+    house_num = ((planet_sign_index - asc_sign_index + 12) % 12) + 1
+    
+    # RUNTIME ASSERTION: House must be 1-12
+    assert 1 <= house_num <= 12, f"House must be 1-12, got {house_num} (planet_sign={planet_sign_index}, asc_sign={asc_sign_index})"
+    
     return house_num
 
 

@@ -84,15 +84,17 @@ export default function KundliPage() {
         } else if ((dataForTable as any).Planets && typeof (dataForTable as any).Planets === 'object') {
           // Nested Planets object (new format)
           planetsForTable = Object.entries((dataForTable as any).Planets).map(([name, planetData]: [string, any]) => {
-            // CRITICAL: Calculate DMS from degrees_in_sign (0-30°), NOT from degree_dms (which is 0-360°)
-            // API returns degree_dms as total degree, but we need DMS in 0-30° format
-            let degreeDisplay = '';
-            if (planetData.degrees_in_sign !== undefined && planetData.degrees_in_sign !== null) {
-              // Calculate DMS from degrees_in_sign (0-30° format)
-              const degInSign = planetData.degrees_in_sign;
-              const deg = Math.floor(degInSign); // Integer part (0-29)
-              const min = Math.floor((degInSign - deg) * 60); // Minutes
-              const sec = Math.floor(((degInSign - deg) * 60 - min) * 60); // Seconds
+            // 🔒 ASTROLOGY LOCK: UI must NEVER calculate astrology.
+            // API is the single source of truth.
+            // Use API-provided degree_dms, arcminutes, arcseconds directly - NO CALCULATIONS
+            
+            let degreeDisplay = 'N/A';
+            
+            // Use API-provided DMS values directly (NO CALCULATIONS)
+            if (planetData.degree_dms !== undefined && planetData.degree_dms !== null) {
+              const deg = planetData.degree_dms;
+              const min = planetData.arcminutes ?? 0;
+              const sec = planetData.arcseconds ?? 0;
               
               // Format: "1°24'49\"" or "1°24'" if seconds are 0
               if (sec > 0) {
@@ -102,24 +104,17 @@ export default function KundliPage() {
               } else {
                 degreeDisplay = `${deg}°`;
               }
-            } else if (planetData.degree !== undefined && planetData.degree !== null) {
-              // Fallback: use degree if degrees_in_sign not available (shouldn't happen)
-              const deg = Math.floor(planetData.degree);
-              const minutes = Math.round((planetData.degree - deg) * 60);
-              degreeDisplay = minutes > 0 ? `${deg}°${minutes}'` : `${deg}°`;
-            } else {
-              degreeDisplay = '-';
+            } else if (planetData.degrees_in_sign !== undefined && planetData.degrees_in_sign !== null) {
+              // Fallback: Use degrees_in_sign as-is (NO CALCULATION)
+              degreeDisplay = `${planetData.degrees_in_sign.toFixed(2)}°`;
             }
-            
-            console.log(`📊 Table: ${name} - House: ${planetData.house}, Sign: ${planetData.sign_sanskrit || planetData.sign}, Degree: ${degreeDisplay}, Total: ${planetData.degree}°, InSign: ${planetData.degrees_in_sign}°`);
             
             return {
               name,
-              sign: planetData.sign_sanskrit || planetData.sign, // Use sign_sanskrit (Sanskrit name)
-              house: planetData.house,
-              degree: degreeDisplay, // DMS format: "31°24'49""
-              degrees_in_sign: planetData.degrees_in_sign, // Keep for reference
-              nakshatra: planetData.nakshatra || '-',
+              sign: planetData.sign_sanskrit || planetData.sign || 'N/A',
+              house: planetData.house ?? 'N/A',
+              degree: degreeDisplay,
+              nakshatra: planetData.nakshatra || 'N/A',
             };
           });
         }
@@ -217,7 +212,7 @@ export default function KundliPage() {
 
         {error && (
           <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 mb-6">
-            {error}
+            {error || 'Failed to load kundli data'}
           </div>
         )}
 

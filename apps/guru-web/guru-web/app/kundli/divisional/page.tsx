@@ -2,7 +2,8 @@
 
 /**
  * Divisional Charts Page
- * Displays various divisional charts (D1-D12)
+ * Displays various divisional charts (D1-D60)
+ * All varga charts are supported and rendered from API data
  */
 
 import { useEffect, useState } from 'react';
@@ -13,6 +14,8 @@ import { getDivisionalCharts, getNavamsa } from '@/services/api';
 import { ChartContainer } from '@/components/Chart/ChartContainer';
 import { useBirthStore } from '@/store/useBirthStore';
 
+// Complete list of all varga charts (D1-D60)
+// These match the backend API varga keys exactly
 const divisionalCharts = [
   { key: 'd1', name: 'D1 - Rasi Chart', description: 'Main birth chart' },
   { key: 'd2', name: 'D2 - Hora Chart', description: 'Wealth and finances' },
@@ -22,12 +25,21 @@ const divisionalCharts = [
   { key: 'd9', name: 'D9 - Navamsa Chart', description: 'Marriage and relationships' },
   { key: 'd10', name: 'D10 - Dashamsa Chart', description: 'Career and profession' },
   { key: 'd12', name: 'D12 - Dwadashamsa Chart', description: 'Parents and past life' },
+  { key: 'd16', name: 'D16 - Shodasamsa Chart', description: 'Vehicles and comforts' },
+  { key: 'd20', name: 'D20 - Vimsamsa Chart', description: 'Spiritual progress' },
+  { key: 'd24', name: 'D24 - Chaturvimsamsa Chart', description: 'Education and learning' },
+  { key: 'd27', name: 'D27 - Saptavimsamsa Chart', description: 'Strengths and weaknesses' },
+  { key: 'd30', name: 'D30 - Trimsamsa Chart', description: 'Misfortunes and obstacles' },
+  { key: 'd40', name: 'D40 - Khavedamsa Chart', description: 'Maternal family influences' },
+  { key: 'd45', name: 'D45 - Akshavedamsa Chart', description: 'Paternal family influences' },
+  { key: 'd60', name: 'D60 - Shashtiamsa Chart', description: 'Karmic patterns from past lives' },
 ];
 
 export default function DivisionalChartsPage() {
   const [selectedChart, setSelectedChart] = useState('d1');
   const [chartData, setChartData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [chartKey, setChartKey] = useState(0); // Force re-render key
   const { userId } = useBirthStore();
 
   useEffect(() => {
@@ -38,13 +50,27 @@ export default function DivisionalChartsPage() {
         const chartTypeUpper = selectedChart.toUpperCase();
         const backendChartType = chartTypeUpper.startsWith('D') ? chartTypeUpper : `D${chartTypeUpper.replace(/^D?/i, '')}`;
         
+        // 🔒 CRITICAL: Log that we're fetching fresh data
+        console.log(`🔄 Fetching fresh ${backendChartType} chart data from API (cache-busted)...`);
+        
         let data;
         
         // Get from main kundli response (which includes all divisional charts as D1, D2, D3, etc.)
         const { getKundli } = await import('@/services/api');
         const { useBirthStore } = await import('@/store/useBirthStore');
         const birthDetails = useBirthStore.getState().birthDetails;
-        const kundliResponse = await getKundli(userId || undefined, birthDetails);
+        const kundliResponse = await getKundli(userId || undefined, birthDetails || undefined);
+        
+        // 🔒 CRITICAL: Log raw API response for D24 specifically
+        if (backendChartType === 'D24') {
+          console.log('📥 RAW API RESPONSE FOR D24:', {
+            fullResponse: kundliResponse,
+            hasD24: !!(kundliResponse as any)?.[backendChartType] || !!(kundliResponse as any)?.data?.kundli?.[backendChartType] || !!(kundliResponse as any)?.data?.[backendChartType],
+            d24Data: (kundliResponse as any)?.[backendChartType] || (kundliResponse as any)?.data?.kundli?.[backendChartType] || (kundliResponse as any)?.data?.[backendChartType],
+            responseKeys: Object.keys(kundliResponse || {}),
+            kundliKeys: (kundliResponse as any)?.data?.kundli ? Object.keys((kundliResponse as any).data.kundli) : [],
+          });
+        }
         
         // Check multiple possible response structures
         // Structure 1: { D1: {...}, D2: {...}, ... } (direct)
@@ -54,12 +80,17 @@ export default function DivisionalChartsPage() {
           if ((kundliResponse as any)[backendChartType]) {
             // Direct structure: { D2: {...} }
             data = (kundliResponse as any)[backendChartType];
+            console.log(`✅ Extracted ${backendChartType} from direct structure`);
           } else if ((kundliResponse as any).data?.kundli?.[backendChartType]) {
             // Nested structure: { data: { kundli: { D2: {...} } } }
             data = (kundliResponse as any).data.kundli[backendChartType];
+            console.log(`✅ Extracted ${backendChartType} from nested structure (data.kundli)`);
           } else if ((kundliResponse as any).data?.[backendChartType]) {
             // Alternative nested: { data: { D2: {...} } }
             data = (kundliResponse as any).data[backendChartType];
+            console.log(`✅ Extracted ${backendChartType} from nested structure (data)`);
+          } else {
+            console.warn(`⚠️ ${backendChartType} not found in response structure`);
           }
         }
         
@@ -67,15 +98,79 @@ export default function DivisionalChartsPage() {
         if (!data) {
           try {
             data = await getDivisionalCharts(selectedChart, userId || undefined);
-          } catch (divisionalError) {
-            // Endpoint doesn't exist - this is expected, don't log error
-            console.warn(`Divisional chart ${backendChartType} not found in main response and endpoint unavailable`);
+          } catch (divisionalError: any) {
+            // Endpoint doesn't exist - this is expected
+            // Validate error structure before logging
+            const errorMessage = divisionalError?.message || String(divisionalError) || 'Unknown error';
+            console.warn(`Divisional chart ${backendChartType} not found in main response:`, errorMessage);
           }
         }
         
-        setChartData(data);
+        // Validate chart data structure before setting
+        // CRITICAL: D24-D60 are "pure sign charts" with Houses: null (astrologically correct)
+        if (data) {
+          const isPureSignChart = /^D(24|27|30|40|45|60)$/.test(backendChartType);
+          
+          // 🔒 CRITICAL: Log D24 data structure for debugging
+          if (backendChartType === 'D24') {
+            console.log('📊 D24 Chart Data Structure:', {
+              hasAscendant: !!data.Ascendant,
+              ascendantSign: data.Ascendant?.sign,
+              ascendantSignIndex: data.Ascendant?.sign_index,
+              hasPlanets: !!data.Planets,
+              planetsCount: data.Planets ? Object.keys(data.Planets).length : 0,
+              planets: data.Planets ? Object.keys(data.Planets) : [],
+              housesValue: data.Houses,
+              isPureSignChart,
+              fullData: data,
+            });
+          }
+          
+          // Validate required fields based on chart type
+          const hasAscendant = !!data.Ascendant;
+          const hasPlanets = data.Planets && typeof data.Planets === 'object' && Object.keys(data.Planets).length > 0;
+          
+          // For pure sign charts: Houses can be null (valid)
+          // For other charts: Houses should be an array (but allow null as fallback)
+          const hasValidHouses = isPureSignChart
+            ? (data.Houses === null || data.Houses === undefined || Array.isArray(data.Houses))
+            : (data.Houses === null || Array.isArray(data.Houses));
+          
+          if (!hasAscendant || !hasPlanets || !hasValidHouses) {
+            // Only log in development - this might be legitimate data absence
+            if (process.env.NODE_ENV === 'development') {
+              console.warn(`⚠️ Chart ${backendChartType} structure validation:`, {
+                hasAscendant,
+                hasPlanets,
+                hasValidHouses,
+                housesValue: data.Houses,
+                isPureSignChart,
+                planetsCount: data.Planets ? Object.keys(data.Planets).length : 0,
+              });
+          }
+            // Treat as legitimate absence, not error
+            setChartData(null);
+          } else {
+            // 🔒 CRITICAL: Force fresh render with new data
+            setChartData({ ...data }); // Create new object reference
+            setChartKey(prev => prev + 1); // Force ChartContainer to re-render
+          }
+        } else {
+          // No data returned - legitimate absence (chart not computed or not available)
+          console.warn(`⚠️ No ${backendChartType} data returned from API`);
+          setChartData(null);
+        }
       } catch (error: any) {
-        // Silently handle errors - set chartData to null
+        // Handle errors gracefully with proper validation
+        const errorMessage = error?.message || String(error) || 'Unknown error';
+        const errorStatus = error?.status || error?.response?.status || 'NO_STATUS';
+        
+        console.error(`❌ Error fetching divisional chart ${selectedChart}:`, {
+          message: errorMessage,
+          status: errorStatus,
+          chartType: selectedChart,
+        });
+        
         setChartData(null);
       } finally {
         setLoading(false);
@@ -83,6 +178,9 @@ export default function DivisionalChartsPage() {
     };
 
     if (selectedChart) {
+      // 🔒 CRITICAL: Clear chart data when chart type changes to prevent stale data
+      setChartData(null);
+      setChartKey(prev => prev + 1);
       fetchChart();
     }
   }, [selectedChart, userId]);
@@ -179,8 +277,10 @@ export default function DivisionalChartsPage() {
         ) : chartData ? (
           <SlideUp delay={0.4}>
             <ChartContainer 
+              key={`${selectedChart}-${chartKey}`} // Force re-render on chart change
               chartData={chartData} 
-              chartType={selectedChart === 'd9' ? 'navamsa' : selectedChart === 'd10' ? 'dasamsa' : 'rasi'} 
+              chartType={selectedChart === 'd9' ? 'navamsa' : selectedChart === 'd10' ? 'dasamsa' : 'rasi'}
+              vargaName={divisionalCharts.find(c => c.key === selectedChart)?.name}
             />
           </SlideUp>
         ) : (

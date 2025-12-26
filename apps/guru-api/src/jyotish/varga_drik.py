@@ -511,7 +511,7 @@ def calculate_varga_sign(sign_index: int, long_in_sign: float, varga: str, chart
 # 2. Golden test update
 # 3. Explicit approval
 
-def calculate_varga(planet_longitude: float, varga_type: int) -> Dict:
+def calculate_varga(planet_longitude: float, varga_type: int, chart_method: Optional[int] = None) -> Dict:
     """
     Unified function to calculate ANY varga (divisional chart) using EXACT Parashari formulas.
     
@@ -854,8 +854,8 @@ def calculate_varga(planet_longitude: float, varga_type: int) -> Dict:
         d1_sign_index = int(math.floor(planet_longitude / 30.0))
         degree_in_sign = planet_longitude % 30.0
         
-        # Step 2: Use calculate_varga_sign function (defaults to chart_method=3)
-        d24_sign_index = calculate_varga_sign(d1_sign_index, degree_in_sign, "D24")
+        # Step 2: Use calculate_varga_sign function (use provided chart_method or default to 3)
+        d24_sign_index = calculate_varga_sign(d1_sign_index, degree_in_sign, "D24", chart_method=chart_method)
         
         # Calculate varga longitude for consistency
         varga_longitude = (planet_longitude * 24.0) % 360.0

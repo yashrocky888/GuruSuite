@@ -1,580 +1,707 @@
 /**
- * Chart Container - Wrapper with North/South toggle
- * Modern glassmorphic styling
- * FIXED: Better API data debugging
+ * Chart Container - Pure Renderer (NO CALCULATIONS)
  * 
- * API Calculation Method:
- * - Uses FLG_SIDEREAL flag for direct sidereal positions (no manual ayanamsa subtraction)
- * - Uses swe.houses_ex() with FLG_SIDEREAL for sidereal ascendant (no manual conversion)
- * - All positions are already in sidereal zodiac format from API
+ * 🔒 ASTROLOGY LOCK
+ * UI must NEVER calculate astrology.
+ * API is the single source of truth.
+ * 
+ * CRITICAL RULE: Renders directly from API structure.
+ * NO normalization. NO transformation. NO calculations.
+ * 
+ * API Structure (CANONICAL):
+ * {
+ *   Ascendant: { sign, house: 1, sign_index, degree, degree_dms, arcminutes, arcseconds, ... },
+ *   Houses: [{ house: 1, sign, sign_index, ... }, ...],
+ *   Planets: { Sun: { sign, house, degree, degree_dms, arcminutes, arcseconds, ... }, ... }
+ * }
  */
 
 'use client';
 
+// 🔥 VERIFICATION LOG - If this doesn't appear, wrong file is being used
+console.log("🔥 NEW ChartContainer LOADED", Date.now(), "Version: 2.0.0-PURE-SIGN-FIX");
+
 import React, { useState, useMemo } from 'react';
 import SouthIndianChart from './SouthIndianChart';
 import { NorthIndianChart } from './NorthIndianChart';
-import { normalizeKundliData, ApiKundliData, convertToSanskritSign, SIGN_TO_NUM, getSignNum, getSignForHouse, getSignName } from './utils';
+import { isHouseChart, isSignChart, HOUSE_CHARTS, SIGN_CHARTS } from './chartUtils';
+import SouthIndianSignChart from './SouthIndianSignChart';
+import NorthIndianSignChart from './NorthIndianSignChart';
 
 interface ChartContainerProps {
   chartData: any; // Raw API data
   chartType?: 'rasi' | 'navamsa' | 'dasamsa';
+  vargaName?: string; // Optional varga name for display (e.g., "D16 - Shodasamsa Chart")
 }
 
 type ChartStyle = 'north' | 'south';
 
+interface DirectApiChart {
+  chartType?: string; // Chart type (e.g., "D1", "D24", etc.)
+  Ascendant: {
+    sign: string;
+    sign_sanskrit?: string;
+    sign_index: number;
+    house?: number; // Optional for pure sign charts
+    degree?: number;
+    degrees_in_sign?: number;
+    degree_dms?: number;
+    arcminutes?: number;
+    arcseconds?: number;
+  };
+  Houses: Array<{
+    house: number;
+    sign: string;
+    sign_sanskrit?: string;
+    sign_index: number;
+  }> | null; // null for pure sign charts (D24-D60)
+  Planets: {
+    [planetName: string]: {
+      sign: string;
+      sign_sanskrit?: string;
+      sign_index: number;
+      house?: number; // Optional for pure sign charts
+      degree?: number;
+      degrees_in_sign?: number;
+      degree_dms?: number;
+      arcminutes?: number;
+      arcseconds?: number;
+    };
+  };
+}
+
 export const ChartContainer: React.FC<ChartContainerProps> = ({ 
   chartData, 
-  chartType = 'rasi' 
+  chartType = 'rasi',
+  vargaName 
 }) => {
   const [chartStyle, setChartStyle] = useState<ChartStyle>('south');
 
-  // Normalize API data to houses
-  const houses = useMemo(() => {
+  // Extract chart data directly from API - NO NORMALIZATION
+  // 🔒 CHART-TYPE AGNOSTIC: All charts (D1, D9, D10, etc.) follow the same structure
+  const apiChart = useMemo((): DirectApiChart | null => {
     if (!chartData) {
-      console.warn('ChartContainer: No chartData provided');
+      return null;
+    }
+
+    // Handle multiple API response formats
+    let chart: any = null;
+    const chartType = (chartData as any).chartType || 'Unknown';
+    
+    // 🔒 CRITICAL: Log D24 extraction for debugging
+    const isD24 = vargaName?.includes('D24') || chartType === 'D24';
+
+    // Format 1: { D1: { Ascendant, Houses, Planets }, D2: {...}, D9: {...}, ... }
+    // Check for any divisional chart key (D1, D2, D3, D4, D7, D9, D10, D12, D16, D20, D24, D27, D30, D40, D45, D60)
+    const divisionalChartKeys = ['D1', 'D2', 'D3', 'D4', 'D7', 'D9', 'D10', 'D12', 'D16', 'D20', 'D24', 'D27', 'D30', 'D40', 'D45', 'D60'];
+    for (const key of divisionalChartKeys) {
+      if ((chartData as any)[key]) {
+        chart = (chartData as any)[key];
+        if (isD24 || key === 'D24') {
+          console.log(`🔍 D24 EXTRACTION (Format 1):`, {
+            key,
+            ascendantSign: chart.Ascendant?.sign,
+            ascendantSignIndex: chart.Ascendant?.sign_index,
+            planets: chart.Planets ? Object.keys(chart.Planets) : [],
+            houses: chart.Houses,
+          });
+    }
+        console.log(`✅ Extracted chart from Format 1 (${key}):`, { chartType: chart.chartType || key, hasAscendant: !!chart.Ascendant, hasHouses: !!chart.Houses, hasPlanets: !!chart.Planets });
+        break;
+      }
+    }
+    
+    // Format 2: { data: { kundli: { D1: {...}, D9: {...}, ... } } }
+    if (!chart && (chartData as any).data?.kundli) {
+      for (const key of divisionalChartKeys) {
+        if ((chartData as any).data.kundli[key]) {
+          chart = (chartData as any).data.kundli[key];
+          if (isD24 || key === 'D24') {
+            console.log(`🔍 D24 EXTRACTION (Format 2):`, {
+              key,
+              ascendantSign: chart.Ascendant?.sign,
+              ascendantSignIndex: chart.Ascendant?.sign_index,
+              planets: chart.Planets ? Object.keys(chart.Planets) : [],
+              houses: chart.Houses,
+            });
+          }
+          console.log(`✅ Extracted chart from Format 2 (${key}):`, { chartType: chart.chartType || key, hasAscendant: !!chart.Ascendant, hasHouses: !!chart.Houses, hasPlanets: !!chart.Planets });
+          break;
+        }
+      }
+      // If no divisional key found, try direct kundli object
+      if (!chart && (chartData as any).data.kundli.Ascendant) {
+        chart = (chartData as any).data.kundli;
+        console.log(`✅ Extracted chart from Format 2 (direct kundli):`, { chartType: chart.chartType || 'D1', hasAscendant: !!chart.Ascendant, hasHouses: !!chart.Houses, hasPlanets: !!chart.Planets });
+    }
+    }
+    
+    // Format 3: Direct chart object { Ascendant, Houses, Planets, chartType }
+    // This is the format used when divisional chart page extracts D9/D10 from main response
+    // CRITICAL: D24-D60 are "pure sign charts" with Houses: null (astrologically correct)
+    // D1-D20 must have Houses array, D24-D60 have Houses: null
+    if (!chart && (chartData as any).Ascendant) {
+      const houses = (chartData as any).Houses;
+      const planets = (chartData as any).Planets;
+      const chartTypeFromData = (chartData as any).chartType || '';
+      
+      // Determine if this is a pure sign chart using single source of truth
+      const isSignChartType = isSignChart(chartTypeFromData);
+      
+      // For pure sign charts: Houses can be null (valid)
+      // For other charts: Houses must be an array
+      const hasValidHouses = isSignChartType 
+        ? (houses === null || houses === undefined)  // null is valid for D24-D60
+        : (Array.isArray(houses) && houses.length === 12);  // Must be 12-element array for D1-D20
+      
+      const hasValidPlanets = planets && typeof planets === 'object' && Object.keys(planets).length > 0;
+      
+      if (hasValidHouses && hasValidPlanets) {
+      chart = chartData;
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`✅ Extracted chart from Format 3 (direct):`, { 
+            chartType: chart.chartType || 'Unknown', 
+            hasAscendant: !!chart.Ascendant, 
+            housesType: isSignChartType ? 'null (pure sign chart)' : `array[${houses.length}]`,
+            planetsCount: Object.keys(planets).length
+          });
+        }
+      } else {
+        // Only warn in development, don't treat as error
+        if (process.env.NODE_ENV === 'development') {
+          console.warn(`⚠️ Format 3 validation:`, {
+            chartType: chartTypeFromData || 'Unknown',
+            isSignChartType,
+            hasAscendant: !!(chartData as any).Ascendant,
+            housesValue: houses,
+            housesIsArray: Array.isArray(houses),
+            housesLength: Array.isArray(houses) ? houses.length : 'N/A',
+            hasPlanets: !!planets,
+            planetsIsObject: planets && typeof planets === 'object',
+            planetsKeys: planets && typeof planets === 'object' ? Object.keys(planets).length : 'N/A'
+          });
+        }
+      }
+    }
+    
+    // Format 4: { success: true, data: { kundli: { Ascendant, Houses, Planets } } }
+    if (!chart && (chartData as any).data?.kundli?.Ascendant) {
+      chart = (chartData as any).data.kundli;
+      console.log(`✅ Extracted chart from Format 4:`, { chartType: chart.chartType || 'D1', hasAscendant: !!chart.Ascendant, hasHouses: !!chart.Houses, hasPlanets: !!chart.Planets });
+    }
+
+    if (!chart) {
+      const receivedKeys = Object.keys(chartData || {});
+      const hasAscendant = !!(chartData as any).Ascendant;
+      const hasHouses = !!(chartData as any).Houses;
+      const hasPlanets = !!(chartData as any).Planets;
+      const chartTypeFromData = (chartData as any).chartType || chartType || 'Unknown';
+      const isSignChartType = isSignChart(chartTypeFromData);
+      
+      // CRITICAL: Don't log as error if this is legitimate data absence
+      // Pure sign charts or unsupported charts are valid states, not errors
+      const isLegitimateAbsence = isSignChartType || 
+        (chartTypeFromData && chartTypeFromData !== 'Unknown' && chartTypeFromData !== 'D1');
+      
+      if (isLegitimateAbsence) {
+        // Informational log only - not an error
+        if (process.env.NODE_ENV === 'development') {
+          console.info(`ℹ️ Chart ${chartTypeFromData} not available or not computed:`, {
+            chartType: chartTypeFromData,
+            hasAscendant,
+            hasHouses: hasHouses ? (Array.isArray((chartData as any).Houses) ? 'array' : typeof (chartData as any).Houses) : false,
+            hasPlanets,
+            reason: isSignChartType ? 'Pure sign chart (may not have house structure)' : 'Chart not computed or not supported'
+          });
+        }
+        return null; // Return null gracefully - UI will show informational message
+      }
+      
+      // Only log as error if this appears to be a real extraction failure
+      // (e.g., D1-D20 missing required fields)
+      if (process.env.NODE_ENV === 'development') {
+        const errorDetails: Record<string, any> = {
+          chartType: chartTypeFromData,
+          receivedKeys: receivedKeys.length > 0 ? receivedKeys : 'EMPTY_OBJECT',
+          hasAscendant,
+          hasHouses,
+          hasPlanets,
+        };
+        
+        if (hasHouses) {
+          errorDetails.housesType = Array.isArray((chartData as any).Houses) ? 'array' : typeof (chartData as any).Houses;
+          if (Array.isArray((chartData as any).Houses)) {
+            errorDetails.housesLength = (chartData as any).Houses.length;
+          }
+        }
+        
+        if (hasPlanets) {
+          errorDetails.planetsType = typeof (chartData as any).Planets;
+          if (typeof (chartData as any).Planets === 'object' && (chartData as any).Planets !== null) {
+            errorDetails.planetsKeys = Object.keys((chartData as any).Planets);
+          }
+        }
+        
+        if (hasAscendant && (chartData as any).Ascendant) {
+          errorDetails.ascendantKeys = Object.keys((chartData as any).Ascendant);
+        }
+        
+        console.error('❌ Cannot extract chart from API response (extraction failure):', errorDetails);
+      }
+      return null;
+    }
+
+    // RUNTIME ASSERTION: Ascendant must exist and have sign
+    // CRITICAL: Ascendant sign is REQUIRED - no fallbacks allowed
+    if (!chart.Ascendant) {
+      console.error('❌ Ascendant missing in API response');
+      return null;
+    }
+    
+    if (!chart.Ascendant.sign && !chart.Ascendant.sign_sanskrit) {
+      console.error('❌ Ascendant sign missing in API response');
+      return null;
+    }
+
+    // RUNTIME ASSERTION: Validate houses based on chart type
+    // D24-D60 are "pure sign charts" with Houses: null (astrologically correct)
+    // D1-D20 must have exactly 12 houses
+    const chartTypeFromChart = chart.chartType || '';
+    const isSignChartType = isSignChart(chartTypeFromChart);
+    
+    // For house-based charts: Validate Ascendant.house must be 1
+    // For pure sign charts: NO house validation (sign-only)
+    if (!isSignChartType && chart.Ascendant?.house !== undefined && chart.Ascendant.house !== 1) {
+      throw new Error(`FATAL: Ascendant.house must be 1 for house-based charts, got ${chart.Ascendant.house}`);
+    }
+
+    if (isSignChartType) {
+      // Pure sign charts: Houses should be null (valid state)
+      if (chart.Houses !== null && chart.Houses !== undefined) {
+        if (process.env.NODE_ENV === 'development') {
+          console.warn(`⚠️ Pure sign chart ${chartTypeFromChart} has Houses (expected null):`, chart.Houses);
+        }
+        // Still allow it - might be API variation
+      }
+    } else {
+      // D1-D20: Must have exactly 12 houses
+    if (!chart.Houses || !Array.isArray(chart.Houses) || chart.Houses.length !== 12) {
+        if (process.env.NODE_ENV === 'development') {
+          console.error(`❌ Invalid house data for ${chartTypeFromChart || 'chart'}. Expected 12 houses, got ${chart.Houses?.length || 0}`);
+        }
+      return null; // Return null instead of throwing - UI will show "No chart data available"
+    }
+    }
+
+    // RUNTIME ASSERTION: Validate planets
+    // For pure sign charts (D24-D60): NO house validation (sign-only charts)
+    // For D1-D20: Planets must have house
+    if (chart.Planets && !isSignChartType) {
+      // Only validate houses for house-based charts
+      Object.entries(chart.Planets).forEach(([name, planet]: [string, any]) => {
+        // D1-D20: Planets must have valid house
+        if (planet.house === undefined || planet.house < 1 || planet.house > 12) {
+          if (process.env.NODE_ENV === 'development') {
+            console.warn(`⚠️ Planet ${name} in ${chartTypeFromChart} has invalid house: ${planet.house} - will be skipped`);
+          }
+        }
+      });
+    }
+    // For D24-D60: NO house validation - planets are sign-only
+
+    return chart as DirectApiChart;
+  }, [chartData]);
+
+  // Convert API structure to chart component format (PURE MAPPING - NO CALCULATIONS)
+  // CRITICAL: This useMemo must be called BEFORE early return to follow Rules of Hooks
+  const housesForChart = useMemo(() => {
+    // If apiChart is null, return empty array
+    if (!apiChart) {
       return [];
     }
     
-    // Handle multiple API formats
-    let planetsArray: any[] = [];
-    let ascendantData: any = null;
-    let housesArray: any[] = [];
-    
-    // Check if it's the new nested format: { success: true, data: { kundli: { Ascendant: {...}, Planets: {...}, Houses: [...] } } }
-    // OR direct nested: { data: { kundli: {...} } }
-    // OR already extracted: { Ascendant: {...}, Planets: {...}, Houses: [...] }
-    // OR API returns D1 directly: { D1: { Ascendant: {...}, Planets: {...}, Houses: [...] }, D2: {...}, ... }
-    // OR divisional chart format: { chartType: "D9", lagnaSign: "...", planets: [...], houses: [...] }
-    // OR old format: { lagnaSign: "...", planets: [...], houses: [...] }
-    let kundli = null;
-    if ((chartData as any).success && (chartData as any).data?.kundli) {
-      // Full nested format: { success: true, data: { kundli: {...} } }
-      kundli = (chartData as any).data.kundli;
-      console.log('✅ Using nested format: success.data.kundli', {
-        hasPlanets: !!(kundli as any).Planets,
-        planetsType: typeof (kundli as any).Planets,
-        planetsKeys: (kundli as any).Planets ? Object.keys((kundli as any).Planets) : []
-      });
-    } else if ((chartData as any).data?.kundli) {
-      // Direct nested: { data: { kundli: {...} } }
-      kundli = (chartData as any).data.kundli;
-      console.log('✅ Using nested format: data.kundli', {
-        hasPlanets: !!(kundli as any).Planets,
-        planetsType: typeof (kundli as any).Planets,
-        planetsKeys: (kundli as any).Planets ? Object.keys((kundli as any).Planets) : []
-      });
-    } else if ((chartData as any).D1) {
-      // API returns D1 directly: { D1: { Ascendant: {...}, Planets: {...}, Houses: [...] }, D2: {...}, ... }
-      // D1 is the main Rashi chart
-      kundli = (chartData as any).D1;
-      console.log('✅ Using D1 format (main chart from API)', {
-        hasPlanets: !!(kundli as any).Planets,
-        planetsType: typeof (kundli as any).Planets,
-        planetsKeys: (kundli as any).Planets ? Object.keys((kundli as any).Planets) : [],
-        allKeys: Object.keys(chartData as any)
-      });
-    } else if ((chartData as any).Ascendant || (chartData as any).Planets || (chartData as any).Houses) {
-      // Already extracted kundli object: { Ascendant: {...}, Planets: {...}, Houses: [...] }
-      kundli = chartData;
-      console.log('✅ Using extracted kundli format', {
-        hasPlanets: !!(kundli as any).Planets,
-        planetsType: typeof (kundli as any).Planets,
-        planetsKeys: (kundli as any).Planets ? Object.keys((kundli as any).Planets) : []
-      });
-    } else if ((chartData as any).chartType || ((chartData as any).planets && Array.isArray((chartData as any).planets))) {
-      // Divisional chart format: { chartType: "D9", lagnaSign: "...", planets: [...], houses: [...] }
-      // Use chartData directly as it already has planets array and houses
-      kundli = null; // Will be handled in the else block below
-      console.log('✅ Using divisional chart format', {
-        hasPlanets: !!(chartData as any).planets,
-        planetsCount: Array.isArray((chartData as any).planets) ? (chartData as any).planets.length : 0
-      });
-    } else {
-      console.warn('⚠️ Unknown chart data format:', Object.keys(chartData as any));
+    // 🔒 CRITICAL: HARD GUARD - If Houses is null, this is a pure sign chart
+    // Bypass ALL house logic immediately
+    if (apiChart.Houses === null || apiChart.Houses === undefined) {
+      const chartTypeFromChart = apiChart.chartType || '';
+      console.log(`🔒 PURE SIGN MODE ENABLED — bypassing house renderer for ${chartTypeFromChart}`);
+      console.log(`   Houses: null (pure sign chart)`);
+      console.log(`   Ascendant: ${apiChart.Ascendant?.sign_sanskrit || apiChart.Ascendant?.sign} (sign index: ${apiChart.Ascendant?.sign_index})`);
+      return []; // Empty array - chart will show planets by sign only
     }
     
-    if (kundli) {
-      
-      // Extract Ascendant - Use exact API fields
-      if (kundli.Ascendant) {
-        ascendantData = {
-          sign: kundli.Ascendant.sign_sanskrit || kundli.Ascendant.sign, // Use sign_sanskrit (Sanskrit name)
-          sign_sanskrit: kundli.Ascendant.sign_sanskrit, // Keep sign_sanskrit
-          degree: kundli.Ascendant.degree, // Full longitude (0-360)
-          degree_dms: kundli.Ascendant.degree_dms, // Degree part (int)
-          arcminutes: kundli.Ascendant.arcminutes, // Minutes part (int)
-          arcseconds: kundli.Ascendant.arcseconds, // Seconds part (int)
-          degrees_in_sign: kundli.Ascendant.degrees_in_sign, // Degrees in sign (0-29.999)
-          house: kundli.Ascendant.house, // House number (1-12)
-          nakshatra: kundli.Ascendant.nakshatra,
-          pada: kundli.Ascendant.pada,
-        };
+    // CRITICAL: D24-D60 are "pure sign charts" with Houses: null
+    // These charts don't have house structure - they're sign-only charts
+    const chartTypeFromChart = apiChart.chartType || '';
+    const isSignChartType = isSignChart(chartTypeFromChart);
+    
+    if (isSignChartType) {
+      // Pure sign charts: Return empty array - these charts don't have houses
+      // They only show planets in signs, not in houses
+      console.log(`🔒 PURE SIGN MODE ENABLED — bypassing house renderer for ${chartTypeFromChart}`);
+      console.log(`   Chart type detected as pure sign chart (D24-D60)`);
+      return []; // Empty array - chart will show planets by sign only
+    }
+    
+    // D1-D20: Must have houses array
+    if (!apiChart.Houses || !Array.isArray(apiChart.Houses)) {
+      if (process.env.NODE_ENV === 'development') {
+        console.error(`❌ Chart ${chartTypeFromChart} missing houses array`);
       }
-      
-      // Extract Planets from object to array - Use sign_sanskrit, retro, and degrees_in_sign
-      if (kundli.Planets && typeof kundli.Planets === 'object') {
-        const planetsEntries = Object.entries(kundli.Planets);
-        console.log(`📦 Extracting ${planetsEntries.length} planets from Planets object`);
-        
-        planetsArray = planetsEntries.map(([name, data]: [string, any]) => {
-          // For chart display, use degrees_in_sign (0-30°) for positioning
-          // But keep total degree for reference
-          const displayDegree = data.degrees_in_sign !== undefined 
-            ? data.degrees_in_sign 
-            : (data.degree % 30); // Calculate degrees in sign from total degree
-          
-          // Extract house number - API uses 'house' field (EXACT from API)
-          const houseNumber = data.house !== undefined ? data.house : 1;
-          
-          // CRITICAL: Calculate DMS from degrees_in_sign (0-30°), NOT from degree_dms (which is 0-360°)
-          // API returns degree_dms as total degree, but we need DMS in 0-30° format
-          const degreeInSign = displayDegree; // Already in 0-30° range from degrees_in_sign
-          const degreeDms = Math.floor(degreeInSign); // Integer part of degrees in sign (0-29)
-          const minutes = Math.floor((degreeInSign - degreeDms) * 60); // Minutes from fractional part
-          const seconds = Math.floor(((degreeInSign - degreeDms) * 60 - minutes) * 60); // Seconds
-          
-          // Use calculated DMS from degrees_in_sign (0-30° format)
-          const degreeMinutes = minutes;
-          const degreeSeconds = seconds;
-          
-          // Special logging for Venus to debug missing planet issue
-          if (name === 'Venus') {
-            console.log(`  🔍 VENUS DEBUG:`, {
-              name,
-              house: houseNumber,
-              sign: data.sign_sanskrit || data.sign,
-              degree: displayDegree,
-              total_degree: data.degree,
-              degrees_in_sign: data.degrees_in_sign,
-              has_house: data.house !== undefined,
-              has_sign: !!(data.sign_sanskrit || data.sign),
-              has_degree: data.degree !== undefined
-            });
+      return [];
+    }
+    
+    // 🔒 CRITICAL: Only build house→sign map for HOUSE-BASED charts
+    // This code should NEVER execute for pure sign charts (D24-D60)
+    // RUNTIME LOG: Verify API houses array
+    if (process.env.NODE_ENV === 'development') {
+      console.log("🏠 HOUSE-BASED CHART MODE — Building house structure");
+    console.log("API HOUSES ARRAY:", apiChart.Houses.map(h => ({ house: h.house, sign: h.sign_sanskrit || h.sign })));
+    console.log("API PLANETS WITH HOUSES:", Object.entries(apiChart.Planets).map(([name, planet]: [string, any]) => ({
+      name,
+      sign: planet.sign_sanskrit || planet.sign,
+      house: planet.house,
+      degree: planet.degree
+    })));
+    }
+    
+    // Build houses array directly from API Houses[]
+    const houses = apiChart.Houses.map((apiHouse) => {
+      // Find all planets in this house
+      // Filter invalid planets (house must be 1-12)
+      const planetsInHouse = Object.entries(apiChart.Planets)
+        .filter(([name, planet]: [string, any]) => {
+          const house = planet.house;
+          const matches = house !== undefined && house >= 1 && house <= 12 && house === apiHouse.house;
+          if (matches) {
+            console.log(`✅ Planet ${name} (sign: ${planet.sign_sanskrit || planet.sign}, house: ${house}) → House ${apiHouse.house} (${apiHouse.sign_sanskrit || apiHouse.sign})`);
           }
-          
-          console.log(`  📍 ${name}: House=${houseNumber}, Sign=${data.sign_sanskrit || data.sign}, Degree=${displayDegree}° (${data.degree}° total), DMS=${degreeDms}°${degreeMinutes}'${degreeSeconds}"`);
-          
-          return {
-            name,
-            sign: data.sign_sanskrit || data.sign, // Use sign_sanskrit (Sanskrit name) - EXACT from API
-            house: houseNumber, // Use house field from API - EXACT from API
-            degree: displayDegree, // Degrees in sign (0-30°) for chart positioning - EXACT from API
-            total_degree: data.degree, // Keep total degree (0-360°) for calculations - EXACT from API
-            degree_dms: degreeDms, // Degree part (int) from API - EXACT from API
-            degree_minutes: degreeMinutes, // Minutes component from arcminutes (API field name)
-            degree_seconds: degreeSeconds, // Seconds component from arcseconds (API field name)
-            degrees_in_sign: data.degrees_in_sign, // Keep degrees_in_sign for reference
-            nakshatra: data.nakshatra,
-            pada: data.pada,
-            retrograde: data.retro === true || data.retrograde === true, // Check retro as boolean (API field name)
-            speed: data.speed,
-            color: data.color,
-          };
-        });
-        console.log(`✅ Extracted ${planetsArray.length} planets:`, planetsArray.map(p => `${p.name} (${p.sign}, H${p.house})`).join(', '));
-        
-        // Check if Venus is in the array
-        const venusPlanet = planetsArray.find(p => p.name === 'Venus');
-        if (!venusPlanet) {
-          console.error('❌ VENUS NOT FOUND in extracted planets array!');
-        } else {
-          console.log(`✅ Venus found: House=${venusPlanet.house}, Sign=${venusPlanet.sign}, Degree=${venusPlanet.degree}°`);
-        }
-      } else {
-        console.warn('⚠️ No Planets object found in kundli:', {
-          hasPlanets: !!(kundli as any).Planets,
-          planetsType: typeof (kundli as any).Planets,
-          allKeys: Object.keys(kundli as any)
-        });
-      }
-      
-      // Extract Houses array - use sign_sanskrit if available
-      if (Array.isArray(kundli.Houses)) {
-        housesArray = kundli.Houses.map((h: any) => ({
-          house: h.house,
-          sign: h.sign_sanskrit || h.sign, // Prefer Sanskrit
-          degree: h.degree,
-          degrees_in_sign: h.degrees_in_sign,
+          return matches;
+        })
+        .map(([name, planet]) => ({
+          name,
+          abbr: name.substring(0, 2),
+          sign: planet.sign_sanskrit || planet.sign,
+          // PURE API MAPPING - NO CALCULATIONS
+          // Use degrees_in_sign ONLY if provided - NO fallback to degree
+          degree: planet.degrees_in_sign ?? undefined,
+          degree_dms: planet.degree_dms ?? undefined,
+          degree_minutes: planet.arcminutes ?? undefined,
+          degree_seconds: planet.arcseconds ?? undefined,
         }));
+
+      // Add Ascendant if this is house 1
+      if (apiHouse.house === 1) {
+        planetsInHouse.push({
+          name: 'Ascendant',
+          abbr: 'Asc',
+          sign: apiChart.Ascendant.sign_sanskrit || apiChart.Ascendant.sign,
+          // PURE API MAPPING - NO CALCULATIONS
+          // Use degrees_in_sign ONLY if provided - NO fallback to degree
+          degree: apiChart.Ascendant.degrees_in_sign ?? undefined,
+          degree_dms: apiChart.Ascendant.degree_dms ?? undefined,
+          degree_minutes: apiChart.Ascendant.arcminutes ?? undefined,
+          degree_seconds: apiChart.Ascendant.arcseconds ?? undefined,
+        });
       }
-    } else {
-      // Direct format: { lagnaSign: "Vrishchika", planets: [...], houses: [...] }
-      // OR divisional chart format: { chartType: "D9", lagnaSign: "...", planets: [...], houses: [...] }
-      // OR new consistent format: { ascendant, ascendant_sign, planets }
-      // OR divisional chart API format: { ascendant: float, ascendant_sign: "English", planets: {...} }
+
+      const houseData = {
+        houseNumber: apiHouse.house,
+        signNumber: apiHouse.sign_index + 1, // 1-12 (just for display, not calculation)
+        signName: apiHouse.sign_sanskrit || apiHouse.sign,
+        planets: planetsInHouse,
+      };
       
-      // Handle divisional chart format: { ascendant: float, ascendant_sign: "English", ascendant_sign_sanskrit: "Karka", planets: {...} }
-      if ((chartData as any).ascendant !== undefined && typeof (chartData as any).ascendant === 'number') {
-        // Divisional chart format: ascendant is a float, need to convert
-        const ascendantDegree = (chartData as any).ascendant;
-        // Prefer ascendant_sign_sanskrit if available (from API), else convert English
-        const sanskritSign = (chartData as any).ascendant_sign_sanskrit 
-          || convertToSanskritSign((chartData as any).ascendant_sign || 'Aries');
-        const signIndex = getSignNum(sanskritSign);
-        const degreesInSign = ascendantDegree % 30;
-        
-        // Calculate DMS from degrees_in_sign
-        const degreeDms = Math.floor(degreesInSign);
-        const minutes = Math.floor((degreesInSign - degreeDms) * 60);
-        const seconds = Math.floor(((degreesInSign - degreeDms) * 60 - minutes) * 60);
-        
-        // CRITICAL: For varga charts, use ascendant_house from API
-        // API provides ascendant_house = ascendant sign (Whole Sign system)
-        const ascendantHouse = (chartData as any).ascendant_house !== undefined
-          ? (chartData as any).ascendant_house  // Use API's ascendant_house value
-          : (signIndex + 1); // Fallback: house = sign (should not happen)
-        
-        ascendantData = {
-          sign: sanskritSign,
-          sign_sanskrit: sanskritSign,
-          degree: ascendantDegree,
-          degree_dms: degreeDms,
-          arcminutes: minutes,
-          arcseconds: seconds,
-          degrees_in_sign: degreesInSign,
-          house: ascendantHouse, // Use API's ascendant_house (house = sign for varga charts)
-        };
-        
-        // Extract planets from object - convert English signs to Sanskrit
-        if ((chartData as any).planets && typeof (chartData as any).planets === 'object') {
-          const planetsEntries = Object.entries((chartData as any).planets);
-          console.log(`📦 Extracting ${planetsEntries.length} planets from divisional chart format`);
-          
-          planetsArray = planetsEntries.map(([name, data]: [string, any]) => {
-            // Convert English sign to Sanskrit
-            const englishSign = data.sign || '';
-            const sanskritSign = convertToSanskritSign(englishSign);
-            const displayDegree = data.degrees_in_sign !== undefined 
-              ? data.degrees_in_sign 
-              : (data.degree % 30);
-            
-            // Calculate DMS from degrees_in_sign
-            const degreeInSign = displayDegree;
-            const degreeDms = Math.floor(degreeInSign);
-            const minutes = Math.floor((degreeInSign - degreeDms) * 60);
-            const seconds = Math.floor(((degreeInSign - degreeDms) * 60 - minutes) * 60);
-            
-            // CRITICAL: For varga charts, use house directly from API
-            // API provides house = sign (Whole Sign system)
-            // DO NOT calculate or infer house
-            const planetHouse = data.house !== undefined && data.house >= 1 && data.house <= 12
-              ? data.house  // Use API's house value directly
-              : (getSignNum(sanskritSign)); // Fallback: should not happen
-            
-            return {
-              name,
-              sign: sanskritSign,
-              house: planetHouse, // Use API house value (house = sign for varga charts)
-              degree: displayDegree,
-              degrees_in_sign: displayDegree,
-              degree_dms: degreeDms,
-              degree_minutes: minutes,
-              degree_seconds: seconds,
-              total_degree: data.degree,
-              retrograde: data.retro || false,
-              nakshatra: data.nakshatra,
-              pada: data.pada,
-            };
-          });
-        }
-        
-        // For varga charts: Use fixed sign grid (house = sign number)
-        // Do NOT rotate by ascendant - Whole Sign system means house = sign
-        const isVargaChart = (chartData as any).chartType && (chartData as any).chartType !== 'D1';
-        
-        if (isVargaChart) {
-          // Fixed sign grid: House 1 = Mesha, House 2 = Vrishabha, ..., House 12 = Meena
-          for (let i = 1; i <= 12; i++) {
-            housesArray.push({
-              house: i,
-              sign: getSignName(i),
-              sign_sanskrit: getSignName(i),
-              degree: 0,
-              degrees_in_sign: 0,
-            });
-          }
-        } else {
-          // For D1: Generate houses from ascendant sign (whole sign system)
-          const lagnaSignNum = signIndex;
-          for (let i = 1; i <= 12; i++) {
-            const houseSignNum = getSignForHouse(i, lagnaSignNum);
-            housesArray.push({
-              house: i,
-              sign: getSignName(houseSignNum),
-              sign_sanskrit: getSignName(houseSignNum),
-              degree: 0,
-              degrees_in_sign: 0,
-            });
-          }
-        }
-      } else if ((chartData as any).ascendant_sign !== undefined) {
-        // New consistent format (already Sanskrit)
-        ascendantData = {
-          sign: (chartData as any).ascendant_sign,
-          sign_sanskrit: (chartData as any).ascendant_sign,
-          degree: (chartData as any).lagnaDegree || 0,
-        };
-        planetsArray = (chartData as any).planets || [];
-      } else {
-        // Legacy format
-        ascendantData = (chartData as any).Ascendant || { 
-          sign: (chartData as any).lagnaSignSanskrit || (chartData as any).lagnaSign || (chartData as any).ascendantSign,
-          degree: (chartData as any).lagnaDegree,
-          sign_sanskrit: (chartData as any).lagnaSignSanskrit || (chartData as any).lagnaSign
-        };
-        planetsArray = (chartData as any).planets || [];
+      // RUNTIME LOG: Verify house data
+      if (houseData.planets.length > 0) {
+        console.log(`House ${houseData.houseNumber} (${houseData.signName}):`, 
+          houseData.planets.map(p => `${p.name} (${p.sign})`).join(', '));
       }
       
-      // Handle houses - could be array of numbers or array of objects
-      if (Array.isArray((chartData as any).houses)) {
-        housesArray = (chartData as any).houses;
-      } else if ((chartData as any).houses) {
-        // If houses is an object, convert to array
-        housesArray = Object.values((chartData as any).houses);
-      } else {
-        housesArray = [];
-      }
-    }
-    
-    // Convert to ApiKundliData format - API now returns Sanskrit names directly, but convert if English for backward compatibility
-    // Handle new consistent structure: {ascendant, ascendant_sign, planets}
-    // PRIORITY: Use ascendantData.sign_sanskrit first (already converted), then check other sources
-    const ascendantSign = ascendantData?.sign_sanskrit 
-      ? ascendantData.sign_sanskrit // Highest priority: Already converted Sanskrit from ascendantData
-      : (ascendantData?.sign 
-        ? (SIGN_TO_NUM[ascendantData.sign] ? ascendantData.sign : convertToSanskritSign(ascendantData.sign))
-        : ((chartData as any).ascendant_sign 
-          ? (SIGN_TO_NUM[(chartData as any).ascendant_sign] ? (chartData as any).ascendant_sign : convertToSanskritSign((chartData as any).ascendant_sign))
-          : ((chartData as any).lagnaSignSanskrit
-            ? (chartData as any).lagnaSignSanskrit
-            : ((chartData as any).lagnaSign 
-              ? (SIGN_TO_NUM[(chartData as any).lagnaSign] ? (chartData as any).lagnaSign : convertToSanskritSign((chartData as any).lagnaSign))
-              : ((chartData as any).ascendantSign 
-                ? (SIGN_TO_NUM[(chartData as any).ascendantSign] ? (chartData as any).ascendantSign : convertToSanskritSign((chartData as any).ascendantSign))
-                : undefined)))));
-    
-    // Extract lagna degree - use degrees_in_sign for Ascendant if available
-    const lagnaDegree = (chartData as any).lagnaDegree 
-      || (ascendantData?.degrees_in_sign !== undefined 
-        ? (ascendantData.degrees_in_sign + (getSignNum(ascendantData.sign_sanskrit || ascendantData.sign || 'Mesha') * 30))
-        : ascendantData?.degree);
-
-    // Determine chart type from various sources
-    // Priority: 1. chartType from API, 2. chartType prop, 3. detect from structure
-    let detectedChartType = (chartData as any).chartType;
-    if (!detectedChartType) {
-      // Check if it's a divisional chart by looking at the structure
-      if ((chartData as any).D2 || (chartData as any).D3 || (chartData as any).D7 || 
-          (chartData as any).D9 || (chartData as any).D10 || (chartData as any).D12) {
-        // This is the main kundli response with multiple charts, not a specific chart
-        detectedChartType = 'D1';
-      } else if ((chartData as any).ascendant !== undefined && typeof (chartData as any).ascendant === 'number' && 
-                 (chartData as any).ascendant_sign && !(chartData as any).Planets) {
-        // Divisional chart format: { ascendant: float, ascendant_sign: "English", chartType: "D12", planets: {...} }
-        // API now provides chartType, but fallback to detection if missing
-        detectedChartType = (chartData as any).chartType || 
-                           (chartType === 'navamsa' ? 'D9' : chartType === 'dasamsa' ? 'D10' : 'D9');
-      }
-    }
-    
-    const apiData: ApiKundliData = {
-      lagna: (chartData as any).ascendant ?? chartData.lagna ?? undefined, // New format uses 'ascendant', legacy uses 'lagna'
-      lagnaSign: ascendantSign,
-      lagnaSignSanskrit: ascendantData?.sign_sanskrit || (chartData as any).lagnaSignSanskrit || (ascendantSign ? (SIGN_TO_NUM[ascendantSign] ? ascendantSign : convertToSanskritSign(ascendantSign)) : undefined),
-      lagnaDegree: lagnaDegree, // Full longitude (0-360°) for Ascendant
-      lagnaDegreeInSign: ascendantData?.degrees_in_sign, // Degrees in sign (0-30°) for Ascendant
-      lagnaDegreeDms: ascendantData?.degree_dms, // Degree part (int) for Ascendant
-      lagnaArcminutes: ascendantData?.arcminutes, // Minutes part (int) for Ascendant
-      lagnaArcseconds: ascendantData?.arcseconds, // Seconds part (int) for Ascendant
-      ascendantHouse: (chartData as any).ascendant_house !== undefined
-        ? (chartData as any).ascendant_house  // From divisional chart format: { ascendant_house: 4 }
-        : (ascendantData?.house !== undefined
-          ? ascendantData.house  // From D1 format: { Ascendant: { house: 1 } }
-          : undefined), // CRITICAL: Use API's ascendant_house (house = sign for varga charts)
-      chartType: detectedChartType,
-      planets: planetsArray.map((p: any) => {
-        // Use sign_sanskrit if available, else convert sign to Sanskrit
-        const sign = p.sign_sanskrit 
-          ? p.sign_sanskrit 
-          : (p.sign ? (SIGN_TO_NUM[p.sign] ? p.sign : convertToSanskritSign(p.sign)) : '');
-        
-        // Use degrees_in_sign for display (0-30°), fallback to degree
-        const displayDegree = p.degrees_in_sign !== undefined ? p.degrees_in_sign : (p.degree || 0);
-        
-        const planetData = {
-          name: p.name,
-          sign: sign, // Sanskrit sign
-          house: p.house || 1,
-          degree: displayDegree, // Degrees in sign (0-30°) for display
-          degrees_in_sign: p.degrees_in_sign !== undefined ? p.degrees_in_sign : displayDegree, // Keep degrees_in_sign for normalization
-          total_degree: p.total_degree || p.degree, // Total longitude (0-360°) for calculations
-          degree_dms: p.degree_dms, // Pass through DMS components
-          degree_minutes: p.degree_minutes, // Pass through arcminutes (from API: arcminutes)
-          degree_seconds: p.degree_seconds, // Pass through arcseconds (from API: arcseconds)
-          nakshatra: p.nakshatra,
-          pada: p.pada,
-          retrograde: p.retrograde || p.retro || false, // Map 'retro' to 'retrograde'
-          color: p.color,
-          speed: p.speed,
-          longitude: p.total_degree || p.degree, // Use total degree as longitude
-        };
-        
-        // Debug: Log if planet is missing required fields
-        if (!planetData.name || !planetData.sign || planetData.house === undefined || planetData.degree === undefined) {
-          console.warn('⚠️ Planet missing required fields:', {
-            name: planetData.name,
-            sign: planetData.sign,
-            house: planetData.house,
-            degree: planetData.degree,
-            original: p
-          });
-        }
-        
-        return planetData;
-      }).filter((p: any) => {
-        const isValid = p.name && p.sign && p.house !== undefined && p.degree !== undefined;
-        if (!isValid) {
-          console.warn('❌ Filtering out invalid planet:', p);
-        }
-        return isValid;
-      }) as any,
-      ayanamsa: chartData.ayanamsa,
-      system: chartData.system,
-      houses: housesArray,
-    };
-
-    console.log('📊 Final apiData before normalization:', {
-      planetsCount: apiData.planets.length,
-      planets: apiData.planets.map(p => `${p.name}: ${p.sign} H${p.house}`),
-      housesCount: apiData.houses?.length || 0
+      return houseData;
     });
 
-    const normalizedHouses = normalizeKundliData(apiData);
-    
-    console.log('✅ Normalized houses:', normalizedHouses.map(h => ({
-      house: h.houseNumber,
-      sign: h.signName,
-      planets: h.planets.map(p => p.abbr)
-    })));
-    
-    return normalizedHouses;
-  }, [chartData]);
+    return houses;
+  }, [apiChart]);
 
-  if (!chartData || houses.length === 0) {
+  // Early return AFTER all hooks are called (Rules of Hooks compliance)
+  if (!apiChart) {
+    // Normalize chart type for display (same logic as main render)
+    let normalizedVargaForDisplay = '';
+    if ((chartData as any)?.chartType && (chartData as any).chartType.length > 0) {
+      normalizedVargaForDisplay = (chartData as any).chartType.toUpperCase();
+    } else if (chartType === 'navamsa') {
+      normalizedVargaForDisplay = 'D9';
+    } else if (chartType === 'dasamsa') {
+      normalizedVargaForDisplay = 'D10';
+    } else {
+      normalizedVargaForDisplay = 'D1'; // Default
+    }
+    
+    const chartTypeDisplay = vargaName || normalizedVargaForDisplay || 'chart';
+    const chartTypeFromData = normalizedVargaForDisplay;
+    const isSignChartType = isSignChart(chartTypeFromData);
+    
+    // Determine if this is a legitimate data absence (pure sign chart or unsupported)
+    const isLegitimateAbsence = isSignChartType || (chartTypeFromData && chartTypeFromData !== 'D1');
+    
     return (
       <div className="glass rounded-xl p-10 text-center">
-        <p className="text-gray-500 dark:text-gray-400">No chart data available</p>
+        <div className="space-y-4">
+          {isLegitimateAbsence ? (
+            <>
+              <p className="text-lg font-semibold text-gray-700 dark:text-gray-300">
+                Chart Not Available
+              </p>
+              <p className="text-gray-500 dark:text-gray-400">
+                {isSignChartType 
+                  ? `${chartTypeDisplay} is a pure sign chart that does not include house structure. This is astrologically correct.`
+                  : `${chartTypeDisplay} is not available for the given birth details or is not supported by the current calculation engine.`
+                }
+              </p>
+              <p className="text-sm text-gray-400 dark:text-gray-500">
+                This is not an error - the chart may be intentionally omitted or not applicable.
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="text-lg font-semibold text-gray-700 dark:text-gray-300">
+                Chart Data Unavailable
+              </p>
+              <p className="text-gray-500 dark:text-gray-400">
+                Unable to extract {chartTypeDisplay} from API response.
+              </p>
+              <p className="text-sm text-gray-400 dark:text-gray-500">
+                Please ensure birth details are submitted and try again.
+              </p>
+            </>
+          )}
+        </div>
       </div>
     );
   }
 
-  // Get ascendant info for display - use actual ascendant sign from API, not house 1's sign
-  // For South Indian charts, house 1 always = Mesha (fixed grid), but ascendant can be in any sign
-  // Priority order for D1 and divisional charts:
-  // 1. D1: Ascendant.sign_sanskrit (from D1.Ascendant)
-  // 2. Divisional: ascendant_sign_sanskrit (from D2/D9/etc)
-  // 3. Ascendant planet's sign (from normalized houses)
-  // 4. lagnaSignSanskrit
-  // 5. Convert ascendant_sign (English) to Sanskrit
-  const ascendantHouseObj = houses.find(h => h.planets.some(p => p.name === 'Ascendant'));
+  // 🔒 CRITICAL: Detect pure sign chart FIRST (before any normalization)
+  // If Houses is null, this is DEFINITELY a pure sign chart (D24-D60)
+  const isPureSignChartByData = apiChart.Houses === null || apiChart.Houses === undefined;
   
-  // Check D1 format first: { D1: { Ascendant: { sign_sanskrit: "Vrishchika" } } }
-  let ascendantSignName = (chartData as any).D1?.Ascendant?.sign_sanskrit
-    // Then check direct format: { Ascendant: { sign_sanskrit: "Vrishchika" } }
-    || (chartData as any).Ascendant?.sign_sanskrit
-    // Then check divisional format: { ascendant_sign_sanskrit: "Karka" }
-    || (chartData as any).ascendant_sign_sanskrit
-    // Then check Ascendant planet in normalized houses
-    || ascendantHouseObj?.planets.find(p => p.name === 'Ascendant')?.sign
-    // Then check lagnaSignSanskrit
-    || (chartData as any).lagnaSignSanskrit
-    || (chartData as any).lagnaSign;
+  // CRITICAL: Normalize chart type - SINGLE DEFAULT for empty/undefined values
+  // Map legacy chartType props to varga format, or use API chartType, or default to D1
+  let normalizedVarga: string = '';
   
-  // If we got ascendant_sign (English), convert to Sanskrit
-  if (!ascendantSignName && (chartData as any).ascendant_sign) {
-    ascendantSignName = SIGN_TO_NUM[(chartData as any).ascendant_sign] 
-      ? (chartData as any).ascendant_sign 
-      : convertToSanskritSign((chartData as any).ascendant_sign);
+  // Step 1: Try to get chartType from API data first (most authoritative)
+  if (apiChart.chartType && typeof apiChart.chartType === 'string' && apiChart.chartType.length > 0) {
+    normalizedVarga = apiChart.chartType.toUpperCase();
+  } 
+  // Step 2: Map legacy chartType prop to varga format
+  else if (chartType === 'navamsa') {
+    normalizedVarga = 'D9';
+  } else if (chartType === 'dasamsa') {
+    normalizedVarga = 'D10';
+  } else if (chartType === 'rasi' || !chartType) {
+    // Default: rasi, undefined, null, or empty string → D1
+    normalizedVarga = 'D1';
+  } else {
+    // Fallback: use chartType as-is if it's already in D format
+    // chartType is 'rasi' | 'navamsa' | 'dasamsa' at this point, so default to D1
+    normalizedVarga = 'D1';
   }
   
-  // Final fallback
-  if (!ascendantSignName) {
-    ascendantSignName = houses.find(h => h.houseNumber === 1)?.signName || 'Mesha';
+  // CRITICAL: Ensure normalizedVarga is never empty
+  if (!normalizedVarga || normalizedVarga.length === 0) {
+    normalizedVarga = 'D1'; // Final fallback
+  }
+  
+  // 🔒 CRITICAL: If Houses is null, FORCE sign chart classification
+  // This overrides any chartType detection - API data is authoritative
+  if (isPureSignChartByData) {
+    // If Houses is null but chartType is not a sign chart, log warning
+    if (!isSignChart(normalizedVarga)) {
+      console.warn(`⚠️ API returned Houses=null but chartType=${normalizedVarga} is not a sign chart. Forcing sign chart mode.`);
+      // Force to D24 as default (most common pure sign chart)
+      normalizedVarga = 'D24';
+    }
+    console.log(`🔒 PURE SIGN CHART DETECTED: Houses=null, forcing sign chart renderer for ${normalizedVarga}`);
+  }
+  
+  // DEFENSIVE ASSERTION: D1 must NEVER be treated as sign chart
+  if (normalizedVarga === 'D1' && !isHouseChart(normalizedVarga)) {
+    console.error('FATAL: D1 chart incorrectly classified as non-house chart');
+    throw new Error('FATAL: D1 must be a house chart');
+  }
+  
+  // 🔒 CRITICAL: If Houses is null, FORCE sign chart mode (override classification)
+  let isHouseBasedChart = isHouseChart(normalizedVarga);
+  let isSignChartType = isSignChart(normalizedVarga);
+  
+  // HARD OVERRIDE: If API says Houses=null, this is a pure sign chart regardless of chartType
+  if (isPureSignChartByData) {
+    isHouseBasedChart = false;
+    isSignChartType = true;
+    console.log(`🔒 FORCED SIGN CHART MODE: Houses=null detected, overriding chart type classification`);
+  }
+  
+  // DEFENSIVE ASSERTION: Chart must be either house chart or sign chart
+  // Only trigger for non-empty, non-default values
+  if (normalizedVarga !== 'D1' && !isHouseBasedChart && !isSignChartType) {
+    console.error(`FATAL: Unknown chart type: ${normalizedVarga}`);
+    throw new Error(`FATAL: Unable to determine chart type for ${normalizedVarga}. Must be house chart (D1-D20) or sign chart (D24-D60).`);
+  }
+  
+  // DEFENSIVE ASSERTION: D24-D60 must NEVER be passed to house chart components
+  if (isSignChartType && isHouseBasedChart) {
+    console.error(`FATAL: Chart ${normalizedVarga} classified as both house and sign chart`);
+    throw new Error(`FATAL: Chart ${normalizedVarga} cannot be both house and sign chart`);
+  }
+  
+  // 🔒 CRITICAL: Final guard - if Houses is null, NEVER use house chart renderer
+  if (isPureSignChartByData && isHouseBasedChart) {
+    console.error(`FATAL: Houses=null but isHouseBasedChart=true. This should never happen.`);
+    isHouseBasedChart = false;
+    isSignChartType = true;
+  }
+  
+  // Use normalizedVarga for all subsequent logic
+  const chartTypeFromData = normalizedVarga;
+
+  // CRITICAL: Ascendant sign must come ONLY from chart.Ascendant.sign
+  // NO fallbacks. NO derivation from planets. NO defaults.
+  const ascendantSign = apiChart.Ascendant.sign_sanskrit || apiChart.Ascendant.sign;
+  const ascendantHouse = apiChart.Ascendant.house; // Only for house charts
+  
+  // RUNTIME ASSERTION: Ascendant sign must exist
+  if (!ascendantSign) {
+    throw new Error('FATAL: Ascendant sign is missing - cannot render chart');
   }
 
-  // Extract ascendant_house from API (for varga charts: house = sign)
-  // Priority: 1. ascendant_house from divisional chart format, 2. Ascendant.house from D1 format
-  const ascendantHouse = (chartData as any).ascendant_house !== undefined
-    ? (chartData as any).ascendant_house  // From divisional chart format: { ascendant_house: 4 }
-    : ((chartData as any).D1?.Ascendant?.house !== undefined
-      ? (chartData as any).D1.Ascendant.house  // From D1 format: { D1: { Ascendant: { house: 1 } } }
-      : ((chartData as any).Ascendant?.house !== undefined
-        ? (chartData as any).Ascendant.house  // From direct format: { Ascendant: { house: 1 } }
-        : undefined));
+  // 🔒 CRITICAL: Final safety guards before rendering
+  // SAFETY GUARD: Prevent house charts from being rendered without houses
+  if (isHouseBasedChart && (!housesForChart || housesForChart.length !== 12)) {
+    throw new Error(
+      `FATAL: House-based chart ${chartTypeFromData} requires 12 houses, got ${housesForChart?.length || 0}`
+    );
+  }
+  
+  // SAFETY GUARD: Prevent sign charts from being passed to house chart components
+  if (isSignChartType && housesForChart && housesForChart.length > 0) {
+    console.warn(`WARNING: Sign chart ${chartTypeFromData} has houses data - ignoring houses`);
+  }
+  
+  // 🔒 CRITICAL: Final guard - if Houses is null, MUST use sign chart renderer
+  if (isPureSignChartByData && isHouseBasedChart) {
+    console.error(`FATAL: Houses=null detected but routing to house chart renderer. Forcing sign chart renderer.`);
+    isHouseBasedChart = false;
+    isSignChartType = true;
+  }
 
   return (
     <div className="glass rounded-xl p-6 border border-white/20">
-      {/* Toggle */}
-      <div className="flex items-center justify-between mb-6 pb-4 border-b border-white/10">
+      {/* Chart Orientation Toggle - Always visible for ALL charts (D1-D60) */}
+      <div className="flex items-center justify-between mb-6">
         <div>
           <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
-            {chartType === 'navamsa' ? 'Navamsa Chart (D9)' : 
+            {vargaName || (chartType === 'navamsa' ? 'Navamsa Chart (D9)' : 
              chartType === 'dasamsa' ? 'Dasamsa Chart (D10)' : 
-             (chartData as any)?.chartType ? `${(chartData as any).chartType} Chart` :
-             'Kundli Chart'}
+             'Kundli Chart (D1)')}
           </h3>
-          {chartData && ((chartData as any).lagnaSign || (chartData as any).lagnaSignSanskrit) && (
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-              Lagna: {(chartData as any).lagnaSignSanskrit || (chartData as any).lagnaSign}
-              {((chartData as any).lagnaDegree !== undefined) && ` (${((chartData as any).lagnaDegree).toFixed(2)}°)`}
-            </p>
-          )}
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            {isSignChartType ? (
+              <>Ascendant: {ascendantSign} • Pure Sign Chart</>
+            ) : isHouseBasedChart && ascendantHouse !== undefined ? (
+              <>Ascendant: {ascendantSign} (House {ascendantHouse})</>
+            ) : (
+              <>Ascendant: {ascendantSign}</>
+            )}
+          </p>
         </div>
 
+        {/* Orientation Toggle - ALWAYS visible for ALL charts (D1-D60) */}
         <div className="flex items-center space-x-3">
-          <span className={`text-sm font-medium transition-colors ${
-            chartStyle === 'south' ? 'text-amber-600 dark:text-amber-400' : 'text-gray-500'
-          }`}>
+          <span className={`text-sm font-medium ${chartStyle === 'south' ? 'text-amber-600' : 'text-gray-500'}`}>
             South
           </span>
           <button
             onClick={() => setChartStyle(chartStyle === 'north' ? 'south' : 'north')}
             className="p-2 rounded-lg glass border border-white/20 hover:border-amber-500/50 transition-smooth"
-            aria-label="Toggle chart style"
+            aria-label="Toggle chart orientation"
           >
-            <svg className="w-4 h-4 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
             </svg>
           </button>
-          <span className={`text-sm font-medium transition-colors ${
-            chartStyle === 'north' ? 'text-amber-600 dark:text-amber-400' : 'text-gray-500'
-          }`}>
+          <span className={`text-sm font-medium ${chartStyle === 'north' ? 'text-amber-600' : 'text-gray-500'}`}>
             North
           </span>
         </div>
       </div>
 
-      {/* Chart Display */}
-      <div className="w-full bg-gradient-to-br from-amber-50/30 to-orange-50/30 dark:from-amber-900/10 dark:to-orange-900/10 rounded-lg p-6 border border-amber-200/30 dark:border-amber-800/30 flex justify-center items-center min-h-[400px]">
-        {chartStyle === 'north' ? (
+      {/* Chart Display - STRICT SEPARATION: House charts and sign charts NEVER share renderers */}
+      <div className="w-full flex justify-center items-center min-h-[500px]">
+        {(() => {
+          // 🔒 CRITICAL: Log routing decision for debugging
+          console.log(`🔀 CHART ROUTING DECISION:`, {
+            chartType: chartTypeFromData,
+            isHouseBasedChart,
+            isSignChartType,
+            isPureSignChartByData,
+            housesLength: housesForChart?.length || 0,
+            chartStyle,
+            apiHouses: apiChart.Houses === null ? 'null' : Array.isArray(apiChart.Houses) ? `array[${apiChart.Houses.length}]` : typeof apiChart.Houses,
+          });
+          
+          if (isHouseBasedChart) {
+            // House-based charts (D1-D20): Use house chart renderers
+            console.log(`🏠 ROUTING TO HOUSE CHART RENDERER: ${chartStyle === 'north' ? 'NorthIndianChart' : 'SouthIndianChart'}`);
+            return chartStyle === 'north' ? (
+              <NorthIndianChart 
+                houses={housesForChart}
+                ascendantSign={ascendantSign}
+                ascendantHouse={ascendantHouse}
+              />
+            ) : (
+              <SouthIndianChart 
+                houses={housesForChart}
+              />
+            );
+          } else if (isSignChartType) {
+            // Sign-based charts (D24-D60): Use sign chart renderers ONLY
+            console.log(`🔒 ROUTING TO SIGN CHART RENDERER: ${chartStyle === 'north' ? 'NorthIndianSignChart' : 'SouthIndianSignChart'}`);
+            return chartStyle === 'north' ? (
+              <NorthIndianSignChart 
+                ascendant={{
+                  sign: apiChart.Ascendant.sign,
+                  sign_sanskrit: apiChart.Ascendant.sign_sanskrit,
+                  sign_index: apiChart.Ascendant.sign_index,
+                  degree: apiChart.Ascendant.degree,
+                }}
+                planets={apiChart.Planets}
+              />
+            ) : (
+              <SouthIndianSignChart 
+                ascendant={{
+                  sign: apiChart.Ascendant.sign,
+                  sign_sanskrit: apiChart.Ascendant.sign_sanskrit,
+                  degree: apiChart.Ascendant.degree,
+                }}
+                planets={apiChart.Planets}
+              />
+            );
+          } else {
+            // Default to D1 (house mode) for unknown chart types
+            console.warn(`⚠️ UNKNOWN CHART TYPE, DEFAULTING TO HOUSE CHART: ${chartTypeFromData}`);
+            return chartStyle === 'north' ? (
           <NorthIndianChart 
-            houses={houses} 
-            ascendantSign={ascendantSignName}
-            ascendantHouse={ascendantHouse} // Pass API's ascendant_house for varga charts
+            houses={housesForChart}
+            ascendantSign={ascendantSign}
+            ascendantHouse={ascendantHouse}
           />
         ) : (
-          <SouthIndianChart houses={houses} />
-        )}
-      </div>
-
-      {/* Chart Info */}
-      <div className="mt-4 text-xs text-gray-600 dark:text-gray-400 text-center space-y-1">
-        <p className="font-semibold">
-          Lagna: {ascendantSignName} | Style: {chartStyle === 'north' ? 'North Indian (Diamond)' : 'South Indian (Rectangular)'}
-        </p>
-        <p>Vedic Sidereal System | {chartData.ayanamsa || 'Lahiri'} Ayanamsa | Planets: {chartData.planets?.length || 0}</p>
-        <p className="text-xs opacity-75">API Lagna: {chartData.lagnaSign || chartData.lagna || 'N/A'}</p>
+              <SouthIndianChart 
+                houses={housesForChart}
+              />
+            );
+          }
+        })()}
       </div>
     </div>
   );

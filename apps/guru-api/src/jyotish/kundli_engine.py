@@ -6,6 +6,7 @@ following ancient Vedic rules and using Swiss Ephemeris.
 """
 
 import swisseph as swe
+import math
 from typing import Dict, List
 from datetime import datetime
 
@@ -178,10 +179,15 @@ def get_planet_house(planet_degree: float, ascendant_degree: float, house_cusps:
 
 def get_planet_house_jhora(planet_degree: float, ascendant_degree: float, house_cusps: List[float]) -> int:
     """
-    Calculate which house a planet is in using JHORA method (sign-based).
+    Calculate which house a planet is in using Whole Sign house system.
     
-    JHORA uses a sign-based house calculation method: house = sign number.
-    This is essentially Whole Sign houses where each sign corresponds to its house number.
+    🔒 DO NOT MODIFY — JHora compatible
+    Whole Sign House System:
+    - House 1 = Ascendant sign
+    - House 2 = Next sign clockwise from ascendant
+    - House 3 = Next sign clockwise, etc.
+    
+    Formula: house = ((planet_sign_index - ascendant_sign_index + 12) % 12) + 1
     
     Args:
         planet_degree: Planet's sidereal longitude
@@ -189,22 +195,28 @@ def get_planet_house_jhora(planet_degree: float, ascendant_degree: float, house_
         house_cusps: List of 12 house cusp degrees (for reference, not used in calculation)
     
     Returns:
-        House number (1-12) using JHORA method
+        House number (1-12) using Whole Sign system
     """
     planet_deg = normalize_degrees(planet_degree)
     asc_deg = normalize_degrees(ascendant_degree)
     
     # Get sign indices (0-11)
-    planet_sign = int(planet_deg / 30.0)
-    asc_sign = int(asc_deg / 30.0)
+    planet_sign_index = int(planet_deg / 30.0)
+    asc_sign_index = int(asc_deg / 30.0)
     
-    # Convert to 1-12 format
-    planet_sign_12 = planet_sign + 1
-    asc_sign_12 = asc_sign + 1
+    # Whole Sign house calculation:
+    # House 1 = ascendant sign
+    # House 2 = next sign clockwise from ascendant
+    # Formula: ((planet_sign - asc_sign + 12) % 12) + 1
+    house = ((planet_sign_index - asc_sign_index + 12) % 12) + 1
     
-    # JHORA house calculation: house = sign number
-    # This is the simplest Whole Sign house system
-    house = planet_sign_12
+    # DEBUG LOG: Show calculation details
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.debug(f"   get_planet_house_jhora: planet={planet_deg}° (sign_idx={planet_sign_index}), asc={asc_deg}° (sign_idx={asc_sign_index}) → house={house}")
+    
+    # RUNTIME ASSERTION: House must be 1-12
+    assert 1 <= house <= 12, f"House must be 1-12, got {house} (planet_sign={planet_sign_index}, asc_sign={asc_sign_index})"
     
     return house
 
@@ -291,12 +303,42 @@ def generate_kundli(
     
     # Calculate house position for each planet using JHORA method
     planets_with_houses = {}
+    import logging
+    logger = logging.getLogger(__name__)
+    
+    logger.info(f"🔍 HOUSE CALCULATION DEBUG:")
+    logger.info(f"   Ascendant: {asc_sidereal}° (sign_index {get_sign_index(asc_sidereal)})")
+    
     for planet_name, planet_full in planets_full.items():
         # Use longitude from JHORA calculation
         planet_degree = planet_full.get("longitude", 0)
+        planet_sign_idx = get_sign_index(planet_degree)
         # Use JHORA method for house calculation
         house_num = get_planet_house_jhora(planet_degree, asc_sidereal, houses_sidereal)
         sign_index = get_sign_index(planet_degree)
+        
+        # DEBUG LOG: Show calculation details
+        logger.info(f"   {planet_name}: {planet_degree}° (sign_index {planet_sign_idx}) → house {house_num}")
+        
+        # Compute DMS exactly as Prokerala (EXACT Prokerala/JHora precision)
+        # 🔒 DO NOT MODIFY — JHora compatible
+        # Preserve absolute longitude as float (0-360) without rounding
+        # Compute sign_degree = absolute_longitude % 30
+        sign_degree = get_degrees_in_sign(planet_degree)
+        # Compute DMS exactly as Prokerala:
+        # degrees = floor(sign_degree)
+        # minutes = floor((sign_degree - degrees) * 60)
+        # seconds = floor((((sign_degree - degrees) * 60) - minutes) * 60)
+        dms_degrees = int(math.floor(sign_degree))
+        dms_minutes_float = (sign_degree - dms_degrees) * 60.0
+        dms_minutes = int(math.floor(dms_minutes_float))
+        dms_seconds = int(math.floor((dms_minutes_float - dms_minutes) * 60.0))
+        # Use JHORA values if available (more precise), otherwise compute from longitude
+        degree_dms = planet_full.get("degree_in_sign", dms_degrees)
+        arcminutes = planet_full.get("minutes_in_sign", dms_minutes)
+        arcseconds = planet_full.get("seconds_in_sign", dms_seconds)
+        # Formatted string: "25° 15′ 00″"
+        degree_formatted = f"{degree_dms}° {arcminutes:02d}′ {arcseconds:02d}″"
         
         planets_with_houses[planet_name] = {
             "degree": round(planet_degree, 4),
@@ -311,10 +353,11 @@ def generate_kundli(
             "pada": planet_full.get("pada", 1),
             "retro": planet_full.get("retro", False),
             "speed": round(planet_full.get("speed", 0), 6),
-            # Add JHORA deg-min-sec format
-            "degree_dms": planet_full.get("degree", 0),
-            "arcminutes": planet_full.get("arcminutes", 0),
-            "arcseconds": planet_full.get("arcseconds", 0)
+            # Add JHORA deg-min-sec format (EXACT Prokerala/JHora precision)
+            "degree_dms": degree_dms,
+            "arcminutes": arcminutes,
+            "arcseconds": arcseconds,
+            "degree_formatted": degree_formatted
         }
     
     # Get Ascendant nakshatra and pada
@@ -330,6 +373,26 @@ def generate_kundli(
     # RUNTIME ASSERTION: Enforce lagna house invariant
     assert asc_house == 1, f"Lagna house must be 1, got {asc_house}"
     
+    # Compute Ascendant DMS exactly as Prokerala (EXACT Prokerala/JHora precision)
+    # 🔒 DO NOT MODIFY — JHora compatible
+    # Preserve absolute longitude as float (0-360) without rounding
+    # Compute sign_degree = absolute_longitude % 30
+    asc_sign_degree = get_degrees_in_sign(asc_sidereal)
+    # Compute DMS exactly as Prokerala:
+    # degrees = floor(sign_degree)
+    # minutes = floor((sign_degree - degrees) * 60)
+    # seconds = floor((((sign_degree - degrees) * 60) - minutes) * 60)
+    asc_dms_degrees = int(math.floor(asc_sign_degree))
+    asc_dms_minutes_float = (asc_sign_degree - asc_dms_degrees) * 60.0
+    asc_dms_minutes = int(math.floor(asc_dms_minutes_float))
+    asc_dms_seconds = int(math.floor((asc_dms_minutes_float - asc_dms_minutes) * 60.0))
+    # Use JHORA values if available (more precise), otherwise compute from longitude
+    asc_degree_dms = asc_jhora.get("degree_in_sign", asc_dms_degrees)
+    asc_arcminutes = asc_jhora.get("minutes_in_sign", asc_dms_minutes)
+    asc_arcseconds = asc_jhora.get("seconds_in_sign", asc_dms_seconds)
+    # Formatted string: "25° 15′ 00″"
+    asc_degree_formatted = f"{asc_degree_dms}° {asc_arcminutes:02d}′ {asc_arcseconds:02d}″"
+    
     # Build Kundli structure
     kundli = {
         "Ascendant": {
@@ -343,23 +406,27 @@ def generate_kundli(
             "nakshatra": asc_nakshatra["name"],
             "nakshatra_index": asc_nakshatra["index"],
             "pada": asc_nakshatra["pada"],
-            # Add JHORA deg-min-sec format
-            "degree_dms": asc_jhora.get("degree", 0),
-            "arcminutes": asc_jhora.get("arcminutes", 0),
-            "arcseconds": asc_jhora.get("arcseconds", 0)
+            # Add JHORA deg-min-sec format (EXACT Prokerala/JHora precision)
+            "degree_dms": asc_degree_dms,
+            "arcminutes": asc_arcminutes,
+            "arcseconds": asc_arcseconds,
+            "degree_formatted": asc_degree_formatted
         },
         "Planets": planets_with_houses,
         "Houses": [
             {
-                "house": i + 1,
-                "degree": round(house_degree, 4),
-                "sign": get_sign(house_degree),
-                "sign_sanskrit": get_sign_sanskrit(house_degree),
-                "sign_index": get_sign_index(house_degree),
-                "degrees_in_sign": round(get_degrees_in_sign(house_degree), 4),
-                "lord": get_house_lord_from_sign(get_sign_index(house_degree))
+                "house": house_num,
+                # 🔒 DO NOT MODIFY — JHora compatible
+                # Whole Sign: House 1 = Ascendant sign, House 2 = next sign clockwise, etc.
+                # Formula: sign_index = (asc_sign_index + house_num - 1) % 12
+                "sign_index": (asc_sign_index + house_num - 1) % 12,
+                "sign": SIGNS[(asc_sign_index + house_num - 1) % 12],
+                "sign_sanskrit": SIGNS_SANSKRIT[(asc_sign_index + house_num - 1) % 12],
+                "degree": round(houses_sidereal[house_num - 1], 4) if house_num <= len(houses_sidereal) else 0.0,  # Keep cusp degree for reference
+                "degrees_in_sign": round(get_degrees_in_sign(houses_sidereal[house_num - 1]), 4) if house_num <= len(houses_sidereal) else 0.0,
+                "lord": get_house_lord_from_sign((asc_sign_index + house_num - 1) % 12)
             }
-            for i, house_degree in enumerate(houses_sidereal)
+            for house_num in range(1, 13)
         ]
     }
     

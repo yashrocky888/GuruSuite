@@ -17,8 +17,8 @@ import {
 } from '@heroicons/react/24/outline';
 import { FadeIn, SlideUp, StaggerContainer, StaggerItem } from '@/frontend/animations';
 import { useBirthStore } from '@/store/useBirthStore';
-import { getDashboardData, getKundli } from '@/services/api';
-import { calculateCurrentDasha } from '@/utils/dasha';
+import { getKundli } from '@/services/api';
+// 🔒 ASTROLOGY LOCK: Removed calculateCurrentDasha import - UI must NEVER calculate astrology
 
 export default function DashboardPage() {
   const { birthDetails, userId } = useBirthStore();
@@ -28,67 +28,114 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchDashboard = async () => {
       try {
-        // Try to get dashboard data from API
-        let data = await getDashboardData(userId);
+        // CRITICAL: /dashboard endpoint does NOT exist - use /kundli directly
+        // Extract dashboard data from D1 chart
+        if (!birthDetails) {
+          setDashboardData({
+            success: false,
+            message: 'Birth details required',
+            error: true,
+          });
+          setLoading(false);
+          return;
+        }
+
+        const kundliResponse = await getKundli(userId || undefined, birthDetails);
         
-        // If dashboard API doesn't have data, extract from kundli
-        if (!data || !data.ascendant || !data.moonSign) {
-          try {
-            const kundliResponse = await getKundli(userId, birthDetails);
-            
-            // Extract D1 chart data
-            // Handle both response formats: direct {D1: {...}} or nested {data: {kundli: {D1: {...}}}}
-            const d1 = (kundliResponse as any).D1 || (kundliResponse as any).data?.kundli?.D1;
-            
-            if (d1) {
-              const ascendant = d1.Ascendant;
-              const planets = d1.Planets || {};
-              const moon = planets.Moon;
-              
-              // Get current_dasha from API response (preferred method)
-              let currentDasha = 'N/A';
-              
-              // Check for current_dasha in various response formats
-              if ((kundliResponse as any).current_dasha?.display) {
-                currentDasha = (kundliResponse as any).current_dasha.display;
-              } else if ((kundliResponse as any).data?.current_dasha?.display) {
-                currentDasha = (kundliResponse as any).data.current_dasha.display;
-              } 
-              // Fallback: Calculate from Moon's nakshatra_index if API doesn't provide it
-              else if (moon?.nakshatra_index !== undefined && moon?.nakshatra_index !== null && birthDetails?.date) {
-                currentDasha = calculateCurrentDasha(moon.nakshatra_index, birthDetails.date);
-              }
-              
-              data = {
-                currentDasha: currentDasha,
-                ascendant: ascendant?.sign_sanskrit || ascendant?.sign || 'N/A',
-                moonSign: moon?.sign_sanskrit || moon?.sign || 'N/A',
-                system: 'Vedic',
-                ayanamsa: 'Lahiri'
-              };
-            }
-          } catch (kundliError) {
-            // If kundli fetch fails, use default
-            console.warn('Could not fetch kundli for dashboard:', kundliError);
-          }
+        // Extract D1 chart data
+        // Handle both response formats: direct {D1: {...}} or nested {data: {kundli: {D1: {...}}}}
+        const d1 = (kundliResponse as any).D1 || (kundliResponse as any).data?.kundli?.D1;
+        
+        if (!d1) {
+          setDashboardData({
+            success: false,
+            message: 'D1 chart data not found in API response',
+            error: true,
+          });
+          setLoading(false);
+          return;
+        }
+
+        const ascendant = d1.Ascendant;
+        const planets = d1.Planets || {};
+        const moon = planets.Moon;
+        
+        // RUNTIME ASSERTION: Ascendant must exist and have sign
+        if (!ascendant || (!ascendant.sign_sanskrit && !ascendant.sign)) {
+          setDashboardData({
+            success: false,
+            message: 'Ascendant data missing in API response',
+            error: true,
+          });
+          setLoading(false);
+          return;
         }
         
-        setDashboardData(data);
-      } catch (error: any) {
-        // Set default data for 404 or other errors
+        // RUNTIME ASSERTION: Moon must exist and have sign
+        if (!moon || (!moon.sign_sanskrit && !moon.sign)) {
+          setDashboardData({
+            success: false,
+            message: 'Moon data missing in API response',
+            error: true,
+          });
+          setLoading(false);
+          return;
+        }
+
+        // RUNTIME ASSERTION: Ascendant.house must be 1
+        if (ascendant.house !== undefined && ascendant.house !== 1) {
+          console.error(`❌ VIOLATION: Ascendant house must be 1, got ${ascendant.house}`);
+        }
+        
+        // 🔒 ASTROLOGY LOCK: UI must NEVER calculate astrology.
+        // API is the single source of truth.
+        // Get current_dasha from API response ONLY - NO CALCULATIONS
+        
+        let currentDasha = 'N/A';
+        
+        // Check for current_dasha in various response formats
+        if ((kundliResponse as any).current_dasha?.display) {
+          currentDasha = (kundliResponse as any).current_dasha.display;
+        } else if ((kundliResponse as any).data?.current_dasha?.display) {
+          currentDasha = (kundliResponse as any).data.current_dasha.display;
+        }
+        // NO FALLBACK CALCULATIONS - If API doesn't provide, show "N/A"
+        
         setDashboardData({
-          success: false,
-          message: 'Dashboard data not available',
-          currentDasha: 'N/A',
-          ascendant: 'N/A',
-          moonSign: 'N/A',
+          success: true,
+          currentDasha: currentDasha,
+          ascendant: ascendant.sign_sanskrit || ascendant.sign,
+          moonSign: moon.sign_sanskrit || moon.sign,
+          system: 'Vedic',
+          ayanamsa: 'Lahiri'
         });
+      } catch (error: any) {
+        // Handle 404 gracefully - show "Not available" instead of "Data Error"
+        if (error?.response?.status === 404) {
+          setDashboardData({
+            success: false,
+            message: 'Kundli data not available. Please submit birth details first.',
+            error: false, // Not an error, just not available
+          });
+        } else {
+          // Log error and show error state
+          console.error('Dashboard data fetch failed:', error);
+          setDashboardData({
+            success: false,
+            message: error.message || 'Failed to fetch dashboard data',
+            error: true,
+          });
+        }
       } finally {
         setLoading(false);
       }
     };
 
-    fetchDashboard();
+    if (birthDetails) {
+      fetchDashboard();
+    } else {
+      setLoading(false);
+    }
   }, [userId, birthDetails]);
 
   const quickLinks = [

@@ -8,7 +8,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { SparklesIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
-import { getGuruInterpretation, GuruRequest } from '@/services/api';
+import { getGuruInterpretation, GuruRequest, handleError } from '@/services/api';
 
 interface GuruReadingProps {
   chartData?: any;
@@ -40,7 +40,9 @@ export default function GuruReading({ chartData, question }: GuruReadingProps) {
       const response = await getGuruInterpretation(request);
       setReading(response.response || response.message || 'No response received');
     } catch (err: any) {
-      setError(err.message || 'Failed to get Guru reading');
+      // CRITICAL: Properly classify error (Axios vs runtime)
+      const { message } = handleError(err, "GuruReading.fetchReading");
+      setError(message || 'Failed to get Guru reading');
     } finally {
       setLoading(false);
     }

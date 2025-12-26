@@ -10,7 +10,7 @@ import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { CalendarIcon, ClockIcon, MapPinIcon } from '@heroicons/react/24/outline';
 import { useBirthStore } from '@/store/useBirthStore';
-import { submitBirthDetails, BirthDetails, LocationSuggestion } from '@/services/api';
+import { submitBirthDetails, BirthDetails, LocationSuggestion, handleError } from '@/services/api';
 import { FadeIn, SlideUp } from '@/frontend/animations';
 import LocationAutocomplete from './LocationAutocomplete';
 
@@ -46,11 +46,25 @@ export default function BirthDetailsForm() {
   // Update coordinates when location is selected
   useEffect(() => {
     if (selectedLocation) {
+      if (process.env.NODE_ENV === 'development') {
+        console.log('📍 Location selected:', {
+          displayName: selectedLocation.displayName,
+          city: selectedLocation.city,
+          country: selectedLocation.country,
+          latitude: selectedLocation.latitude,
+          longitude: selectedLocation.longitude,
+          timezone: selectedLocation.timezone,
+        });
+      }
+      
       setFormData(prev => ({
         ...prev,
         latitude: selectedLocation.latitude,
         longitude: selectedLocation.longitude,
         place: selectedLocation.displayName,
+        city: selectedLocation.city,
+        country: selectedLocation.country,
+        timezone: selectedLocation.timezone,
       }));
     }
   }, [selectedLocation]);
@@ -78,16 +92,38 @@ export default function BirthDetailsForm() {
         throw new Error('Please fill in all required fields');
       }
 
-      // Get coordinates from selected location or form data
+      // Validate coordinates are present
+      if (!formData.latitude || !formData.longitude || !selectedLocation?.latitude || !selectedLocation?.longitude) {
+        throw new Error('Please select a location from the suggestions to get coordinates');
+      }
+
+      // Get coordinates from selected location (required)
+      if (!selectedLocation?.latitude || !selectedLocation?.longitude) {
+        throw new Error('Location not selected properly. Please select a location from the suggestions.');
+      }
+
       const details: BirthDetails = {
         date: formData.date!,
         time: formData.time!,
-        city: formData.city!,
-        country: formData.country!,
-        latitude: formData.latitude || 0,
-        longitude: formData.longitude || 0,
-        timezone: formData.timezone,
+        city: selectedLocation.city || formData.city || formData.place?.split(',')[0] || '',
+        country: selectedLocation.country || formData.country || formData.place?.split(',')[1]?.trim() || '',
+        latitude: selectedLocation.latitude,
+        longitude: selectedLocation.longitude,
+        timezone: selectedLocation.timezone || formData.timezone || 'UTC',
       };
+
+      // Development mode: Log the payload
+      if (process.env.NODE_ENV === 'development') {
+        console.log('📤 Submitting birth details:', {
+          date: details.date,
+          time: details.time,
+          city: details.city,
+          country: details.country,
+          latitude: details.latitude,
+          longitude: details.longitude,
+          timezone: details.timezone,
+        });
+      }
 
       // Submit to backend
       const response = await submitBirthDetails(details);
@@ -104,41 +140,33 @@ export default function BirthDetailsForm() {
       }
       
       // Redirect to dashboard
-      router.push('/dashboard');
+      // CRITICAL: router.push can throw runtime errors (navigation errors)
+      // These are NOT Axios errors and must be handled separately
+      try {
+        router.push('/dashboard');
+      } catch (navError: any) {
+        // Navigation/runtime error - NOT an API error
+        const { message } = handleError(navError, "BirthDetailsForm.navigation");
+        setError(`Navigation error: ${message}`);
+        return; // Don't continue if navigation fails
+      }
     } catch (err: any) {
-      // Better error handling
-      let errorMessage = 'Failed to submit birth details';
+      // CRITICAL: Properly classify error (Axios vs runtime)
+      // submitBirthDetails uses axios, so errors here are likely Axios errors
+      // But we must check because router.push errors could bubble up
+      const { message, isAxiosError } = handleError(err, "BirthDetailsForm.submit");
       
-      // Check if it's a 404 error (endpoint not found)
-      if (err?.response?.status === 404) {
-        // This is handled by the API service workaround, but just in case
-        errorMessage = 'Birth details endpoint not available. Using local storage.';
-      } else if (err.message) {
-        errorMessage = err.message;
-      } else if ((err as any).response?.data) {
-        const errorData = (err as any).response.data;
-        // Handle FastAPI error format
-        if (typeof errorData === 'string') {
-          errorMessage = errorData;
-        } else if (errorData.detail) {
-          if (typeof errorData.detail === 'string') {
-            errorMessage = errorData.detail;
-          } else if (errorData.detail.message) {
-            errorMessage = errorData.detail.message;
-          } else {
-            errorMessage = errorData.detail.error || JSON.stringify(errorData.detail);
-          }
-        } else if (errorData.message) {
-          errorMessage = errorData.message;
-        } else if (errorData.error) {
-          errorMessage = errorData.error;
+      // Extract user-friendly message
+      let errorMessage = message;
+      
+      // If it's an Axios error, provide more context
+      if (isAxiosError) {
+        if (err?.response?.status === 404) {
+          // This is handled by the API service workaround, but just in case
+          errorMessage = 'Birth details endpoint not available. Using local storage.';
+        } else if (err?.response?.status >= 500) {
+          errorMessage = 'Server error. Please try again later.';
         }
-      } else if ((err as any).code === 'ECONNREFUSED' || (err as any).message?.includes('Network Error')) {
-        errorMessage = 'Cannot connect to server. Please ensure the backend is running on port 8000.';
-      } else if ((err as any).response?.status === 404) {
-        errorMessage = 'API endpoint not found. Please check backend configuration.';
-      } else if ((err as any).response?.status >= 500) {
-        errorMessage = 'Server error. Please try again later.';
       }
       
       setError(errorMessage);

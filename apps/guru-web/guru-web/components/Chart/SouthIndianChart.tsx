@@ -20,6 +20,9 @@
 
 'use client';
 
+// 🔥 VERIFICATION LOG - If this appears for D24, routing is wrong
+console.log("🔥 SouthIndianChart LOADED", Date.now());
+
 import React, { useMemo } from 'react';
 import { southRectPositions } from './coordinates';
 import { normalizeSignName } from './houseUtils';
@@ -45,15 +48,24 @@ interface SouthIndianChartProps {
 }
 
 export default function SouthIndianChart({ houses }: SouthIndianChartProps) {
+  // 🔒 CRITICAL: Log when this component is called (should NEVER happen for D24-D60)
+  console.log("🏠 SouthIndianChart CALLED with houses.length:", houses?.length || 0);
+  
   // GUARD RAIL: This component is ONLY for house-based charts (D1-D20)
   // Sign charts (D24-D60) must use SouthIndianSignChart component
   if (!houses || houses.length !== 12) {
+    console.error("❌ FATAL: SouthIndianChart called incorrectly!");
+    console.error("   Expected 12 houses, got:", houses?.length || 0);
+    console.error("   This component is ONLY for house-based charts (D1-D20)");
+    console.error("   Sign charts (D24-D60) must use SouthIndianSignChart component instead.");
     throw new Error(
       `FATAL: SouthIndianChart used incorrectly. ` +
       `Expected 12 houses, got ${houses?.length || 0}. ` +
       `Sign charts (D24-D60) must use SouthIndianSignChart component instead.`
     );
   }
+  
+  console.log("🏠 SouthIndianChart RENDERING (house-based chart)");
   
   // RUNTIME ASSERTION: Ascendant must be in house 1
   const ascendantHouse = houses.find(h => 

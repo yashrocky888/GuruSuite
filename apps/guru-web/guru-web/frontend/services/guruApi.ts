@@ -7,8 +7,9 @@
 
 import axios from 'axios';
 
-// TODO: Update with actual API base URL
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+// CANONICAL API URL - asia-south1 region (DO NOT CHANGE)
+const DEPLOYED_API_URL = 'https://guru-api-660206747784.asia-south1.run.app';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || `${DEPLOYED_API_URL}/api/v1`;
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,

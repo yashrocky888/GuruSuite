@@ -1,0 +1,113 @@
+{
+  "varga_type": "D24",
+  "birth_data": {
+    "dob": "1995-05-16",
+    "time": "18:38:00",
+    "timezone": "Asia/Kolkata",
+    "latitude": 12.9716,
+    "longitude": 77.5946,
+    "ayanamsa": "Lahiri"
+  },
+  "Ascendant": {
+    "sign": null,
+    "sign_index": null,
+    "house": 1,
+    "degree": null,
+    "minute": null,
+    "second": null,
+    "degrees_in_sign": null,
+    "note": "TO BE POPULATED FROM PROKERALA"
+  },
+  "Planets": {
+    "Sun": {
+      "sign": null,
+      "sign_index": null,
+      "house": null,
+      "degree": null,
+      "minute": null,
+      "second": null,
+      "degrees_in_sign": null,
+      "note": "TO BE POPULATED FROM PROKERALA"
+    },
+    "Moon": {
+      "sign": null,
+      "sign_index": null,
+      "house": null,
+      "degree": null,
+      "minute": null,
+      "second": null,
+      "degrees_in_sign": null,
+      "note": "TO BE POPULATED FROM PROKERALA"
+    },
+    "Mars": {
+      "sign": null,
+      "sign_index": null,
+      "house": null,
+      "degree": null,
+      "minute": null,
+      "second": null,
+      "degrees_in_sign": null,
+      "note": "TO BE POPULATED FROM PROKERALA"
+    },
+    "Mercury": {
+      "sign": null,
+      "sign_index": null,
+      "house": null,
+      "degree": null,
+      "minute": null,
+      "second": null,
+      "degrees_in_sign": null,
+      "note": "TO BE POPULATED FROM PROKERALA"
+    },
+    "Jupiter": {
+      "sign": null,
+      "sign_index": null,
+      "house": null,
+      "degree": null,
+      "minute": null,
+      "second": null,
+      "degrees_in_sign": null,
+      "note": "TO BE POPULATED FROM PROKERALA"
+    },
+    "Venus": {
+      "sign": null,
+      "sign_index": null,
+      "house": null,
+      "degree": null,
+      "minute": null,
+      "second": null,
+      "degrees_in_sign": null,
+      "note": "TO BE POPULATED FROM PROKERALA"
+    },
+    "Saturn": {
+      "sign": null,
+      "sign_index": null,
+      "house": null,
+      "degree": null,
+      "minute": null,
+      "second": null,
+      "degrees_in_sign": null,
+      "note": "TO BE POPULATED FROM PROKERALA"
+    },
+    "Rahu": {
+      "sign": null,
+      "sign_index": null,
+      "house": null,
+      "degree": null,
+      "minute": null,
+      "second": null,
+      "degrees_in_sign": null,
+      "note": "TO BE POPULATED FROM PROKERALA"
+    },
+    "Ketu": {
+      "sign": null,
+      "sign_index": null,
+      "house": null,
+      "degree": null,
+      "minute": null,
+      "second": null,
+      "degrees_in_sign": null,
+      "note": "TO BE POPULATED FROM PROKERALA"
+    }
+  }
+}
