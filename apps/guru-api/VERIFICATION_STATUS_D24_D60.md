@@ -4,10 +4,10 @@
 **Last Updated:** 2024-12-25  
 **Scope:** API calculations in `apps/guru-api/src/jyotish/varga_drik.py`  
 **UI Changes:** ❌ FORBIDDEN - UI is renderer only  
-**Status:** ✅ ALL VARGA FORMULAS VERIFIED - 100% MATCH WITH PROKERALA  
-**Verification Date:** 2024-12-25  
+**Status:** ❌ NOT VERIFIED - D24 PLANET SIGNS DO NOT MATCH PROKERALA  
+**Verification Date:** N/A - Verification FAILED  
 **Test Birth Data:** 1995-05-16, 18:38 IST, Bangalore (Lahiri Ayanamsa)  
-**Match Rate:** 60/60 planets (100%) across D24, D27, D30, D40, D45, D60
+**Match Rate:** 0/10 planets for D24 - CRITICAL MISMATCHES FOUND
 
 ---
 
@@ -15,7 +15,7 @@
 
 ### D24 — CHATURVIMSHAMSA (SIDDHAMSA)
 
-**Implementation:** ✅ PROKERALA VERIFIED FORMULA  
+**Implementation:** ⚠️ FORMULA IMPLEMENTED BUT NOT VERIFIED  
 **Location:** `varga_drik.py` lines 239-268
 
 **Formula:**
@@ -30,9 +30,26 @@
 5. d24_sign_index = (start + amsa) % 12
 ```
 
-**Classical Source:** Prokerala (Industry Standard) - VERIFIED FROM REVERSE ENGINEERING  
-**Prokerala Default:** ✅ 100% MATCH VERIFIED  
-**Status:** ✅ VERIFIED - 10/10 PLANETS MATCH PROKERALA
+**Classical Source:** Prokerala (Industry Standard) - FORMULA IMPLEMENTED  
+**Prokerala Match:** ❌ FAILED - PLANET SIGNS DO NOT MATCH  
+**Status:** ❌ NOT VERIFIED - CRITICAL MISMATCHES FOUND
+
+**Verification Results (1995-05-16, 18:38 IST, Bangalore):**
+- ✅ Ascendant: Leo (matches Prokerala)
+- ✅ Sun: Leo (matches Prokerala)
+- ✅ Mars: Virgo (matches Prokerala)
+- ✅ Mercury: Sagittarius (matches Prokerala)
+- ✅ Jupiter: Virgo (matches Prokerala)
+- ✅ Venus: Sagittarius (matches Prokerala)
+- ❌ **Saturn: API = Gemini, Prokerala = Cancer (Karka) - CRITICAL MISMATCH**
+- ❓ Moon: Needs Prokerala verification
+- ❓ Rahu: Needs Prokerala verification
+- ❓ Ketu: Needs Prokerala verification
+
+**Action Required:**
+1. Fix D24 formula for Saturn (and verify other planets)
+2. Re-test against Prokerala until 100% match
+3. DO NOT mark as verified until ALL planets match exactly
 
 ---
 
