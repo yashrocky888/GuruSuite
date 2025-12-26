@@ -246,54 +246,53 @@ def calculate_varga_sign(sign_index: int, long_in_sign: float, varga: str) -> in
     elif varga == "D24":
         # ⚠️ D24 — CHATURVIMSHAMSA (SIDDHAMSA) - NOT VERIFIED
         # Source: PyJHora (https://github.com/naturalstupid/PyJHora)
-        # Reference: src/jhora/horoscope/chart.py
+        # Reference: src/jhora/horoscope/chart/charts.py
         #
         # PyJHora defines THREE chart_methods for D24:
-        # 1 = Traditional Parasara
-        # 2 = Even-sign reversal
-        # 3 = Even-sign double reversal (DEFAULT in JHora/PyJHora)
+        # 1 = Traditional Parasara Siddhamsa (Odd Le->Cn, Even Cn->Ge)
+        # 2 = Parasara with even sign reversal (Odd Le->Cn, Even Cn->Le)
+        # 3 = Parasara Siddhamsa with even sign double reversal (Odd Le->Cn, Even Le->Cn) [DEFAULT]
         #
-        # ⚠️ CURRENT STATUS: Implementation incomplete
-        # - Need exact chart_method logic from PyJHora source code
-        # - Current pattern-matching is NOT acceptable
-        # - Must implement universal rule based on sign parity + direction logic
+        # PyJHora Implementation (EXACT):
+        # - dvf = 24, f1 = 30.0/dvf = 1.25
+        # - l = int(long_in_sign // f1)  [uses degrees_in_sign, NOT full_longitude]
+        # - odd_base = 4 (Leo)
+        # - even_base = 4 if chart_method==3 else 3 (Leo for method 3, Cancer for 1&2)
+        # - even_dirn = -1 if chart_method==2 else 1 (reverse for method 2, forward for 1&3)
+        # - Odd signs: r = (odd_base + l) % 12
+        # - Even signs: r = (even_base + even_dirn*l) % 12
         #
-        # TODO: Extract exact implementation from PyJHora source
-        # TODO: Implement all three chart_methods properly
-        # TODO: Default to chart_method=3 (PyJHora/JHora default)
-        # TODO: Verify against 3+ different birth charts
-        # TODO: Remove ALL division_index-based exceptions
+        # Current implementation: Uses chart_method=1 (Traditional Parasara)
+        # - Matches 7/10 planets for test birth
+        # - Needs verification against multiple births
+        # - Needs confirmation of correct chart_method for Prokerala/JHora
         #
-        # Formula structure (to be completed):
-        # 1. division_index = floor(full_longitude / (30/24)) % 24
-        # 2. Determine base and direction based on chart_method
-        # 3. result = (base ± division_index) % 12 (direction depends on method)
+        # TODO: Verify which chart_method Prokerala/JHora uses
+        # TODO: Test against 3+ different birth charts
+        # TODO: Only mark VERIFIED after universal rule matches all test cases
         
-        # Calculate division index from full longitude (PyJHora method)
-        full_longitude = sign_index * 30.0 + long_in_sign
-        division_index = int(math.floor(full_longitude / (30.0 / 24.0))) % 24
+        # PyJHora exact implementation
+        chart_method = 1  # Traditional Parasara (closest match to Prokerala for test birth)
+        dvf = 24
+        f1 = 30.0 / dvf
         
-        # ⚠️ TEMPORARY: Pattern-matched implementation (NOT UNIVERSAL)
-        # This matches test birth but uses division_index exceptions
-        # MUST be replaced with proper chart_method logic
-        is_odd = (sign_index % 2 == 0)  # 0-indexed: 0,2,4,6,8,10 are odd
+        # Calculate division index from degrees_in_sign (PyJHora uses long_in_sign, not full_longitude)
+        l = int(long_in_sign // f1)
         
+        # Determine sign parity (0-indexed: 0,2,4,6,8,10 are odd)
+        is_odd = (sign_index % 2 == 0)
+        
+        # PyJHora base and direction logic
+        odd_base = 4  # Leo
+        even_base = 4 if chart_method == 3 else 3  # Leo for method 3, Cancer for 1&2
+        even_dirn = -1 if chart_method == 2 else 1  # Reverse for method 2, forward for 1&3
+        
+        # Calculate result (PyJHora exact formula)
         if is_odd:
-            # Odd signs: Pattern shows base=4 (Leo) except div_idx=8 needs base=3 (Cancer)
-            # TODO: Replace with proper chart_method logic
-            if division_index == 8:
-                base = 3  # Cancer
-            else:
-                base = 4  # Leo
+            result_0based = (odd_base + l) % 12
         else:
-            # Even signs: Pattern shows base=3 (Cancer) except div_idx=20 needs base=4 (Leo)
-            # TODO: Replace with proper chart_method logic
-            if division_index == 20:
-                base = 4  # Leo
-            else:
-                base = 3  # Cancer
+            result_0based = (even_base + even_dirn * l) % 12
         
-        result_0based = (base + division_index) % 12
         return result_0based
     
     elif varga == "D27":
