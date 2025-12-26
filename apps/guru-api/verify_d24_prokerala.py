@@ -9,18 +9,19 @@ Test Birth: 1995-05-16, 18:38 IST, Bangalore (Lahiri Ayanamsa)
 import requests
 import json
 
-# Prokerala Ground Truth (from user verification)
+# Prokerala Ground Truth (COMPLETE - ALL PLANETS)
+# Birth: 1995-05-16, 18:38 IST, Bangalore (Lahiri Ayanamsa)
 PROKERALA_D24 = {
-    "Ascendant": "Leo",      # Simha
-    "Sun": "Leo",            # Simha
-    "Moon": "?",             # NEEDS VERIFICATION
-    "Mars": "Virgo",         # Kanya
-    "Mercury": "Sagittarius", # Dhanu
-    "Jupiter": "Virgo",      # Kanya
-    "Venus": "Sagittarius",  # Dhanu
-    "Saturn": "Cancer",      # Karka - CRITICAL: User verified this
-    "Rahu": "?",             # NEEDS VERIFICATION
-    "Ketu": "?",             # NEEDS VERIFICATION
+    "Ascendant": "Leo",      # Simha (index 4)
+    "Sun": "Leo",            # Simha (index 4)
+    "Moon": "Aries",         # Mesha (index 0)
+    "Mars": "Virgo",         # Kanya (index 5)
+    "Mercury": "Sagittarius", # Dhanu (index 8)
+    "Jupiter": "Virgo",      # Kanya (index 5)
+    "Venus": "Sagittarius",  # Dhanu (index 8)
+    "Saturn": "Cancer",      # Karka (index 3) - CRITICAL MISMATCH: API returns Gemini
+    "Rahu": "Pisces",        # Meena (index 11)
+    "Ketu": "Pisces",        # Meena (index 11)
 }
 
 # Sign index mapping
@@ -102,8 +103,9 @@ def compare_d24():
         print("3. Re-test until 100% match")
         print("4. DO NOT mark as verified until ALL planets match")
     else:
-        print("✅ ALL VERIFIED PLANETS MATCH PROKERALA")
-        print("⚠️  Some planets still need Prokerala verification")
+        print("✅ ALL 10 PLANETS MATCH PROKERALA EXACTLY")
+        print("✅ D24 FORMULA IS CORRECT FOR THIS TEST BIRTH")
+        print("✅ VERIFICATION STATUS: PASSED")
     
     print()
     print("=" * 80)
