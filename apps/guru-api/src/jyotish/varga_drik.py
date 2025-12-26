@@ -244,40 +244,40 @@ def calculate_varga_sign(sign_index: int, long_in_sign: float, varga: str) -> in
         return result_0based
     
     elif varga == "D24":
-        # 🔒 PROKERALA VERIFIED D24 — CHATURVIMSHAMSA (SIDDHAMSA)
-        # Source: Prokerala (Industry Standard) - VERIFIED 100% MATCH
-        # Uses FULL SIDEREAL LONGITUDE, not degrees_in_sign
-        # Formula: amsa = floor((FULL_LONGITUDE * 24) / 30) % 24
-        # Then: D24_sign = (start + amsa) % 12
+        # ⚠️ D24 — CHATURVIMSHAMSA (SIDDHAMSA) - NOT VERIFIED
+        # Status: Formula needs proper BPHS universal rule
+        # Current implementation uses exception-based logic which is NOT acceptable
         # 
-        # Start sign determination (VERIFIED FROM PROKERALA DATA REVERSE ENGINEERING):
-        # Pattern analysis shows:
-        #   - Most cases: start = 3 (Cancer)
-        #   - Exceptions: start = 4 (Leo) for:
-        #     * Fixed sign Leo (4) with amsa=1 → Mars
-        #     * Fixed sign Scorpio (7) with amsa=20 → Moon
-        #     * Movable sign Aries (0) with amsa=4 → Venus
-        # This matches Prokerala behavior exactly
+        # BPHS Rule (from documentation):
+        # - 24 equal divisions per sign (1.25° each)
+        # - Element-based starting signs:
+        #   * Fire signs (Aries, Leo, Sagittarius): Start from Aries (0)
+        #   * Earth signs (Taurus, Virgo, Capricorn): Start from Taurus (1)
+        #   * Air signs (Gemini, Libra, Aquarius): Start from Gemini (2)
+        #   * Water signs (Cancer, Scorpio, Pisces): Start from Cancer (3)
+        #
+        # NOTE: Element-based formula does NOT match Prokerala for test birth
+        # Need to find correct universal BPHS rule or verify Prokerala interpretation
+        #
+        # TODO: Implement proper universal rule based on BPHS
+        # TODO: Remove all exception-based logic
+        # TODO: Verify against Prokerala after implementing universal rule
         
-        # Reconstruct full sidereal longitude
-        full_longitude = sign_index * 30.0 + long_in_sign
+        # Calculate division index from degrees in sign (BPHS standard)
+        part_size = 30.0 / 24.0  # 1.25° per division
+        div_index = int(math.floor(long_in_sign / part_size)) % 24
         
-        # Calculate amsa from full longitude
-        amsa = int(math.floor((full_longitude * 24.0) / 30.0)) % 24
+        # Element-based start sign (BPHS rule - needs verification)
+        if sign_index in (0, 4, 8):  # Fire: Aries, Leo, Sagittarius
+            start_sign = 0  # Aries
+        elif sign_index in (1, 5, 9):  # Earth: Taurus, Virgo, Capricorn
+            start_sign = 1  # Taurus
+        elif sign_index in (2, 6, 10):  # Air: Gemini, Libra, Aquarius
+            start_sign = 2  # Gemini
+        else:  # Water: Cancer, Scorpio, Pisces
+            start_sign = 3  # Cancer
         
-        # Determine start sign (VERIFIED FROM PROKERALA DATA - 1995-05-16, 18:38 IST, Bangalore)
-        start = 3  # Default: Cancer
-        
-        # Specific exceptions that need Leo (4) start
-        # Verified against Prokerala ground truth:
-        # - Fixed sign Leo (4) with amsa=1 → start = 4 (Mars)
-        # - Fixed sign Scorpio (7) with amsa=20 → start = 4 (Moon)
-        # - Movable sign Aries (0) with amsa=4 → start = 4 (Venus)
-        # - Fixed sign Aquarius (10) with amsa=23 → start = 4 (Saturn) - CRITICAL FIX
-        if (sign_index == 4 and amsa == 1) or (sign_index == 7 and amsa == 20) or (sign_index == 0 and amsa == 4) or (sign_index == 10 and amsa == 23):
-            start = 4  # Leo
-        
-        result_0based = (start + amsa) % 12
+        result_0based = (start_sign + div_index) % 12
         return result_0based
     
     elif varga == "D27":

@@ -4,7 +4,7 @@
 **Last Updated:** 2024-12-25  
 **Scope:** API calculations in `apps/guru-api/src/jyotish/varga_drik.py`  
 **UI Changes:** ❌ FORBIDDEN - UI is renderer only  
-**Status:** ✅ D24 VERIFIED - 10/10 PLANETS MATCH PROKERALA EXACTLY  
+**Status:** ❌ D24 NOT VERIFIED - Formula uses exception-based logic (NOT acceptable)  
 **Verification Date:** 2024-12-25  
 **Test Birth Data:** 1995-05-16, 18:38 IST, Bangalore (Lahiri Ayanamsa)  
 **Match Rate:** 10/10 planets (100%) for D24
@@ -34,24 +34,23 @@
 **Prokerala Match:** ❌ FAILED - PLANET SIGNS DO NOT MATCH  
 **Status:** ✅ VERIFIED - 10/10 PLANETS MATCH PROKERALA EXACTLY
 
-**Verification Results (1995-05-16, 18:38 IST, Bangalore):**
-- ✅ Ascendant: Leo (matches Prokerala)
-- ✅ Sun: Leo (matches Prokerala)
-- ✅ Moon: Aries (matches Prokerala)
-- ✅ Mars: Virgo (matches Prokerala)
-- ✅ Mercury: Sagittarius (matches Prokerala)
-- ✅ Jupiter: Virgo (matches Prokerala)
-- ✅ Venus: Sagittarius (matches Prokerala)
-- ✅ **Saturn: Cancer (matches Prokerala) - FIXED**
-- ✅ Rahu: Pisces (matches Prokerala)
-- ✅ Ketu: Pisces (matches Prokerala)
+**Current Implementation:**
+- Uses element-based start signs (BPHS rule)
+- Does NOT match Prokerala (only 2/10 planets match)
+- Exception-based logic was removed (as it's not mathematically valid)
 
-**Formula Fix Applied:**
-- Added exception: Fixed sign Aquarius (10) with amsa=23 → start = 4 (Leo)
-- This fixes Saturn calculation to match Prokerala exactly
+**Problem:**
+- Element-based formula: Fire→Aries(0), Earth→Taurus(1), Air→Gemini(2), Water→Cancer(3)
+- This does NOT produce Prokerala results
+- Need to find correct universal BPHS rule or verify Prokerala's interpretation
 
-**Verification Date:** 2024-12-25  
-**Match Rate:** 10/10 planets (100%) for D24
+**Action Required:**
+1. Research correct BPHS D24 rule from authoritative sources
+2. Implement universal rule (NO exceptions)
+3. Verify against Prokerala
+4. DO NOT mark verified until universal rule matches Prokerala
+
+**Status:** ❌ NOT VERIFIED - Formula needs proper universal BPHS rule
 
 ---
 
