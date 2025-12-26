@@ -4,7 +4,7 @@
 **Last Updated:** 2024-12-25  
 **Scope:** API calculations in `apps/guru-api/src/jyotish/varga_drik.py`  
 **UI Changes:** ❌ FORBIDDEN - UI is renderer only  
-**Status:** ✅ D24 VERIFIED - Matches JHora + Prokerala exactly (10/10 planets)  
+**Status:** ⚠️ D24 VERIFIED FOR TEST BIRTH - Needs verification for multiple births  
 **Verification Date:** 2024-12-25  
 **Test Birth Data:** 1995-05-16, 18:38 IST, Bangalore (Lahiri Ayanamsa)  
 **Match Rate:** 10/10 planets (100%) for D24
@@ -59,7 +59,8 @@
 - ✅ All 10 planets match Prokerala exactly
 - ✅ Saturn correctly in Cancer (Karka) - critical verification point
 
-**Status:** ✅ VERIFIED - JHora + Prokerala match (10/10 planets)
+**Status:** ⚠️ VERIFIED FOR TEST BIRTH (10/10 planets match JHora + Prokerala)
+**Next Step:** Verify against multiple births before final verification
 
 ---
 
