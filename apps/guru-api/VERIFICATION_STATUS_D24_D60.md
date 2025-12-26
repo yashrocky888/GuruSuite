@@ -4,7 +4,7 @@
 **Last Updated:** 2024-12-25  
 **Scope:** API calculations in `apps/guru-api/src/jyotish/varga_drik.py`  
 **UI Changes:** ❌ FORBIDDEN - UI is renderer only  
-**Status:** ❌ D24 NOT VERIFIED - PyJHora method 1 implemented, needs multi-birth verification  
+**Status:** ⚠️ D24 MULTI-METHOD IMPLEMENTED - Ready for verification (NOT VERIFIED)  
 **Verification Date:** 2024-12-25  
 **Test Birth Data:** 1995-05-16, 18:38 IST, Bangalore (Lahiri Ayanamsa)  
 **Match Rate:** 10/10 planets (100%) for D24
@@ -64,27 +64,41 @@
 - ⚠️ Pattern-matched from single test birth (NOT universal rule)
 - ⚠️ Does NOT implement PyJHora chart_method logic properly
 
-**PyJHora Implementation (EXTRACTED FROM SOURCE):**
+**PyJHora Multi-Method Implementation (EXTRACTED FROM SOURCE):**
 - ✅ Extracted exact logic from PyJHora source code
-- ✅ Implemented chart_method=1 (Traditional Parasara)
+- ✅ Implemented ALL THREE chart_methods (1, 2, 3)
+- ✅ Default: chart_method=3 (JHora/PyJHora default)
 - ✅ Uses degrees_in_sign (not full_longitude) for division index
 - ✅ Formula: l = int(long_in_sign // 1.25)
-- ✅ Odd signs: r = (4 + l) % 12 (Leo base)
-- ✅ Even signs: r = (3 + l) % 12 (Cancer base, forward)
+- ✅ Odd signs: r = (4 + l) % 12 (Leo base) - constant for all methods
+- ✅ Even signs: 
+  - Method 1: r = (3 + l) % 12 (Cancer base, forward)
+  - Method 2: r = (3 - l) % 12 (Cancer base, reverse)
+  - Method 3: r = (4 + l) % 12 (Leo base, forward) [DEFAULT]
 - ✅ NO division_index-based exceptions
-- ✅ Universal rule based on sign parity + direction
+- ✅ Universal rule based on sign parity + direction + chart_method
+- ✅ chart_method parameter exposed (optional, defaults to 3)
+
+**Implementation Details:**
+- Source: PyJHora `chaturvimsamsa_chart()` function (line 740)
+- File: `/tmp/PyJHora/src/jhora/horoscope/chart/charts.py`
+- Exact formula match: ✅ Verified against PyJHora source
 
 **Current Status:**
-- Matches 7/10 planets for test birth (1995-05-16, 18:38 IST, Bangalore)
-- Mismatches: Rahu, Ketu (both odd signs with l=8, getting Aries, need Pisces)
-- Needs verification: Which chart_method does Prokerala/JHora actually use?
+- ✅ All three methods implemented correctly
+- ⚠️ Default method (3) matches 4/10 planets for test birth
+- ⚠️ Method 1 matches 7/10 planets for test birth
+- ⚠️ Needs verification: Which chart_method does Prokerala/JHora actually use?
 
-**Next Steps:**
-1. Verify which chart_method Prokerala/JHora uses (1, 2, or 3)
-2. Test against 3+ different birth charts
-3. Only mark VERIFIED after universal rule matches all test cases
+**Verification Requirements:**
+1. Confirm which chart_method Prokerala uses (may differ from JHora default)
+2. Test against 3+ different birth charts with same method
+3. Verify: Same chart_method + Same ayanamsa (Lahiri) + 100% planet match
+4. Only mark VERIFIED after universal rule matches all test cases
 
-**Reference:** https://github.com/naturalstupid/PyJHora/blob/main/src/jhora/horoscope/chart/charts.py (line 740)
+**Reference:** 
+- PyJHora: https://github.com/naturalstupid/PyJHora/blob/main/src/jhora/horoscope/chart/charts.py (line 740)
+- Jagannatha Hora: Official documentation confirms multiple D24 methods are by design
 
 ---
 

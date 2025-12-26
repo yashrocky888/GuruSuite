@@ -80,7 +80,7 @@ from typing import Dict, Optional
 from src.utils.converters import normalize_degrees, get_sign_name
 
 
-def calculate_varga_sign(sign_index: int, long_in_sign: float, varga: str) -> int:
+def calculate_varga_sign(sign_index: int, long_in_sign: float, varga: str, chart_method: Optional[int] = None) -> int:
     """
     Calculate the final rashi index (0-11) in a varga chart.
     
@@ -90,6 +90,8 @@ def calculate_varga_sign(sign_index: int, long_in_sign: float, varga: str) -> in
         sign_index: Sign index (0=Aries, 1=Taurus, ..., 11=Pisces)
         long_in_sign: Longitude within the sign (0-30 degrees)
         varga: Varga type ("D1", "D2", "D3", "D4", "D7", "D9", "D10", "D12", etc.)
+        chart_method: Optional chart method for vargas that support multiple methods (e.g., D24)
+                      For D24: 1=Traditional Parasara, 2=Even-sign reversal, 3=Even-sign double reversal (JHora default)
     
     Returns:
         Final sign index (0-11) in the varga chart
@@ -244,35 +246,40 @@ def calculate_varga_sign(sign_index: int, long_in_sign: float, varga: str) -> in
         return result_0based
     
     elif varga == "D24":
-        # ⚠️ D24 — CHATURVIMSHAMSA (SIDDHAMSA) - NOT VERIFIED
+        # 🔒 D24 — CHATURVIMSHAMSA (SIDDHAMSA) - MULTI-METHOD IMPLEMENTATION
         # Source: PyJHora (https://github.com/naturalstupid/PyJHora)
-        # Reference: src/jhora/horoscope/chart/charts.py
+        # Reference: src/jhora/horoscope/chart/charts.py (line 740)
         #
-        # PyJHora defines THREE chart_methods for D24:
+        # Jagannatha Hora supports MULTIPLE D24 chart methods (by design, not bug):
         # 1 = Traditional Parasara Siddhamsa (Odd Le->Cn, Even Cn->Ge)
         # 2 = Parasara with even sign reversal (Odd Le->Cn, Even Cn->Le)
-        # 3 = Parasara Siddhamsa with even sign double reversal (Odd Le->Cn, Even Le->Cn) [DEFAULT]
+        # 3 = Parasara Siddhamsa with even sign double reversal (Odd Le->Cn, Even Le->Cn) [JHora DEFAULT]
         #
-        # PyJHora Implementation (EXACT):
+        # PyJHora Implementation (EXACT from source):
         # - dvf = 24, f1 = 30.0/dvf = 1.25
         # - l = int(long_in_sign // f1)  [uses degrees_in_sign, NOT full_longitude]
-        # - odd_base = 4 (Leo)
+        # - odd_base = 4 (Leo) - constant for all methods
         # - even_base = 4 if chart_method==3 else 3 (Leo for method 3, Cancer for 1&2)
         # - even_dirn = -1 if chart_method==2 else 1 (reverse for method 2, forward for 1&3)
         # - Odd signs: r = (odd_base + l) % 12
         # - Even signs: r = (even_base + even_dirn*l) % 12
         #
-        # Current implementation: Uses chart_method=1 (Traditional Parasara)
-        # - Matches 7/10 planets for test birth
-        # - Needs verification against multiple births
-        # - Needs confirmation of correct chart_method for Prokerala/JHora
+        # Default: chart_method=3 (JHora/PyJHora default)
+        # This can be overridden via chart_method parameter
+        # Prokerala follows JHora defaults - verification will confirm which method Prokerala uses
         #
-        # TODO: Verify which chart_method Prokerala/JHora uses
-        # TODO: Test against 3+ different birth charts
-        # TODO: Only mark VERIFIED after universal rule matches all test cases
+        # ⚠️ NOT VERIFIED: Needs verification against JHora/Prokerala with correct method
+        # ⚠️ Verification requires: Same chart_method + Same ayanamsa + 100% planet match
+        
+        # Use provided chart_method or default to 3 (JHora default)
+        if chart_method is None:
+            chart_method = 3  # JHora/PyJHora default
+        
+        # Validate chart_method
+        if chart_method not in (1, 2, 3):
+            chart_method = 3  # Fallback to default
         
         # PyJHora exact implementation
-        chart_method = 1  # Traditional Parasara (closest match to Prokerala for test birth)
         dvf = 24
         f1 = 30.0 / dvf
         
@@ -282,8 +289,8 @@ def calculate_varga_sign(sign_index: int, long_in_sign: float, varga: str) -> in
         # Determine sign parity (0-indexed: 0,2,4,6,8,10 are odd)
         is_odd = (sign_index % 2 == 0)
         
-        # PyJHora base and direction logic
-        odd_base = 4  # Leo
+        # PyJHora base and direction logic (exact from source)
+        odd_base = 4  # Leo (constant for all methods)
         even_base = 4 if chart_method == 3 else 3  # Leo for method 3, Cancer for 1&2
         even_dirn = -1 if chart_method == 2 else 1  # Reverse for method 2, forward for 1&3
         
@@ -808,15 +815,18 @@ def calculate_varga(planet_longitude: float, varga_type: int) -> Dict:
         }
     
     elif varga_type == 24:
-        # 🔒 PROKERALA VERIFIED D24 — CHATURVIMSHAMSA (SIDDHAMSA)
-        # Source: Prokerala (Industry Standard) - VERIFIED 100% MATCH
-        # Uses calculate_varga_sign for consistency (VERIFIED FORMULA)
+        # ⚠️ D24 — CHATURVIMSHAMSA (SIDDHAMSA) - MULTI-METHOD IMPLEMENTATION
+        # Source: PyJHora (Jagannatha Hora) - Multiple chart methods supported
+        # Uses calculate_varga_sign for consistency
+        # Default: chart_method=3 (JHora default)
+        #
+        # ⚠️ NOT VERIFIED: Needs verification against JHora/Prokerala with correct method
         
         # Step 1: Get sign index and degree in sign
         d1_sign_index = int(math.floor(planet_longitude / 30.0))
         degree_in_sign = planet_longitude % 30.0
         
-        # Step 2: Use verified calculate_varga_sign function
+        # Step 2: Use calculate_varga_sign function (defaults to chart_method=3)
         d24_sign_index = calculate_varga_sign(d1_sign_index, degree_in_sign, "D24")
         
         # Calculate varga longitude for consistency
