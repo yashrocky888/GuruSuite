@@ -337,7 +337,7 @@ async def kundli_get(
     lat: float = Query(..., description="Latitude"),
     lon: float = Query(..., description="Longitude"),
     timezone: str = Query("Asia/Kolkata", description="Timezone (default: Asia/Kolkata)"),
-    d24_chart_method: Optional[int] = Query(None, description="D24 chart method (1, 2, or 3). Default: 3 (JHora default)")
+    # d24_chart_method parameter REMOVED - D24 is locked to Method 1 (JHora verified)
 ):
     """
     Calculate complete Kundli (D1) with all varga charts (D2-D60).
@@ -466,11 +466,8 @@ async def kundli_get(
         # Additional varga charts (D16-D60)
         d16_chart = build_varga_chart(d1_planets, d1_ascendant, 16)
         d20_chart = build_varga_chart(d1_planets, d1_ascendant, 20)
-        # D24 supports chart_method parameter (1, 2, or 3) - default is 3 (JHora default)
-        # Validate chart_method if provided
-        if d24_chart_method is not None and d24_chart_method not in (1, 2, 3):
-            d24_chart_method = None  # Fallback to default
-        d24_chart = build_varga_chart(d1_planets, d1_ascendant, 24, chart_method=d24_chart_method)
+        # D24 is LOCKED to Method 1 (JHora verified) - no method parameter
+        d24_chart = build_varga_chart(d1_planets, d1_ascendant, 24)
         d27_chart = build_varga_chart(d1_planets, d1_ascendant, 27)
         d30_chart = build_varga_chart(d1_planets, d1_ascendant, 30)
         d40_chart = build_varga_chart(d1_planets, d1_ascendant, 40)

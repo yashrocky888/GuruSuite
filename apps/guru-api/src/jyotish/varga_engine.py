@@ -75,7 +75,8 @@ def build_varga_chart(
     
     try:
         # Calculate varga ascendant
-        varga_asc_data = _calculate_varga_internal(d1_ascendant, varga_type, chart_method=chart_method)
+        # NOTE: D24 is locked to method 1, chart_method parameter is ignored for D24
+        varga_asc_data = _calculate_varga_internal(d1_ascendant, varga_type, chart_method=chart_method if varga_type != 24 else None)
         varga_asc_sign_index = varga_asc_data["sign"]
         
         # For D24-D60: NO HOUSE CALCULATION (pure sign charts)
@@ -130,7 +131,8 @@ def build_varga_chart(
         # For D24-D60: NO HOUSE CALCULATION (pure sign charts)
         # For D1-D20: Whole Sign House System
         for planet_name, d1_longitude in d1_planets.items():
-            varga_data = _calculate_varga_internal(d1_longitude, varga_type, chart_method=chart_method)
+            # NOTE: D24 is locked to method 1, chart_method parameter is ignored for D24
+            varga_data = _calculate_varga_internal(d1_longitude, varga_type, chart_method=chart_method if varga_type != 24 else None)
             varga_sign_index = varga_data["sign"]
             
             # For D24-D60: No house calculation (pure sign charts)
@@ -284,7 +286,8 @@ def get_varga_ascendant_only(d1_ascendant: float, varga_type: int) -> Dict:
     _CALLED_FROM_ENGINE = True
     
     try:
-        varga_asc_data = _calculate_varga_internal(d1_ascendant, varga_type, chart_method=chart_method)
+        # NOTE: D24 is locked to method 1, chart_method parameter is ignored for D24
+        varga_asc_data = _calculate_varga_internal(d1_ascendant, varga_type, chart_method=chart_method if varga_type != 24 else None)
         varga_asc_sign_index = varga_asc_data["sign"]
         
         # For D24-D60: NO HOUSE CALCULATION (pure sign charts)

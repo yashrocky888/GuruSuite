@@ -32,6 +32,7 @@ interface ChartContainerProps {
   chartData: any; // Raw API data
   chartType?: 'rasi' | 'navamsa' | 'dasamsa';
   vargaName?: string; // Optional varga name for display (e.g., "D16 - Shodasamsa Chart")
+  // d24ChartMethod prop REMOVED - D24 is locked to Method 1 (JHora verified)
 }
 
 type ChartStyle = 'north' | 'south';
@@ -668,6 +669,7 @@ export const ChartContainer: React.FC<ChartContainerProps> = ({
             console.log(`🔒 ROUTING TO SIGN CHART RENDERER: ${chartStyle === 'north' ? 'NorthIndianSignChart' : 'SouthIndianSignChart'}`);
             return chartStyle === 'north' ? (
               <NorthIndianSignChart 
+                chartType={chartTypeFromData}
                 ascendant={{
                   sign: apiChart.Ascendant.sign,
                   sign_sanskrit: apiChart.Ascendant.sign_sanskrit,

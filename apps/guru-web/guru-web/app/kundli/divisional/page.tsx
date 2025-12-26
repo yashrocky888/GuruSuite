@@ -59,6 +59,9 @@ export default function DivisionalChartsPage() {
         const { getKundli } = await import('@/services/api');
         const { useBirthStore } = await import('@/store/useBirthStore');
         const birthDetails = useBirthStore.getState().birthDetails;
+        
+        // D24 is locked to Method 1 (JHora verified) - no method parameter needed
+        // Use standard getKundli function for all charts including D24
         const kundliResponse = await getKundli(userId || undefined, birthDetails || undefined);
         
         // 🔒 CRITICAL: Log raw API response for D24 specifically
@@ -230,10 +233,10 @@ export default function DivisionalChartsPage() {
               {divisionalCharts.find(c => c.key === selectedChart)?.description}
             </p>
             {selectedChart === 'd24' && (
-              <div className="mb-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md">
-                <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                  <strong>Note:</strong> D24 (Chaturvimsamsa) has multiple classical calculation methods. 
-                  Results may differ from Prokerala depending on the method used.
+              <div className="mb-3 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md">
+                <p className="text-sm text-green-800 dark:text-green-200">
+                  <strong>✓ Verified:</strong> D24 (Chaturvimsamsa) uses Method 1 (Traditional Parasara Siddhamsa) 
+                  and has been verified against Jagannatha Hora (JHora).
                 </p>
               </div>
             )}

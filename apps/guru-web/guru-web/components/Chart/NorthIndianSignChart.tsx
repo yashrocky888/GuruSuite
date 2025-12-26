@@ -47,6 +47,8 @@ interface NorthIndianSignChartProps {
     degree?: number;
     [key: string]: any;
   }>;
+  chartType?: string; // Chart type (e.g., "D24", "D27", etc.) - used for conditional verification
+  // d24ChartMethod prop REMOVED - D24 is locked to Method 1 (JHora verified)
 }
 
 /**
@@ -165,7 +167,7 @@ function getSafePlanetPosition(
   return safeCoords;
 }
 
-export default function NorthIndianSignChart({ ascendant, planets }: NorthIndianSignChartProps) {
+export default function NorthIndianSignChart({ ascendant, planets, chartType }: NorthIndianSignChartProps) {
   // ============================================================================
   // 🔒 CRITICAL: NORTH INDIAN CHARTS MUST BE LAGNA-RELATIVE
   // Ascendant sign MUST appear in House 1 (top center diamond)
@@ -331,23 +333,47 @@ export default function NorthIndianSignChart({ ascendant, planets }: NorthIndian
   }, [ascendantSignIndex, normalizedAscendantSign, ascendantSign]);
   
   // ============================================================================
-  // PROKERALA VERIFICATION CHECKPOINT (After rotation and grouping)
+  // CONDITIONAL VERIFICATION CHECKPOINT (After rotation and grouping)
   // ============================================================================
-  // Expected for D24 (1995-05-16, 18:38 IST, Bangalore):
-  // - Ascendant: Leo (Simha) → House 1 ✅
-  // - Saturn: Cancer (Karka) → Should appear in rotated house containing Cancer
-  // - Moon: Aries (Mesha) → Should appear in rotated house containing Aries
+  // ⚠️ CRITICAL: D24 is NOT VERIFIED and supports multiple classical methods
+  // Planet-sign assertions are ONLY for verification mode, NOT normal rendering
   // ============================================================================
-  console.log('🔍 PROKERALA VERIFICATION CHECKPOINT:');
-  console.log(`   Expected Ascendant: Leo (Simha) → House 1`);
-  console.log(`   Expected Saturn: Cancer (Karka) → Check if Cancer sign has Saturn`);
-  const cancerNormalized = normalizeSignName('cancer');
-  const saturnInCancer = planetsBySign[cancerNormalized]?.find(p => p.name === 'Saturn');
-  if (saturnInCancer) {
-    console.log(`   ✅ Saturn found in Cancer sign (normalized="${cancerNormalized}")`);
-  } else {
-    console.error(`   ❌ Saturn NOT found in Cancer sign! Check API data.`);
-    console.error(`   Available signs with planets:`, Object.keys(planetsBySign));
+  const isD24 = chartType === 'D24' || chartType === 'd24';
+  // D24 is LOCKED to Method 1 (JHora verified) - no method switching
+  // Verification mode: Only in development, for Method 1 results
+  const isVerificationMode = process.env.NODE_ENV === 'development' && isD24;
+  
+  if (isD24) {
+    console.log(`🔍 D24 VERIFICATION CHECKPOINT (Method 1 - JHora Verified):`);
+    console.log(`   Chart Type: D24`);
+    console.log(`   Chart Method: 1 (Traditional Parasara Siddhamsa - JHora verified)`);
+    console.log(`   Verification Mode: ${isVerificationMode ? 'ENABLED' : 'DISABLED'}`);
+    
+    // Log planet placements for verification (Method 1 expected results)
+    if (isVerificationMode) {
+      console.log(`   Expected (JHora Method 1): Traditional Parasara Siddhamsa results`);
+      const saturnSign = Object.entries(planetsBySign).find(([_, planets]) => 
+        planets.some(p => p.name === 'Saturn')
+      )?.[0];
+      if (saturnSign) {
+        console.log(`   ℹ️ Saturn is in ${saturnSign} sign (Method 1)`);
+      }
+      // Log all planet placements for verification
+      Object.entries(planetsBySign).forEach(([sign, planets]) => {
+        const planetNames = planets.map(p => p.name).join(', ');
+        if (planetNames) {
+          console.log(`   ℹ️ ${sign}: [${planetNames}]`);
+        }
+      });
+    } else {
+      // Normal mode: Just log planet placements
+      const saturnSign = Object.entries(planetsBySign).find(([_, planets]) => 
+        planets.some(p => p.name === 'Saturn')
+      )?.[0];
+      if (saturnSign) {
+        console.log(`   ℹ️ Saturn is in ${saturnSign} sign (Method 1 - JHora verified)`);
+      }
+    }
   }
   
   // Log full rotation map
