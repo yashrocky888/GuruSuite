@@ -229,6 +229,14 @@ export default function DivisionalChartsPage() {
             <p className="text-gray-600 dark:text-gray-400 mb-3">
               {divisionalCharts.find(c => c.key === selectedChart)?.description}
             </p>
+            {selectedChart === 'd24' && (
+              <div className="mb-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md">
+                <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                  <strong>Note:</strong> D24 (Chaturvimsamsa) has multiple classical calculation methods. 
+                  Results may differ from Prokerala depending on the method used.
+                </p>
+              </div>
+            )}
             {chartData && (
               <div className="mt-4 pt-4 border-t border-white/10">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
