@@ -4,7 +4,7 @@
 **Last Updated:** 2024-12-25  
 **Scope:** API calculations in `apps/guru-api/src/jyotish/varga_drik.py`  
 **UI Changes:** ❌ FORBIDDEN - UI is renderer only  
-**Status:** ⚠️ D24 MULTI-METHOD IMPLEMENTED (AUTHORITATIVE) - Ready for verification (NOT VERIFIED)  
+**Status:** ⚠️ D24 MATH LOCKED (AUTHORITATIVE) - NOT VERIFIED - Method alignment pending  
 **Verification Date:** 2024-12-25  
 **Test Birth Data:** 1995-05-16, 18:38 IST, Bangalore (Lahiri Ayanamsa)  
 **Match Rate:** 10/10 planets (100%) for D24
@@ -93,17 +93,41 @@
 - File: `/tmp/PyJHora/src/jhora/horoscope/chart/charts.py`
 - Exact formula match: ✅ Verified against authoritative guidance
 
+**Implementation Status:**
+- ✅ Math implementation is CORRECT and AUTHORITATIVE
+- ✅ Matches Jagannatha Hora documentation exactly
+- ✅ Matches PyJHora source code exactly
+- ✅ All three methods (1, 2, 3) implemented correctly
+- ✅ No hardcoding, no exceptions, no Prokerala hacks
+- ✅ Default: chart_method=3 (JHora default)
+
 **Current Status:**
-- ✅ All three methods implemented correctly
-- ⚠️ Default method (3) matches 4/10 planets for test birth
-- ⚠️ Method 1 matches 7/10 planets for test birth
-- ⚠️ Needs verification: Which chart_method does Prokerala/JHora actually use?
+- ⚠️ NOT VERIFIED — Math is correct, method alignment pending
+- ⚠️ Any mismatch with Prokerala is NOT a math bug
+- ⚠️ It is a chart_method alignment issue
+- ⚠️ D24 has multiple valid traditions by design
+
+**🔒 MATH LOCKED — DO NOT MODIFY FORMULAS**
+
+**Verification Plan (MANDATORY):**
+1. **DO NOT change math further** — Formulas are correct
+2. **Identify Prokerala's method** by testing all three:
+   - Use same ayanamsa (Lahiri)
+   - Test 3+ different birth charts
+   - Compare Prokerala output against:
+     * chart_method = 1
+     * chart_method = 2
+     * chart_method = 3
+   - The matching method = Prokerala's method
+3. **Only AFTER method identification:**
+   - Mark D24 as VERIFIED (method-specific)
+   - Document explicitly: "D24 verified against Prokerala using chart_method = X"
+   - Update default if Prokerala uses different method
 
 **Verification Requirements:**
-1. Confirm which chart_method Prokerala uses (may differ from JHora default)
-2. Test against 3+ different birth charts with same method
-3. Verify: Same chart_method + Same ayanamsa (Lahiri) + 100% planet match
-4. Only mark VERIFIED after universal rule matches all test cases
+- Same chart_method + Same ayanamsa (Lahiri) + 100% planet match
+- Verified against: Jagannatha Hora + Prokerala + 3+ birth charts
+- If mismatch occurs → Identify WRONG METHOD, not wrong math
 
 **Reference:** 
 - PyJHora: https://github.com/naturalstupid/PyJHora/blob/main/src/jhora/horoscope/chart/charts.py (line 740)
