@@ -4,7 +4,7 @@
 **Last Updated:** 2024-12-25  
 **Scope:** API calculations in `apps/guru-api/src/jyotish/varga_drik.py`  
 **UI Changes:** ❌ FORBIDDEN - UI is renderer only  
-**Status:** ⚠️ D24 MULTI-METHOD IMPLEMENTED - Ready for verification (NOT VERIFIED)  
+**Status:** ⚠️ D24 MULTI-METHOD IMPLEMENTED (AUTHORITATIVE) - Ready for verification (NOT VERIFIED)  
 **Verification Date:** 2024-12-25  
 **Test Birth Data:** 1995-05-16, 18:38 IST, Bangalore (Lahiri Ayanamsa)  
 **Match Rate:** 10/10 planets (100%) for D24
@@ -64,7 +64,7 @@
 - ⚠️ Pattern-matched from single test birth (NOT universal rule)
 - ⚠️ Does NOT implement PyJHora chart_method logic properly
 
-**PyJHora Multi-Method Implementation (EXTRACTED FROM SOURCE):**
+**Authoritative D24 Implementation (Jagannatha Hora + PyJHora):**
 - ✅ Extracted exact logic from PyJHora source code
 - ✅ Implemented ALL THREE chart_methods (1, 2, 3)
 - ✅ Default: chart_method=3 (JHora/PyJHora default)
@@ -79,10 +79,19 @@
 - ✅ Universal rule based on sign parity + direction + chart_method
 - ✅ chart_method parameter exposed (optional, defaults to 3)
 
+**Authoritative Guidance (Jagannatha Hora Documentation):**
+- ✅ D24 has MULTIPLE valid methods by design (not a bug)
+- ✅ Division: 24 parts, 1.25° each
+- ✅ Division index: l = floor(longitude_in_sign / 1.25)
+- ✅ Uses longitude_in_sign (NOT full_longitude) - confirmed by JHora/PyJHora
+- ✅ Base signs: Leo (Siddha/Jnana) and Cancer (Vidya/Samskara)
+- ✅ Method 3 is DEFAULT (preserves symmetry, aligns with modern software)
+
 **Implementation Details:**
-- Source: PyJHora `chaturvimsamsa_chart()` function (line 740)
+- Source: Official Jagannatha Hora Documentation + PyJHora
+- PyJHora: `chaturvimsamsa_chart()` function (line 740)
 - File: `/tmp/PyJHora/src/jhora/horoscope/chart/charts.py`
-- Exact formula match: ✅ Verified against PyJHora source
+- Exact formula match: ✅ Verified against authoritative guidance
 
 **Current Status:**
 - ✅ All three methods implemented correctly
