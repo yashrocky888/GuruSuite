@@ -4,7 +4,7 @@
 **Last Updated:** 2024-12-25  
 **Scope:** API calculations in `apps/guru-api/src/jyotish/varga_drik.py`  
 **UI Changes:** ❌ FORBIDDEN - UI is renderer only  
-**Status:** ⚠️ D24 MATCHES TEST BIRTH - Needs PyJHora source verification + multiple-birth testing  
+**Status:** ❌ D24 NOT VERIFIED - Implementation uses division_index exceptions (NOT acceptable)  
 **Verification Date:** 2024-12-25  
 **Test Birth Data:** 1995-05-16, 18:38 IST, Bangalore (Lahiri Ayanamsa)  
 **Match Rate:** 10/10 planets (100%) for D24
@@ -60,22 +60,29 @@
 - ✅ Saturn correctly in Cancer (Karka) - critical verification point
 
 **Current Implementation:**
-- Based on PyJHora rule: Odd→Leo(4), Even→Cancer(3) or Leo(4)
-- Pattern-derived exceptions: div_idx=8 for odd signs, div_idx=20 for even signs
-- Matches Prokerala/JHora for test birth (10/10 planets)
+- ⚠️ Uses division_index-based exceptions (div_idx=8 for odd, div_idx=20 for even)
+- ⚠️ Pattern-matched from single test birth (NOT universal rule)
+- ⚠️ Does NOT implement PyJHora chart_method logic properly
 
-**Status:** ⚠️ MATCHES TEST BIRTH - NOT FULLY VERIFIED
-**Issues:**
-1. Rule still uses division_index-based exceptions (not fully universal)
-2. Need to extract exact chart_method logic from PyJHora source code
-3. Need verification against multiple births (minimum 3 different charts)
-4. Current implementation is pattern-matched, not derived from authoritative source
+**PyJHora Requirements (NOT YET IMPLEMENTED):**
+- Must implement explicit chart_method parameter
+- chart_method = 1: Traditional Parasara
+- chart_method = 2: Even-sign reversal
+- chart_method = 3: Even-sign double reversal (DEFAULT)
+- Default to chart_method = 3 (PyJHora/JHora default)
+- Use ONLY: sign parity + division_index + direction logic
+- NO division_index-based exceptions
 
-**Next Steps:**
-1. Extract exact D24 logic from PyJHora source: https://github.com/naturalstupid/PyJHora/blob/main/src/jhora/horoscope/chart.py
-2. Implement universal rule (NO division_index exceptions)
-3. Verify against 3+ different birth charts
-4. Only mark VERIFIED after universal rule matches all test cases
+**Status:** ❌ NOT VERIFIED - Implementation violates classical Jyotish principles
+
+**Mandatory Requirements:**
+1. Extract exact chart_method logic from PyJHora source code
+2. Implement all three chart_methods with explicit parameter
+3. Remove ALL division_index-based exceptions
+4. Verify against JHora, Prokerala, and 3+ different birth charts
+5. Only mark VERIFIED after universal rule matches all test cases
+
+**Reference:** https://github.com/naturalstupid/PyJHora/blob/main/src/jhora/horoscope/chart.py
 
 ---
 

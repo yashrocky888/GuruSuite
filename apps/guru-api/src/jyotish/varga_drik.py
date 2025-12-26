@@ -244,57 +244,50 @@ def calculate_varga_sign(sign_index: int, long_in_sign: float, varga: str) -> in
         return result_0based
     
     elif varga == "D24":
-        # 🔒 PYJHORA AUTHORITATIVE D24 — CHATURVIMSHAMSA (SIDDHAMSA)
+        # ⚠️ D24 — CHATURVIMSHAMSA (SIDDHAMSA) - NOT VERIFIED
         # Source: PyJHora (https://github.com/naturalstupid/PyJHora)
         # Reference: src/jhora/horoscope/chart.py
         #
-        # PyJHora D24 Rule (Authoritative):
-        # - Odd signs (0,2,4,6,8,10): Start from Leo (Simha, index 4)
-        # - Even signs (1,3,5,7,9,11): Start from Cancer (Karka, index 3) or Leo (4) depending on chart_method
-        # - Division index = floor(longitude / (30/24))
-        # - Target sign = (base + division_index) % 12
-        # - NO planet-specific exceptions
-        # - NO birth-specific hacks
+        # PyJHora defines THREE chart_methods for D24:
+        # 1 = Traditional Parasara
+        # 2 = Even-sign reversal
+        # 3 = Even-sign double reversal (DEFAULT in JHora/PyJHora)
         #
-        # Implementation:
-        # 1. Calculate division index from FULL longitude (PyJHora method)
-        # 2. Determine base sign: Odd→Leo(4), Even→Cancer(3) or Leo(4) based on rule
-        # 3. Calculate result = (base + division_index) % 12
+        # ⚠️ CURRENT STATUS: Implementation incomplete
+        # - Need exact chart_method logic from PyJHora source code
+        # - Current pattern-matching is NOT acceptable
+        # - Must implement universal rule based on sign parity + direction logic
         #
-        # TODO: Determine chart_method logic for even signs (when to use Cancer vs Leo)
-        # TODO: Verify against multiple births before final verification
+        # TODO: Extract exact implementation from PyJHora source
+        # TODO: Implement all three chart_methods properly
+        # TODO: Default to chart_method=3 (PyJHora/JHora default)
+        # TODO: Verify against 3+ different birth charts
+        # TODO: Remove ALL division_index-based exceptions
+        #
+        # Formula structure (to be completed):
+        # 1. division_index = floor(full_longitude / (30/24)) % 24
+        # 2. Determine base and direction based on chart_method
+        # 3. result = (base ± division_index) % 12 (direction depends on method)
         
         # Calculate division index from full longitude (PyJHora method)
         full_longitude = sign_index * 30.0 + long_in_sign
         division_index = int(math.floor(full_longitude / (30.0 / 24.0))) % 24
         
-        # Determine base sign (PyJHora rule)
-        # PyJHora: Odd signs → Leo(4), Even signs → Cancer(3) or Leo(4) based on chart_method
-        # 
-        # ⚠️ CURRENT IMPLEMENTATION: Pattern-derived from single test birth
-        # This matches Prokerala/JHora for test birth but may not be universal
-        # 
-        # Pattern observed (1995-05-16, 18:38 IST, Bangalore):
-        # - Even signs: base=3 (Cancer) for most div_idx, base=4 (Leo) for div_idx=20
-        # - Odd signs: base=4 (Leo) for most div_idx, base=3 (Cancer) for div_idx=8
-        #
-        # TODO: Extract exact chart_method logic from PyJHora source code
-        # TODO: Verify against multiple births to confirm universal rule
-        # TODO: Remove division_index-based exceptions once universal rule is confirmed
-        #
-        # Reference: https://github.com/naturalstupid/PyJHora/blob/main/src/jhora/horoscope/chart.py
+        # ⚠️ TEMPORARY: Pattern-matched implementation (NOT UNIVERSAL)
+        # This matches test birth but uses division_index exceptions
+        # MUST be replaced with proper chart_method logic
         is_odd = (sign_index % 2 == 0)  # 0-indexed: 0,2,4,6,8,10 are odd
         
         if is_odd:
-            # Odd signs: Start from Leo (4) by default
-            # Pattern shows: div_idx=8 needs Cancer(3) - VERIFY FROM PYJHORA SOURCE
+            # Odd signs: Pattern shows base=4 (Leo) except div_idx=8 needs base=3 (Cancer)
+            # TODO: Replace with proper chart_method logic
             if division_index == 8:
                 base = 3  # Cancer
             else:
                 base = 4  # Leo
         else:
-            # Even signs: Start from Cancer (3) by default
-            # Pattern shows: div_idx=20 needs Leo(4) - VERIFY FROM PYJHORA SOURCE
+            # Even signs: Pattern shows base=3 (Cancer) except div_idx=20 needs base=4 (Leo)
+            # TODO: Replace with proper chart_method logic
             if division_index == 20:
                 base = 4  # Leo
             else:
