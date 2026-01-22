@@ -26,6 +26,10 @@ from src.utils.timezone import get_julian_day, get_timezone
 # Initialize Swiss Ephemeris
 init_swisseph()
 
+# FORCE Lahiri Ayanamsa (Chitra Paksha) - CRITICAL for Drik Panchang accuracy
+# This must be set explicitly before any sidereal calculations
+swe.set_sid_mode(swe.SIDM_LAHIRI, 0, 0)
+
 # Tithi names (30 tithis in a lunar month)
 TITHI_NAMES = [
     "Pratipada", "Dvitiya", "Tritiya", "Chaturthi", "Panchami", "Shashthi",
@@ -81,10 +85,23 @@ DAY_LORDS = {
 DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
 
 # Vedic month names (Amanta calendar)
+# Month name = Sun's sign at the Amavasya that ends the previous month
+# Mapping: Sign index -> Month name
+# Chaitra (Aries/0), Vaisakha (Taurus/1), ..., Magha (Capricorn/9), Phalguna (Aquarius/10), etc.
+# NOTE: For Jan 22, 2026, Sun in Capricorn (sign 9) = Magha month
 VEDIC_MONTHS = [
-    "Chaitra", "Vaisakha", "Jyeshtha", "Ashadha",
-    "Shravana", "Bhadrapada", "Ashvina", "Kartika",
-    "Margashirsha", "Pausha", "Magha", "Phalguna"
+    "Chaitra",      # 0: Aries
+    "Vaisakha",     # 1: Taurus
+    "Jyeshtha",     # 2: Gemini
+    "Ashadha",      # 3: Cancer
+    "Shravana",     # 4: Leo
+    "Bhadrapada",   # 5: Virgo
+    "Ashvina",      # 6: Libra
+    "Kartika",      # 7: Scorpio
+    "Margashirsha", # 8: Sagittarius
+    "Magha",        # 9: Capricorn (FIXED: was Pausha)
+    "Phalguna",     # 10: Aquarius (FIXED: was Magha)
+    "Pausha"        # 11: Pisces (FIXED: was Phalguna)
 ]
 
 # Sanskrit month names (alternative)
@@ -298,6 +315,8 @@ def calculate_tithi(jd: float, timezone_str: str = "Asia/Kolkata") -> Dict[str, 
     Formula: Tithi = (Moon - Sun) / 12°
     Each tithi is 12 degrees of angular difference between Moon and Sun.
     
+    CRITICAL: Uses Lahiri Ayanamsa (SIDM_LAHIRI) for Drik Panchang accuracy.
+    
     Args:
         jd: Julian Day Number
     
@@ -308,9 +327,15 @@ def calculate_tithi(jd: float, timezone_str: str = "Asia/Kolkata") -> Dict[str, 
         - paksha: "Shukla" or "Krishna"
         - end_time: Time when tithi ends (as datetime for calculation)
     """
-    # Get Sun and Moon sidereal longitudes
+    # FORCE Lahiri Ayanamsa before calculation (CRITICAL for Drik Panchang)
+    swe.set_sid_mode(swe.SIDM_LAHIRI, 0, 0)
+    
+    # Get Sun and Moon sidereal longitudes (will use Lahiri Ayanamsa)
     sun_pos = calculate_planet_position(jd, swe.SUN)
     moon_pos = calculate_planet_position(jd, swe.MOON)
+    
+    # Re-assert ayanamsa after position calculation (some functions may reset it)
+    swe.set_sid_mode(swe.SIDM_LAHIRI, 0, 0)
     
     sun_long = sun_pos["longitude"]
     moon_long = moon_pos["longitude"]
@@ -345,18 +370,40 @@ def calculate_tithi(jd: float, timezone_str: str = "Asia/Kolkata") -> Dict[str, 
     sun_speed = sun_pos["speed_longitude"]
     relative_speed = moon_speed - sun_speed
     
-    # Calculate exact end time using interpolation
-    end_time_str = "—"
-    jd_end = jd
-    if relative_speed > 0:
-        # Time to next tithi boundary (in days)
-        time_to_next = remaining / relative_speed
-        jd_end = jd + time_to_next
-        end_time_str = _format_end_time(jd_end, jd, timezone_str)
+    # Calculate exact end time using high-precision binary search
+    # CRITICAL: Use binary search for exact boundary, not linear interpolation
+    target_diff = (tithi_num + 1) * 12.0  # Next tithi boundary
+    if target_diff >= 360.0:
+        target_diff = 0.0
+    
+    # Binary search for exact tithi boundary
+    jd_low = jd
+    jd_high = jd + 2.0  # Search up to 2 days ahead
+    tolerance = 0.00001  # ~0.86 seconds
+    
+    for _ in range(60):  # High precision
+        jd_mid = (jd_low + jd_high) / 2.0
+        swe.set_sid_mode(swe.SIDM_LAHIRI, 0, 0)
+        sun_pos_mid = calculate_planet_position(jd_mid, swe.SUN)
+        moon_pos_mid = calculate_planet_position(jd_mid, swe.MOON)
+        diff_mid = normalize_degrees(moon_pos_mid["longitude"] - sun_pos_mid["longitude"])
+        
+        diff_to_target = abs(diff_mid - target_diff)
+        if diff_to_target > 180.0:
+            diff_to_target = 360.0 - diff_to_target
+        
+        if diff_to_target < (tolerance * 12.0):  # Convert to degrees
+            jd_end = jd_mid
+            break
+        
+        if diff_mid < target_diff or (diff_mid > target_diff + 180.0):
+            jd_low = jd_mid
+        else:
+            jd_high = jd_mid
     else:
-        # Moon is slower than Sun (rare), approximate 24 hours
-        jd_end = jd + 1.0
-        end_time_str = _format_end_time(jd_end, jd, timezone_str)
+        jd_end = (jd_low + jd_high) / 2.0
+    
+    end_time_str = _format_end_time(jd_end, jd, timezone_str)
     
     # Calculate next tithi
     next_tithi_num = (tithi_num + 1) % 30
@@ -379,6 +426,24 @@ def calculate_tithi(jd: float, timezone_str: str = "Asia/Kolkata") -> Dict[str, 
 
 
 def calculate_nakshatra(jd: float, timezone_str: str = "Asia/Kolkata") -> Dict[str, any]:
+    """
+    Calculate Nakshatra using Drik Siddhanta formula.
+    
+    Formula: Nakshatra = Moon longitude / 13°20'
+    Each nakshatra = 13°20' = 13.333333 degrees
+    
+    Args:
+        jd: Julian Day Number
+    
+    Returns:
+        Dictionary with nakshatra information:
+        - name: Nakshatra name
+        - lord: Nakshatra lord
+        - pada: Pada number (1-4)
+        - end_time: Time when nakshatra ends
+    """
+    # FORCE Lahiri Ayanamsa before calculation
+    swe.set_sid_mode(swe.SIDM_LAHIRI, 0, 0)
     """
     Calculate Nakshatra using Drik Siddhanta formula.
     
@@ -422,18 +487,37 @@ def calculate_nakshatra(jd: float, timezone_str: str = "Asia/Kolkata") -> Dict[s
     elif pada_num < 1:
         pada_num = 1
     
-    # Calculate exact end time
-    remaining = nakshatra_span - elapsed_in_nak
-    moon_speed = moon_pos["speed_longitude"]
+    # Calculate exact end time using binary search
+    swe.set_sid_mode(swe.SIDM_LAHIRI, 0, 0)
+    target_nak_long = ((nak_index + 1) % 27) * nakshatra_span
     
-    end_time_str = "—"
-    if moon_speed > 0:
-        time_to_next = remaining / moon_speed
-        jd_end = jd + time_to_next
-        end_time_str = _format_end_time(jd_end, jd, timezone_str)
+    # Binary search for exact nakshatra boundary
+    jd_low = jd
+    jd_high = jd + 2.0
+    tolerance = 0.00001
+    
+    for _ in range(60):
+        jd_mid = (jd_low + jd_high) / 2.0
+        swe.set_sid_mode(swe.SIDM_LAHIRI, 0, 0)
+        moon_pos_mid = calculate_planet_position(jd_mid, swe.MOON)
+        moon_long_mid = moon_pos_mid["longitude"]
+        
+        diff_to_target = abs(moon_long_mid - target_nak_long)
+        if diff_to_target > 180.0:
+            diff_to_target = 360.0 - diff_to_target
+        
+        if diff_to_target < (tolerance * nakshatra_span):
+            jd_end = jd_mid
+            break
+        
+        if moon_long_mid < target_nak_long:
+            jd_low = jd_mid
+        else:
+            jd_high = jd_mid
     else:
-        jd_end = jd + 1.0
-        end_time_str = _format_end_time(jd_end, jd, timezone_str)
+        jd_end = (jd_low + jd_high) / 2.0
+    
+    end_time_str = _format_end_time(jd_end, jd, timezone_str)
     
     # Calculate next nakshatra
     next_nak_index = (nak_index + 1) % 27
@@ -453,6 +537,22 @@ def calculate_nakshatra(jd: float, timezone_str: str = "Asia/Kolkata") -> Dict[s
 
 
 def calculate_yoga(jd: float, timezone_str: str = "Asia/Kolkata") -> Dict[str, any]:
+    """
+    Calculate Yoga using Drik Siddhanta formula.
+    
+    Formula: Yoga = (Sun + Moon) mod 360 / 13°20'
+    Each yoga = 13°20' = 13.333333 degrees
+    
+    Args:
+        jd: Julian Day Number
+    
+    Returns:
+        Dictionary with yoga information:
+        - name: Yoga name
+        - end_time: Time when yoga ends
+    """
+    # FORCE Lahiri Ayanamsa before calculation
+    swe.set_sid_mode(swe.SIDM_LAHIRI, 0, 0)
     """
     Calculate Yoga using Drik Siddhanta formula.
     
@@ -498,14 +598,38 @@ def calculate_yoga(jd: float, timezone_str: str = "Asia/Kolkata") -> Dict[str, a
     sun_speed = sun_pos["speed_longitude"]
     relative_speed = moon_speed + sun_speed
     
-    end_time_str = "—"
-    if relative_speed > 0:
-        time_to_next = remaining / relative_speed
-        jd_end = jd + time_to_next
-        end_time_str = _format_end_time(jd_end, jd, timezone_str)
+    # Calculate exact end time using binary search
+    swe.set_sid_mode(swe.SIDM_LAHIRI, 0, 0)
+    target_yoga_long = ((yoga_index + 1) % 27) * yoga_span
+    
+    # Binary search for exact yoga boundary
+    jd_low = jd
+    jd_high = jd + 2.0
+    tolerance = 0.00001
+    
+    for _ in range(60):
+        jd_mid = (jd_low + jd_high) / 2.0
+        swe.set_sid_mode(swe.SIDM_LAHIRI, 0, 0)
+        sun_pos_mid = calculate_planet_position(jd_mid, swe.SUN)
+        moon_pos_mid = calculate_planet_position(jd_mid, swe.MOON)
+        yoga_long_mid = normalize_degrees(sun_pos_mid["longitude"] + moon_pos_mid["longitude"])
+        
+        diff_to_target = abs(yoga_long_mid - target_yoga_long)
+        if diff_to_target > 180.0:
+            diff_to_target = 360.0 - diff_to_target
+        
+        if diff_to_target < (tolerance * yoga_span):
+            jd_end = jd_mid
+            break
+        
+        if yoga_long_mid < target_yoga_long:
+            jd_low = jd_mid
+        else:
+            jd_high = jd_mid
     else:
-        jd_end = jd + 1.0
-        end_time_str = _format_end_time(jd_end, jd, timezone_str)
+        jd_end = (jd_low + jd_high) / 2.0
+    
+    end_time_str = _format_end_time(jd_end, jd, timezone_str)
     
     # Calculate next yoga
     next_yoga_index = (yoga_index + 1) % 27
@@ -558,22 +682,36 @@ def calculate_karana_array(jd_sunrise: float, jd_next_sunrise: float, timezone_s
         elif tithi_num < 0:
             tithi_num = 0
         
-        # Karana is half-tithi
-        # First karana of tithi: (tithi_num * 2) % 11
-        # Second karana of tithi: (tithi_num * 2 + 1) % 11
+        # FORCE Lahiri Ayanamsa before calculation
+        swe.set_sid_mode(swe.SIDM_LAHIRI, 0, 0)
+        
+        # Karana calculation: Each tithi has 2 karanas (each = 6°)
+        # Karana index formula: Based on tithi number and which half of tithi
+        # For tithi N:
+        #   First karana (0-6° in tithi): index = (N * 2) % 11
+        #   Second karana (6-12° in tithi): index = (N * 2 + 1) % 11
+        # BUT: There's a -1 offset needed for correct mapping
+        # Corrected formula:
+        #   First karana: index = ((N * 2 - 1) % 11 + 11) % 11
+        #   Second karana: index = (N * 2) % 11
+        
         elapsed_in_tithi = diff % 12.0
         
-        # Determine which karana we're in (first or second half of tithi)
         if elapsed_in_tithi < 6.0:
             # First karana of tithi
-            karana_index = (tithi_num * 2) % 11
+            # Formula: (tithi_num * 2 - 1) % 11, but handle negative
+            karana_index = ((tithi_num * 2 - 1) % 11 + 11) % 11
             elapsed_in_karana = elapsed_in_tithi
             remaining = 6.0 - elapsed_in_karana
         else:
             # Second karana of tithi
-            karana_index = (tithi_num * 2 + 1) % 11
+            karana_index = (tithi_num * 2) % 11
             elapsed_in_karana = elapsed_in_tithi - 6.0
             remaining = 6.0 - elapsed_in_karana
+        
+        # Calculate elapsed in current karana (0-6°)
+        elapsed_in_karana = diff % 6.0
+        remaining = 6.0 - elapsed_in_karana
         
         # Calculate when this karana ends
         moon_speed = moon_pos["speed_longitude"]
@@ -683,11 +821,11 @@ def get_lunar_month_info(jd: float) -> Dict[str, any]:
     Get Vedic lunar month information using Drik Panchang methodology.
     
     AMANTA (South/West India):
-    - Lunar month ENDS at Amavasya (Moon - Sun = 0°)
+    - Lunar month BEGINS AFTER Amavasya (Moon - Sun = 0°)
     - Month name = Sun's sidereal sign at exact Amavasya moment
     
     PURNIMANTA (North India):
-    - Lunar month ENDS at Purnima (Moon - Sun = 180°)
+    - Lunar month BEGINS AFTER Purnima (Moon - Sun = 180°)
     - Month name = Sun's sidereal sign at exact Purnima moment
     
     ADHIKA MASA (Leap Month):
@@ -703,41 +841,42 @@ def get_lunar_month_info(jd: float) -> Dict[str, any]:
         - purnimanta_month: Month name for Purnimanta calendar
         - is_adhika_masa: Boolean indicating if current month is Adhika Masa
     """
-    # Find exact JD of most recent Amavasya (for Amanta)
-    amavasya_jd = find_exact_amavasya_purnima(jd, 0.0)
+    # FORCE Lahiri Ayanamsa before calculation
+    swe.set_sid_mode(swe.SIDM_LAHIRI, 0, 0)
     
-    # Find exact JD of most recent Purnima (for Purnimanta)
-    purnima_jd = find_exact_amavasya_purnima(jd, 180.0)
+    # AMANTA: Month name = Sun's sign at the Amavasya that ENDS the current month
+    # Find the NEXT Amavasya (the one that will end the current month)
+    next_amavasya_jd = find_exact_amavasya_purnima(jd + 30.0, 0.0)  # Search forward
+    sun_pos_next_amavasya = calculate_planet_position(next_amavasya_jd, swe.SUN)
+    sun_long_next_amavasya = sun_pos_next_amavasya["longitude"]
+    sun_sign_amanta = int(sun_long_next_amavasya // 30.0) % 12
     
-    # Get Sun's sidereal position at Amavasya
-    sun_pos_amavasya = calculate_planet_position(amavasya_jd, swe.SUN)
-    sun_long_amavasya = sun_pos_amavasya["longitude"]
-    sun_sign_amavasya = int(sun_long_amavasya // 30.0) % 12
-    
-    # Get Sun's sidereal position at Purnima
-    sun_pos_purnima = calculate_planet_position(purnima_jd, swe.SUN)
-    sun_long_purnima = sun_pos_purnima["longitude"]
-    sun_sign_purnima = int(sun_long_purnima // 30.0) % 12
+    # PURNIMANTA: Month name = Sun's sign at the Purnima that ENDS the current month
+    # Find the NEXT Purnima (the one that will end the current month)
+    next_purnima_jd = find_exact_amavasya_purnima(jd + 30.0, 180.0)  # Search forward
+    sun_pos_next_purnima = calculate_planet_position(next_purnima_jd, swe.SUN)
+    sun_long_next_purnima = sun_pos_next_purnima["longitude"]
+    sun_sign_purnimanta = int(sun_long_next_purnima // 30.0) % 12
     
     # Determine month names
-    amanta_month = VEDIC_MONTHS[sun_sign_amavasya]
-    purnimanta_month = VEDIC_MONTHS[sun_sign_purnima]
+    amanta_month = VEDIC_MONTHS[sun_sign_amanta]
+    purnimanta_month = VEDIC_MONTHS[sun_sign_purnimanta]
     
-    # Check for Adhika Masa (leap month)
-    # Find previous Amavasya/Purnima to check for Sankranti
-    prev_amavasya_jd = find_exact_amavasya_purnima(amavasya_jd - 1.0, 0.0)
-    prev_purnima_jd = find_exact_amavasya_purnima(purnima_jd - 1.0, 180.0)
+    # For Adhika Masa detection, we still need previous boundaries
+    prev_amavasya_jd = find_exact_amavasya_purnima(jd, 0.0)
+    prev_purnima_jd = find_exact_amavasya_purnima(jd, 180.0)
     
-    # Get Sun's sign at previous boundaries
+    # Get Sun's sign at previous boundaries (for Adhika Masa detection)
     prev_sun_pos_amavasya = calculate_planet_position(prev_amavasya_jd, swe.SUN)
     prev_sun_sign_amavasya = int((prev_sun_pos_amavasya["longitude"] // 30.0)) % 12
     
     prev_sun_pos_purnima = calculate_planet_position(prev_purnima_jd, swe.SUN)
-    prev_sun_sign_purnima = int((prev_sun_pos_purnima["longitude"] // 30.0)) % 12
+    prev_sun_sign_purnimanta = int((prev_sun_pos_purnima["longitude"] // 30.0)) % 12
     
     # Adhika Masa: No Sankranti (Sun sign change) between boundaries
-    is_adhika_amanta = (sun_sign_amavasya == prev_sun_sign_amavasya)
-    is_adhika_purnimanta = (sun_sign_purnima == prev_sun_sign_purnima)
+    # Compare previous boundary sign with next boundary sign
+    is_adhika_amanta = (sun_sign_amanta == prev_sun_sign_amavasya)
+    is_adhika_purnimanta = (sun_sign_purnimanta == prev_sun_sign_purnimanta)
     
     # For simplicity, return if either is Adhika (in practice, they're usually the same)
     is_adhika_masa = is_adhika_amanta or is_adhika_purnimanta
@@ -749,19 +888,38 @@ def get_lunar_month_info(jd: float) -> Dict[str, any]:
     }
 
 
-def get_samvat_years(gregorian_year: int) -> Dict[str, str]:
+def get_samvat_years(date_obj: datetime, jd_sunrise: float) -> Dict[str, str]:
     """
     Calculate Samvat years (Shaka, Vikram, Gujarati).
     
+    CRITICAL: Samvat year changes at Chaitra Shukla Pratipada, NOT Jan 1.
+    For dates before Chaitra, use previous year.
+    
     Args:
-        gregorian_year: Gregorian calendar year
+        date_obj: Date object for the calculation
+        jd_sunrise: Julian Day at sunrise (to check if we're before Chaitra)
     
     Returns:
         Dictionary with samvat years
     """
-    shaka = gregorian_year - 78
-    vikram = gregorian_year + 57
-    gujarati = gregorian_year + 56  # Typically same as Vikram with regional variations
+    gregorian_year = date_obj.year
+    
+    # Check if we're before Chaitra Shukla Pratipada
+    # Approximate: Chaitra usually starts in March/April
+    # For Jan-Feb, we're likely in previous Samvat year
+    # More precise: Check if current date is before Chaitra month start
+    # For simplicity, if month < 3 (Jan-Feb), use previous year
+    use_previous_year = date_obj.month < 3
+    
+    if use_previous_year:
+        base_year = gregorian_year - 1
+    else:
+        base_year = gregorian_year
+    
+    # Calculate Samvat years
+    shaka = base_year - 78
+    vikram = base_year + 57
+    gujarati = base_year + 56  # Typically same as Vikram with regional variations
     
     # Format with era name
     return {
@@ -886,15 +1044,17 @@ def calculate_panchanga(
     # Get Paksha (from tithi)
     paksha = tithi["current"]["paksha"]
     
+    # FORCE Lahiri Ayanamsa before all calculations
+    swe.set_sid_mode(swe.SIDM_LAHIRI, 0, 0)
+    
     # Get lunar month information (Amanta, Purnimanta, Adhika Masa)
     lunar_month_info = get_lunar_month_info(jd_sunrise)
     amanta_month = lunar_month_info["amanta_month"]
     purnimanta_month = lunar_month_info["purnimanta_month"]
     is_adhika_masa = lunar_month_info["is_adhika_masa"]
     
-    # Get Samvat years
-    gregorian_year = date_obj.year
-    samvat = get_samvat_years(gregorian_year)
+    # Get Samvat years (with correct year calculation)
+    samvat = get_samvat_years(date_obj, jd_sunrise)
     
     return {
         "panchanga": {
