@@ -14,6 +14,7 @@ import swisseph as swe
 from src.db.schemas import PanchangRequest
 from src.jyotish.panchang import calculate_panchang
 from src.jyotish.panchang_engine import generate_panchang
+from src.jyotish.panchanga.panchanga_engine import calculate_panchanga
 
 router = APIRouter()
 
@@ -95,4 +96,54 @@ async def calculate_panchang_endpoint(request: PanchangRequest):
         return panchang_data
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error calculating panchang: {str(e)}")
+
+
+@router.get("/panchanga")
+def get_panchanga(
+    date: str = Query(..., description="Date in YYYY-MM-DD format"),
+    lat: float = Query(..., description="Latitude"),
+    lon: float = Query(..., description="Longitude"),
+    tz: str = Query(..., description="Timezone (e.g., 'Asia/Kolkata')")
+):
+    """
+    Calculate Panchanga using Drik Siddhanta (Swiss Ephemeris).
+    
+    JHora / Prokerala Standard Mode
+    Backend ONLY - No AI, No frontend logic
+    
+    This endpoint calculates complete Panchanga using Drik Siddhanta methodology:
+    - Sunrise/Sunset using Swiss Ephemeris
+    - Tithi = (Moon - Sun) / 12°
+    - Nakshatra = Moon longitude / 13°20'
+    - Yoga = (Moon + Sun) mod 360
+    - Karana = half-tithi logic
+    - Vara from weekday & sunrise rule
+    
+    Args:
+        date: Date in YYYY-MM-DD format
+        lat: Latitude
+        lon: Longitude
+        tz: Timezone string (e.g., 'Asia/Kolkata')
+    
+    Returns:
+        Complete Panchanga data with all elements
+    """
+    try:
+        # Validate date format
+        datetime.strptime(date, "%Y-%m-%d")
+        
+        # Calculate Panchanga
+        panchanga_data = calculate_panchanga(
+            date=date,
+            latitude=lat,
+            longitude=lon,
+            timezone=tz
+        )
+        
+        return panchanga_data
+        
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=f"Invalid input: {str(e)}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error calculating panchanga: {str(e)}")
 
