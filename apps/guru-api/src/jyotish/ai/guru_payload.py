@@ -625,6 +625,22 @@ def build_guru_context(
     except Exception:
         pass
 
+    # Stress flags for remedy gating (LLM must obey)
+    stress_flags = {}
+    try:
+        from src.jyotish.ai.interpretation_engine import compute_stress_flags
+        temp_result = {
+            "janma_nakshatra": janma_nakshatra,
+            "transit": transit_block,
+            "quality": quality,
+            "time": time_block,
+            "tara_bala": tara_bala_block,
+            "lordship": lordship_block,
+        }
+        stress_flags = compute_stress_flags(temp_result)
+    except Exception:
+        stress_flags = {"severe_stress": False, "moderate_stress": False}
+
     result = {
         "janma_nakshatra": janma_nakshatra,
         "natal": natal,
@@ -638,6 +654,8 @@ def build_guru_context(
         "most_afflicted_house": most_afflicted_house,
         "afflicted_reason": afflicted_reason,
         "calculation_date": calculation_date.replace(tzinfo=None).isoformat() if calculation_date else None,
+        "severe_stress": stress_flags.get("severe_stress", False),
+        "moderate_stress": stress_flags.get("moderate_stress", False),
     }
 
     # --- DYNAMIC HORIZON VISIBILITY (additive only) ---

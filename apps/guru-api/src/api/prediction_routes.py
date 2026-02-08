@@ -21,18 +21,10 @@ from src.jyotish.ai.guru_payload import (
 )
 from src.ai.post_processor import (
     validate_and_format_guidance,
-    get_canonical_throne,
     apply_dharma_graha_tone_to_section,
 )
 from src.ai.llm_client import LLMClient
-from src.jyotish.ai.interpretation_engine import (
-    build_single_transit_line as _build_transit_line,
-    build_dasha_section as _build_dasha_section,
-    build_chandra_bala_section as _build_chandra_bala_section,
-    build_tara_section as _build_tara_section,
-    build_dharma_section as _build_dharma_section,
-    apply_tara_global_tone,
-)
+from src.jyotish.ai.interpretation_engine import apply_tara_global_tone
 from src.ai.rishi_prompt import RISHI_PRESENCE_PROMPT, RISHI_NARRATIVE_REFINEMENT_PROMPT
 from src.utils.timezone import get_julian_day, local_to_utc
 
@@ -203,46 +195,6 @@ REQUIRED_STRUCTURED_SECTIONS = [
 ]
 
 
-def _build_single_transit_line(
-    pname: str, pdata: dict, context: Dict[str, Any],
-    same_house: bool = False, variant_index: int = 0, emit_bindu: bool = True,
-) -> str:
-    """
-    Build one transit line from interpretation engine (zero-hardcode).
-    Every sentence traceable to chart data.
-    """
-    return _build_transit_line(pname, pdata, context, same_house=same_house, emit_bindu=emit_bindu, variant_index=variant_index)
-
-
-def _ensure_mahadasha_first_in_major_transits(
-    major_transits_text: str, context: Dict[str, Any]
-) -> str:
-    """
-    Authority lock: Mahadasha must appear first. If not, prepend Guru-synthesis line.
-    """
-    time_block = context.get("time") or {}
-    mahadasha = (time_block.get("mahadasha_lord") or "").strip()
-    if not mahadasha or not major_transits_text:
-        return major_transits_text
-    transit = context.get("transit") or {}
-    if mahadasha not in transit:
-        return major_transits_text
-    text_lower = major_transits_text.lower()
-    first_planet = None
-    for p in transit:
-        pos = text_lower.find(p.lower())
-        if pos >= 0:
-            if first_planet is None or pos < first_planet[1]:
-                first_planet = (p, pos)
-    if first_planet and first_planet[0] == mahadasha:
-        return major_transits_text
-    pdata = transit.get(mahadasha)
-    if not isinstance(pdata, dict):
-        return major_transits_text
-    line = _build_single_transit_line(mahadasha, pdata, context)
-    return line + "\n\n" + major_transits_text.strip()
-
-
 def _get_transit_planet_order(context: Dict[str, Any]) -> List[str]:
     """Return transit planets in declaration order: Mahadasha, Antardasha, classical, Rahu, Ketu."""
     transit = context.get("transit") or {}
@@ -285,68 +237,6 @@ def _get_transit_planet_order(context: Dict[str, Any]) -> List[str]:
     return order
 
 
-def _build_deterministic_major_transits(context: Dict[str, Any]) -> str:
-    """
-    Build Major Transits section from backend context only. Guru synthesis. NEVER empty.
-    House-level bindu tracking: emit full bindu commentary once per house; short constraint thereafter.
-    """
-    transit = context.get("transit") or {}
-    if not transit:
-        return "Transit positions govern the day."
-    order = _get_transit_planet_order(context)
-    lines = []
-    last_house = None
-    house_bindu_emitted = set()
-    for idx, pname in enumerate(order):
-        pdata = transit.get(pname)
-        if not isinstance(pdata, dict):
-            continue
-        house = int(pdata.get("transit_house") or pdata.get("house_from_lagna", 1))
-        same_house = last_house is not None and house == last_house
-        emit_bindu = house not in house_bindu_emitted
-        line = _build_single_transit_line(
-            pname, pdata, context,
-            same_house=same_house,
-            emit_bindu=emit_bindu,
-            variant_index=idx,
-        )
-        lines.append(line)
-        # Only mark house once we've emitted full bindu phrase (low bindu)
-        quality = context.get("quality") or {}
-        qdata = quality.get(pname) or {}
-        bindu = qdata.get("bindu")
-        if emit_bindu and bindu is not None and int(bindu) < 4:
-            house_bindu_emitted.add(house)
-        last_house = house
-    if not lines:
-        return "Transit positions govern the day."
-    major = "\n\n".join(lines)
-    major = _ensure_mahadasha_first_in_major_transits(major, context)
-    return major
-
-
-def _build_deterministic_moon_movement(context: Dict[str, Any]) -> str:
-    """
-    Build Moon Movement section from backend context only. Guru elaboration. NEVER empty.
-    """
-    events = context.get("transit_events") or []
-    if not events:
-        return "No Moon sign change today."
-    for ev in events:
-        if isinstance(ev, dict) and ev.get("planet") == "Moon":
-            from_house = ev.get("from_house", "")
-            to_house = ev.get("to_house", "")
-            time_local = ev.get("time_local", "")
-            if from_house and to_house:
-                fh, th = int(from_house), int(to_house)
-                from_ord = _house_ordinal(fh)
-                to_ord = _house_ordinal(th)
-                time_suffix = f" at {time_local}" if time_local else ""
-                meaning = MOON_HOUSE_SHIFT_MEANING.get((fh, th), DEFAULT_MEANING)
-                return f"As the Moon shifts from the {from_ord} to the {to_ord} house{time_suffix}, {meaning[0].lower()}{meaning[1:]}"
-    return "No Moon sign change today."
-
-
 def _build_guidance_with_structure(structured: Dict[str, str]) -> str:
     """
     Rebuild final guidance from structured sections WITH canonical headings.
@@ -367,34 +257,6 @@ def _build_guidance_with_structure(structured: Dict[str, str]) -> str:
         elif content:
             parts.append(content)
     return "\n\n".join(parts).strip()
-
-
-def _ensure_full_planet_coverage_in_major_transits(
-    major_transits_text: str, context: Dict[str, Any]
-) -> str:
-    """
-    Soft check: every planet in CURRENT SKY POSITION must appear in MAJOR TRANSITS.
-    If missing, append Guru-synthesis line.
-    """
-    transit = context.get("transit") or {}
-    if not transit:
-        return major_transits_text
-    order = _get_transit_planet_order(context)
-    missing = []
-    for pname in order:
-        if not re.search(rf"\b{re.escape(pname)}\b", major_transits_text, re.IGNORECASE):
-            missing.append(pname)
-    if not missing:
-        return major_transits_text
-    append_parts = []
-    for pname in missing:
-        pdata = transit.get(pname)
-        if not isinstance(pdata, dict):
-            continue
-        append_parts.append(_build_single_transit_line(pname, pdata, context))
-    if append_parts:
-        return (major_transits_text or "").rstrip() + "\n\n" + "\n\n".join(append_parts)
-    return major_transits_text
 
 
 # Panchanga vara-lord closing (Guru presence — one line per day lord)
@@ -494,22 +356,10 @@ def _build_greeting(seeker_name: str, context: Dict[str, Any]) -> str:
 
 
 def _fill_missing_section(key: str, val: str, context: Dict[str, Any]) -> str:
-    """If val is empty, use deterministic builder. NEVER return empty."""
+    """If val is empty, use placeholder. Full LLM synthesis — no deterministic prose."""
     if val and val.strip():
         return val.strip()
-    if key == "dasha":
-        return _build_dasha_section(context)
-    if key == "chandra_bala":
-        return _build_chandra_bala_section(context)
-    if key == "tara_bala":
-        return _build_tara_section(context)
-    if key == "moon_movement":
-        return _build_deterministic_moon_movement(context)
-    if key == "major_transits":
-        return _build_deterministic_major_transits(context)
-    if key == "dharmic_guidance":
-        return _build_dharma_section(context)
-    return val or ""
+    return "Interpretation unavailable for this section."
 
 
 def _assemble_structured_output(
@@ -519,31 +369,25 @@ def _assemble_structured_output(
     seeker_name: str = "",
 ) -> tuple:
     """
-    Assemble structured dict and concatenated guidance string in fixed order.
-    Order: Greeting → CURRENT SKY POSITION → Panchanga → Dasha → Tara Bala → Chandra Bala → Major transits → Dharma → Throne → Moon movement.
-    LOCK: Panchanga from backend only. Greeting from backend. Always set greeting. Never fail.
-    DETERMINISTIC FILL: If parsed missing any section, use backend builder. dasha, chandra_bala, tara_bala NEVER empty.
+    Assemble structured dict and concatenated guidance string.
+    Full LLM synthesis — no deterministic prose. LLM generates all sections.
     """
     structured: Dict[str, str] = {
         "declarations": _format_declarations_for_display(declarations_block),
     }
     for key in REQUIRED_STRUCTURED_SECTIONS:
         val = _safe_str(parsed.get(key))
-        if key == "panchanga":
-            val = _build_backend_panchanga(context) or val
         val = _fill_missing_section(key, val, context)
         structured[key] = val
     major_transits = structured.get("major_transits") or ""
-    major_transits = _ensure_mahadasha_first_in_major_transits(major_transits, context)
-    major_transits = _ensure_full_planet_coverage_in_major_transits(major_transits, context)
     major_transits = apply_tara_global_tone(major_transits, context)
     structured["major_transits"] = major_transits
-    # SYNC LOCK: Always build greeting (use Seeker when name empty). Always set in structured.
+    # Greeting from LLM (with Guru self-introduction)
     name = (seeker_name or "Seeker").strip()
-    greeting = _build_greeting(name, context)
+    greeting = _safe_str(parsed.get("greeting"))
+    if not greeting or not greeting.strip():
+        greeting = f"{name}, the wheel of Time turns thus:"
     structured["greeting"] = greeting
-    # Throne: always use canonical (Nakshatra intro) — set here so sync applies before return
-    structured["throne"] = get_canonical_throne(context)
     parts = []
     parts.append(greeting)
     if declarations_block:
@@ -1259,21 +1103,24 @@ ALLOWED RETROGRADE PLANETS (use Retrograde/Vakri only for these): {allowed_retro
                 # Structured flow for daily: LLM fills interpretation slots only, backend assembles
                 use_structured = timescale == "daily" and declarations_block
                 if use_structured:
+                    severe = context.get("severe_stress", False)
+                    moderate = context.get("moderate_stress", False)
+                    remedy_note = f"REMEDY GATING: severe_stress={severe}, moderate_stress={moderate}. Obey these flags."
                     structured_prompt = f"""Seeker: {seeker_name}
 
 Return ONLY a valid JSON object. No markdown, no code block, no other text.
-Keys (all required, use empty string "" if no content): panchanga, dasha, chandra_bala, tara_bala, major_transits, dharmic_guidance, throne, moon_movement
+Keys (all required, use empty string "" if no content): greeting, panchanga, dasha, chandra_bala, tara_bala, major_transits, dharmic_guidance, throne, moon_movement
 
-CRITICAL: Do NOT include "Planet currently transits Sign in your Nth house" — backend provides those. You interpret only.
+{remedy_note}
 
+greeting: MANDATORY Guru self-introduction. First 3–5 sentences. Address seeker by name. Establish chart examined. Convey planetary motion advises, not controls. Calm authority. No ego. Vary daily.
 panchanga: From JSON only (tithi, nakshatra, vara, yoga, karana). No hallucination. Start with "On this sacred [tithi] of the [paksha]..." Max 6 sentences.
 dasha: Mahadasha and Antardasha interpretation. Authority order.
 chandra_bala: Moon strength from transit house. If Moon 8th from natal Moon → exact sentence "Do not initiate major ventures today."
 tara_bala: If tara_category in Vipat/Naidhana/Pratyak: cautionary tone only; no optimism. Else brief influence.
-chandra_bala: If Moon 8th from natal Moon → exact sentence only: "Do not initiate major ventures today." No variation.
-major_transits: MANDATORY full planet coverage. Every planet in CURRENT SKY POSITION must appear exactly once. Order: Mahadasha first, Antardasha second, remaining classical planets (Sun, Moon, Mars, Mercury, Jupiter, Venus, Saturn), then Rahu, then Ketu. Format: "In the Nth house, [Planet]…" — never repeat "Planet currently transits Sign in your Nth house." For Rahu: "In the Nth house, Rahu amplifies karmic hunger in this domain." For Ketu: "In the Nth house, Ketu creates detachment and internalization in this domain." Do NOT use dignity or avastha for Rahu/Ketu. For classical planets: use transit.dignity, transit.avastha.modifier_suggestion. No "shadow self", no new-age phrasing. If Mahadasha 8th/12th lord or malefic: restrained tone.
-dharmic_guidance: 2 do's/don'ts, 1 Gita principle from context.gita (match dominant conflict: Saturn→detachment, Mars→anger control, Jupiter→wisdom), 1 classical maxim.
-throne: "You were born under [Nakshatra]...". One dynamic daily spiritual line from Janma Nakshatra lord + current Moon sign + Tara category. No static personality (e.g. do not repeat "Jyeshtha gives leadership"). If not activated: exact "Today, no transit planet activates your throne." If activated: planet name only. No repetition.
+major_transits: MANDATORY full planet coverage. Every planet in CURRENT SKY POSITION must appear. Order: Mahadasha first, Antardasha second, classical planets, Rahu, Ketu. Human narrative — no "Ruling the X house", no doctrinal terms. Contextual interpretation.
+dharmic_guidance: 2 do's/don'ts, 1 Gita principle from context.gita. One classical maxim.
+throne: "You were born under [Nakshatra]...". Dynamic daily line. If not activated: "Today, no transit planet activates your throne." If activated: planet name only.
 moon_movement: If transit_events has Moon move, describe. Else "".
 
 ALLOWED RETROGRADE: {allowed_retrograde_str}. Use retrograde words ONLY for these planets.
@@ -1285,7 +1132,7 @@ JSON CONTEXT:
                         resp = client.openai_client.chat.completions.create(
                             model="gpt-4o",
                             messages=[
-                                {"role": "system", "content": "You are a classical Vedic Daivajna. Return only valid JSON. Write with warm, dignified Rishi presence—continuous flow, no robotic repetition. Tone from context only."},
+                                {"role": "system", "content": GURU_SYSTEM_PROMPT + "\n\nReturn ONLY valid JSON. Keys: greeting, panchanga, dasha, chandra_bala, tara_bala, major_transits, dharmic_guidance, throne, moon_movement."},
                                 {"role": "user", "content": structured_prompt},
                             ],
                             max_tokens=1200,
@@ -1654,27 +1501,20 @@ Produce one seamless classical Daivajna daily prediction.
     if timescale == "daily" and allowed_retrograde_set_out is not None:
         guidance = _strip_disallowed_retrograde(guidance, allowed_retrograde_set_out)
 
-    # Fallback: when structured path failed, build ALL sections deterministically from backend. NEVER empty.
+    # Fallback: when LLM failed, return structure with placeholders. No deterministic prose.
     if timescale == "daily" and declarations_block:
-        decl_norm = _normalize_declaration_block(declarations_block)
-        major_content = guidance
-        if guidance and ("Guidance could not be generated" in guidance or "OPENAI_API_KEY not set" in guidance):
-            major_content = _build_deterministic_major_transits(context)
-        elif decl_norm and guidance and guidance.startswith(decl_norm):
-            major_content = guidance[len(decl_norm):].lstrip("\n\t ")
-        if not major_content or "Guidance could not be generated" in (major_content or "") or "OPENAI_API_KEY not set" in (major_content or ""):
-            major_content = _build_deterministic_major_transits(context)
+        placeholder = "Interpretation could not be generated. Full chart data is available in the context."
         fallback_structured: Dict[str, str] = {
-            "greeting": _build_greeting(seeker_name, context),
+            "greeting": f"{(seeker_name or 'Seeker').strip()}, the wheel of Time turns thus:",
             "declarations": _format_declarations_for_display(declarations_block),
-            "panchanga": _build_backend_panchanga(context) or "The day unfolds under celestial influence.",
-            "dasha": _build_dasha_section(context),
-            "chandra_bala": _build_chandra_bala_section(context),
-            "tara_bala": _build_tara_section(context),
-            "major_transits": major_content,
-            "dharmic_guidance": apply_dharma_graha_tone_to_section("", context),
-            "throne": get_canonical_throne(context),
-            "moon_movement": _build_deterministic_moon_movement(context),
+            "panchanga": placeholder,
+            "dasha": placeholder,
+            "chandra_bala": placeholder,
+            "tara_bala": placeholder,
+            "major_transits": placeholder,
+            "dharmic_guidance": placeholder,
+            "throne": placeholder,
+            "moon_movement": "No Moon sign change today." if not (context.get("transit_events") or []) else placeholder,
         }
         guidance = _build_guidance_with_structure(fallback_structured)
         return {

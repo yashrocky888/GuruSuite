@@ -223,33 +223,10 @@ def get_canonical_throne(context: Dict[str, Any]) -> str:
 
 def enforce_throne_activation(body: str, context: Dict[str, Any]) -> str:
     """
-    When throne is NOT activated: "You were born under {Nakshatra}. Today, no transit planet activates your throne. Preserve your natal strength; do not expend it carelessly."
-    When activated: "You were born under {Nakshatra}. Today, {Planet} activates your throne."
-    No personality repetition. No generic traits.
+    Full LLM synthesis — no deterministic throne replacement.
+    LLM generates throne section.
     """
-    activating = get_activating_planets(context)
-    janma = context.get("janma_nakshatra") or {}
-    nak_name = (janma.get("name") or "").strip() or "your birth star"
-    pada = janma.get("pada", 1)
-    intro = f"You were born under {nak_name} (Pada {pada}). "
-
-    if not activating:
-        canonical_throne = intro + _NO_ACTIVATION_FULL
-    else:
-        planet_names = ", ".join(activating)
-        canonical_throne = intro + f"Today, {planet_names} activates your throne."
-
-    paragraphs = body.split("\n\n") if body else []
-    replaced = False
-    for i, p in enumerate(paragraphs):
-        if "you were born under" in p.lower() or "activates your throne" in p.lower() or "no transit planet activates" in p.lower():
-            paragraphs[i] = canonical_throne
-            replaced = True
-            break
-    if not replaced:
-        paragraphs.append(canonical_throne)
-
-    return "\n\n".join(paragraphs)
+    return body
 
 
 # Tara override: Vipat, Naidhana, Pratyak → prohibit optimistic language.
@@ -363,21 +340,10 @@ DHARMA_CLOSING = "Act with awareness. The fruit will follow."
 
 def _enforce_dharma_authority(section_text: str, context: Dict[str, Any]) -> str:
     """
-    ULTRA-TIGHT DHARMA LOCK.
-    Replace entire Dharma section with data-driven block from interpretation engine:
-    Mahadasha lordship + Tara category + most afflicted house.
-    No static graha psychology. Million-chart safe.
+    Full LLM synthesis — no deterministic dharma replacement.
+    Return section as-is. LLM generates dharma.
     """
-    try:
-        from src.jyotish.ai.interpretation_engine import build_dharma_section
-        return build_dharma_section(context)
-    except Exception:
-        time_block = context.get("time") or {}
-        mahadasha = (time_block.get("mahadasha_lord") or "").strip()
-        principle = DHARMA_GRAHA_PRINCIPLE.get(mahadasha, "Restraint preserves power.")
-        ch, v = DHARMA_GITA_VERSE.get(mahadasha, (2, 47))
-        gita_ref = f"Bhagavad Gita {ch}.{v}"
-        return f"{principle}\n\n{gita_ref}\n\n{DHARMA_CLOSING}"
+    return section_text
 
 
 def _replace_dharma_paragraphs_in_body(body: str, context: Dict[str, Any]) -> str:
