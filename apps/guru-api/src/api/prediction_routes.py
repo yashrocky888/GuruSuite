@@ -33,7 +33,7 @@ from src.jyotish.ai.interpretation_engine import (
     build_dharma_section as _build_dharma_section,
     apply_tara_global_tone,
 )
-from src.ai.rishi_prompt import RISHI_PRESENCE_PROMPT
+from src.ai.rishi_prompt import RISHI_PRESENCE_PROMPT, RISHI_NARRATIVE_REFINEMENT_PROMPT
 from src.utils.timezone import get_julian_day, local_to_utc
 
 
@@ -1158,7 +1158,7 @@ ONLY using verified JSON data.
 ==================================================
 END ZERO-HALLUCINATION LOCK
 ==================================================
-"""
+""" + RISHI_NARRATIVE_REFINEMENT_PROMPT
 
 
 router = APIRouter()
