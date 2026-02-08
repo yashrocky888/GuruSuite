@@ -14,23 +14,63 @@ import {
   ChartBarIcon,
   SunIcon,
   ArrowLeftIcon,
+  ArrowPathIcon,
+  AcademicCapIcon,
 } from '@heroicons/react/24/outline';
 import { FadeIn, SlideUp, StaggerContainer, StaggerItem } from '@/frontend/animations';
 import { useBirthStore } from '@/store/useBirthStore';
 import { getKundli } from '@/services/api';
+import apiClient from '@/services/api';
+import { useMaxLoadTime } from '@/hooks/useMaxLoadTime';
+import DashboardTransitActivationCard from '@/components/DashboardTransitActivationCard';
 // 🔒 ASTROLOGY LOCK: Removed calculateCurrentDasha import - UI must NEVER calculate astrology
 
 export default function DashboardPage() {
-  const { birthDetails, userId } = useBirthStore();
+  const { birthDetails, userId, hasHydrated } = useBirthStore();
   const [dashboardData, setDashboardData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
+
+  // 🔒 MAX LOAD TIME: Auto-stop spinner after 8 seconds
+  useMaxLoadTime({
+    loading,
+    setLoading,
+    maxTime: 8000,
+    onTimeout: () => {
+      setError('Loading took too long. Please try again.');
+    },
+  });
 
   useEffect(() => {
+    // 🔒 RACE CONDITION FIX 1: Client-side only
+    if (typeof window === 'undefined') return;
+
+    // 🔒 RACE CONDITION FIX 2: Hydration complete
+    if (!hasHydrated) return;
+
+    // 🔒 RACE CONDITION FIX 3: Prevent duplicate calls - REMOVED
+    // ❌ BUG FIX: if (loading) return; was preventing the effect from running!
+    // The loading state starts as true, so this guard blocked the initial fetch
+    // Instead, we'll track if we're already fetching with a ref or check inside the async function
+
+    // 🔒 RACE CONDITION FIX 4: Ensure API client is ready
+    if (!apiClient || !apiClient.defaults?.baseURL) {
+      console.warn('⚠️ API client not ready, waiting...');
+      return;
+    }
+
     const fetchDashboard = async () => {
+      console.log("🔍 DASHBOARD FETCH START");
+      
       try {
-        // CRITICAL: /dashboard endpoint does NOT exist - use /kundli directly
-        // Extract dashboard data from D1 chart
+        // Set loading to true at the start - this prevents duplicate calls
+        setLoading(true);
+        setError(null);
+        
+        // 🔒 HARD FAILSAFE: Check birth details
         if (!birthDetails) {
+          console.warn("⚠️ Dashboard: No birth details available");
           setDashboardData({
             success: false,
             message: 'Birth details required',
@@ -40,46 +80,43 @@ export default function DashboardPage() {
           return;
         }
 
+        console.log("🔍 BEFORE GETKUNDLI CALL");
         const kundliResponse = await getKundli(userId || undefined, birthDetails);
+        console.log("🔍 GETKUNDLI RESPONSE", kundliResponse);
+        
+        // 🔒 HARD FAILSAFE: Validate API response
+        if (!kundliResponse) {
+          throw new Error("API returned null or undefined response");
+        }
         
         // Extract D1 chart data
         // Handle both response formats: direct {D1: {...}} or nested {data: {kundli: {D1: {...}}}}
         const d1 = (kundliResponse as any).D1 || (kundliResponse as any).data?.kundli?.D1;
         
+        // 🔒 HARD FAILSAFE: Validate D1 data exists
         if (!d1) {
-          setDashboardData({
-            success: false,
-            message: 'D1 chart data not found in API response',
-            error: true,
+          console.error("❌ Dashboard: D1 chart data not found in API response", {
+            responseKeys: Object.keys(kundliResponse || {}),
+            hasD1: !!(kundliResponse as any).D1,
+            hasDataKundliD1: !!(kundliResponse as any).data?.kundli?.D1,
           });
-          setLoading(false);
-          return;
+          throw new Error('D1 chart data not found in API response');
         }
 
         const ascendant = d1.Ascendant;
         const planets = d1.Planets || {};
         const moon = planets.Moon;
         
-        // RUNTIME ASSERTION: Ascendant must exist and have sign
+        // 🔒 HARD FAILSAFE: Validate Ascendant data
         if (!ascendant || (!ascendant.sign_sanskrit && !ascendant.sign)) {
-          setDashboardData({
-            success: false,
-            message: 'Ascendant data missing in API response',
-            error: true,
-          });
-          setLoading(false);
-          return;
+          console.error("❌ Dashboard: Ascendant data missing", { ascendant, d1Keys: Object.keys(d1) });
+          throw new Error('Ascendant data missing in API response');
         }
         
-        // RUNTIME ASSERTION: Moon must exist and have sign
+        // 🔒 HARD FAILSAFE: Validate Moon data
         if (!moon || (!moon.sign_sanskrit && !moon.sign)) {
-          setDashboardData({
-            success: false,
-            message: 'Moon data missing in API response',
-            error: true,
-          });
-          setLoading(false);
-          return;
+          console.error("❌ Dashboard: Moon data missing", { moon, planetsKeys: Object.keys(planets) });
+          throw new Error('Moon data missing in API response');
         }
 
         // RUNTIME ASSERTION: Ascendant.house must be 1
@@ -109,7 +146,9 @@ export default function DashboardPage() {
           system: 'Vedic',
           ayanamsa: 'Lahiri'
         });
+        console.log("🔍 DASHBOARD FETCH SUCCESS");
       } catch (error: any) {
+        console.error("🔍 DASHBOARD FETCH ERROR", error);
         // Handle 404 gracefully - show "Not available" instead of "Data Error"
         if (error?.response?.status === 404) {
           setDashboardData({
@@ -117,16 +156,20 @@ export default function DashboardPage() {
             message: 'Kundli data not available. Please submit birth details first.',
             error: false, // Not an error, just not available
           });
+          setError(null); // 404 is expected, not an error
         } else {
           // Log error and show error state
+          const errorMessage = error?.message || 'Failed to fetch dashboard data';
           console.error('Dashboard data fetch failed:', error);
+          setError(errorMessage);
           setDashboardData({
             success: false,
-            message: error.message || 'Failed to fetch dashboard data',
+            message: errorMessage,
             error: true,
           });
         }
       } finally {
+        console.log("🔍 DASHBOARD FETCH END - Setting loading to false");
         setLoading(false);
       }
     };
@@ -134,9 +177,10 @@ export default function DashboardPage() {
     if (birthDetails) {
       fetchDashboard();
     } else {
+      console.log("🔍 DASHBOARD - No birth details, setting loading to false");
       setLoading(false);
     }
-  }, [userId, birthDetails]);
+  }, [userId, birthDetails, hasHydrated, retryCount]); // Added retryCount to trigger retry
 
   const quickLinks = [
     {
@@ -157,17 +201,55 @@ export default function DashboardPage() {
       title: 'Transits',
       description: 'Current Vedic transits',
       icon: ChartBarIcon,
-      href: '/transits',
+      href: '/kundli/transits',
       gradient: 'from-blue-500 to-cyan-500',
     },
     {
-      title: 'Panchang',
-      description: 'Today\'s panchang',
+      title: 'Panchanga',
+      description: 'Today\'s panchanga',
       icon: SunIcon,
-      href: '/panchang',
+      href: '/panchanga',
       gradient: 'from-yellow-400 to-orange-500',
     },
+    {
+      title: 'Shadbala',
+      description: 'Sixfold Planetary Strength',
+      icon: ChartBarIcon,
+      href: '/shadbala',
+      gradient: 'from-indigo-500 to-purple-500',
+    },
+    {
+      title: 'Guru Predictions',
+      description: 'Daily Guidance',
+      icon: AcademicCapIcon,
+      href: '/dashboard/predictions',
+      gradient: 'from-amber-500 to-orange-500',
+    },
   ];
+
+  // 🔒 HARD FAILSAFE: Show error state if loading failed
+  if (error && !loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center max-w-md">
+          <div className="p-6 rounded-lg bg-red-500/10 border border-red-500/20 mb-4">
+            <p className="text-red-600 dark:text-red-400 mb-4">{error}</p>
+            <button
+              onClick={() => {
+                setRetryCount(prev => prev + 1);
+                setError(null);
+                setLoading(true);
+              }}
+              className="px-4 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-blue-600 text-white font-semibold flex items-center mx-auto"
+            >
+              <ArrowPathIcon className="w-5 h-5 mr-2" />
+              Retry
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -175,6 +257,7 @@ export default function DashboardPage() {
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-600 dark:text-gray-400">Loading dashboard...</p>
+          <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">This will timeout after 8 seconds</p>
         </div>
       </div>
     );
@@ -267,6 +350,28 @@ export default function DashboardPage() {
             </div>
           </SlideUp>
         )}
+
+        {/* Guru Guidance CTA */}
+        <SlideUp delay={0.45}>
+          <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-4 p-6 rounded-xl glass border border-white/20">
+            <span className="text-gray-700 dark:text-gray-300 text-center sm:text-left">
+              🕉 Receive Guru Guidance based on Dasha, Shadbala & Transits
+            </span>
+            <Link
+              href="/dashboard/predictions"
+              className="inline-flex items-center justify-center px-5 py-2.5 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 text-white font-medium hover:opacity-90 transition-opacity shrink-0"
+            >
+              View Predictions
+            </Link>
+          </div>
+        </SlideUp>
+
+        {/* Transit Activation (Secondary Switch) — Dashboard only, no duplicate elsewhere */}
+        <SlideUp delay={0.5}>
+          <div className="mt-8">
+            <DashboardTransitActivationCard birthDetails={birthDetails} />
+          </div>
+        </SlideUp>
       </div>
     </div>
   );

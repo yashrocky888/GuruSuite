@@ -93,6 +93,9 @@ gcloud run deploy $SERVICE_NAME \
 echo ""
 echo "✅ DEPLOYMENT COMPLETE!"
 echo ""
+echo "⚠️  If OPENAI_API_KEY was cleared, run:"
+echo "   gcloud run services update guru-api --region asia-south1 --set-env-vars \"OPENAI_API_KEY=...,DEPLOYMENT_ENV=production,LOG_LEVEL=INFO\""
+echo ""
 
 # Get service URL
 SERVICE_URL=$(gcloud run services describe $SERVICE_NAME --region $REGION --format 'value(status.url)' 2>/dev/null)

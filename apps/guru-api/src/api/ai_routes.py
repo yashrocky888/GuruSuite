@@ -134,6 +134,8 @@ async def ai_daily(
     lon: float = Query(..., description="Birth longitude"),
     use_local: bool = Query(False, description="Use local LLM (Ollama) instead of OpenAI")
 ):
+    # HARD CUTOVER: All daily predictions MUST come from POST /api/v1/predict only.
+    raise RuntimeError("DEPRECATED: Use /api/v1/predict ONLY")
     """
     Phase 8: Get AI Guru daily prediction.
     
@@ -205,6 +207,8 @@ async def ai_morning(
     lon: float = Query(..., description="Birth longitude"),
     use_local: bool = Query(False, description="Use local LLM (Ollama) instead of OpenAI")
 ):
+    # HARD CUTOVER: Morning/daily text MUST come from POST /api/v1/predict only.
+    raise RuntimeError("DEPRECATED: Use /api/v1/predict ONLY")
     """
     Phase 8: Get AI Guru morning notification.
     

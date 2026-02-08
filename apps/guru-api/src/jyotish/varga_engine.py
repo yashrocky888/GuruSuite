@@ -26,9 +26,44 @@ from typing import Dict, List, Optional
 from src.jyotish.varga_drik import calculate_varga as _calculate_varga_internal
 from src.utils.converters import normalize_degrees, get_sign_name
 
+# 🔥 STEP 4: HARD FAIL TEST - Module loading verification
+print("🔥 varga_engine loaded", __file__, flush=True)
+
+# 🔒 STEP 1: SINGLE SOURCE OF TRUTH - TOP LEVEL DEFINITION ONLY
+# This function MUST exist at module top-level, immediately after imports
+# MUST NOT be inside any function, class, if, or try block
+# MUST NOT be redefined anywhere else
+def _normalize_sign_index(sign_index: int) -> int:
+    if sign_index is None:
+        raise ValueError("sign_index cannot be None")
+    return sign_index % 12
+
 
 # Runtime guard: Track if calculate_varga is called outside this module
 _CALLED_FROM_ENGINE = False
+
+
+def compute_vargottama_flags(d1_planets: Dict, d9_planets: Dict) -> Dict[str, bool]:
+    """
+    Compute per-planet Vargottama flag (D1 sign == D9 sign). BPHS compliant.
+    A planet is Vargottama when its D1 sign_index equals its D9 sign_index.
+    Rahu and Ketu are ignored (not included in returned dict).
+    No new ephemeris calls; uses existing D1 and D9 planet data only.
+    """
+    SKIP = {"Rahu", "Ketu"}
+    flags = {}
+    for planet, d1_data in d1_planets.items():
+        if planet in SKIP:
+            continue
+        if planet not in d9_planets:
+            continue
+        d1_si = d1_data.get("sign_index")
+        d9_si = d9_planets[planet].get("sign_index")
+        if d1_si is None or d9_si is None:
+            flags[planet] = False
+            continue
+        flags[planet] = (int(d1_si) % 12) == (int(d9_si) % 12)
+    return flags
 
 
 def build_varga_chart(
@@ -74,10 +109,93 @@ def build_varga_chart(
     _CALLED_FROM_ENGINE = True
     
     try:
+        # 🔍 STEP 1C CONTINUED: VALUES RECEIVED BY build_varga_chart()
+        if varga_type == 4:
+            print("=" * 80)
+            print("🔍 STEP 1C CONTINUED: VALUES RECEIVED BY build_varga_chart() (varga_engine.py)")
+            print("=" * 80)
+            print(f"d1_ascendant received = {d1_ascendant}")
+            print(f"varga_type = {varga_type}")
+            # 🔒 INVARIANT CHECK: d1_ascendant unchanged from API extraction
+            assert isinstance(d1_ascendant, float), f"d1_ascendant must be float, got {type(d1_ascendant)}"
+            assert 0 <= d1_ascendant < 360, f"d1_ascendant out of range: {d1_ascendant}"
+            print("=" * 80)
+        
         # Calculate varga ascendant
         # NOTE: D24 is locked to method 1, chart_method parameter is ignored for D24
-        varga_asc_data = _calculate_varga_internal(d1_ascendant, varga_type, chart_method=chart_method if varga_type != 24 else None)
-        varga_asc_sign_index = varga_asc_data["sign"]
+        # 🔒 CRITICAL: Use explicit keyword arguments to ensure is_ascendant=True is ALWAYS passed for Lagna
+        # Note: is_ascendant flag is passed but D4 uses SAME modality-based logic for Ascendant and Planets
+        varga_asc_data = _calculate_varga_internal(
+            planet_longitude=d1_ascendant,
+            varga_type=varga_type,
+            chart_method=chart_method if varga_type != 24 else None,
+            is_ascendant=True  # 🔒 MANDATORY: Lagna must use is_ascendant=True
+        )
+        
+        # 🔒 MANDATORY VALIDATION: Ensure varga_asc_data is complete
+        if not varga_asc_data:
+            raise ValueError(f"D4 ascendant calculation returned None or empty dict for varga_type={varga_type}")
+        if "sign" not in varga_asc_data:
+            raise ValueError(f"D4 ascendant calculation missing 'sign' key: {varga_asc_data}")
+        if "sign_name" not in varga_asc_data:
+            raise ValueError(f"D4 ascendant calculation missing 'sign_name' key: {varga_asc_data}")
+        if "longitude" not in varga_asc_data:
+            raise ValueError(f"D4 ascendant calculation missing 'longitude' key: {varga_asc_data}")
+        if "degrees_in_sign" not in varga_asc_data:
+            raise ValueError(f"D4 ascendant calculation missing 'degrees_in_sign' key: {varga_asc_data}")
+        
+        # 🔒 MANDATORY: Normalize sign_index IMMEDIATELY after _calculate_varga_internal()
+        # This is a data integrity fix - ensures sign_index is ALWAYS 0-11
+        varga_asc_sign_index_raw = varga_asc_data["sign"]
+        if varga_asc_sign_index_raw is None:
+            raise ValueError(f"D4 ascendant sign_index is None: {varga_asc_data}")
+        varga_asc_sign_index = _normalize_sign_index(varga_asc_sign_index_raw)
+        
+        # 🔒 D4 VERIFICATION LOG (MANDATORY) - Initialize table header
+        if varga_type == 4:
+            print("=" * 80)
+            print("🔒 D4 VERIFICATION TABLE")
+            print("=" * 80)
+            print(f"{'Planet':<12} | {'Longitude':<12} | {'D4 Sign':<12} | {'D4 House':<12}")
+            print("-" * 80)
+            # Log Ascendant first
+            d4_asc_sign_name = get_sign_name(varga_asc_sign_index)
+            print(f"{'Ascendant':<12} | {d1_ascendant:>11.6f}° | {d4_asc_sign_name:<12} | {1:<12}")
+            
+            # 🔍 STEP 2: VERIFY INVARIANTS - Moon vs Ascendant comparison
+            if "Moon" in d1_planets:
+                moon_d1_longitude = d1_planets["Moon"]
+                moon_varga_data = _calculate_varga_internal(moon_d1_longitude, varga_type, chart_method=chart_method if varga_type != 24 else None)
+                moon_d4_sign = _normalize_sign_index(moon_varga_data["sign"])
+                moon_d4_sign_name = get_sign_name(moon_d4_sign)
+                print("=" * 80)
+                print("🔍 STEP 2: VERIFY INVARIANTS - Moon vs Ascendant D4 Comparison")
+                print("=" * 80)
+                print(f"Moon D1 longitude = {moon_d1_longitude}")
+                print(f"Moon D4 sign = {moon_d4_sign} ({moon_d4_sign_name})")
+                print(f"Moon D4 degrees_in_sign = {moon_varga_data.get('degrees_in_sign')}")
+                print(f"Ascendant D1 longitude = {d1_ascendant}")
+                print(f"Ascendant D4 sign = {varga_asc_sign_index} ({d4_asc_sign_name})")
+                print(f"Ascendant D4 degrees_in_sign = {varga_asc_data.get('degrees_in_sign')}")
+                # 🔒 INVARIANT CHECK: Ascendant and Moon follow identical math path
+                # Both should use same calculate_varga() function
+                assert "longitude" in moon_varga_data, "Moon D4 missing longitude"
+                assert "sign" in moon_varga_data, "Moon D4 missing sign"
+                assert "degrees_in_sign" in moon_varga_data, "Moon D4 missing degrees_in_sign"
+                # 🔒 INVARIANT CHECK: D4 uses quarter-based offset mapping - degrees_in_sign preserved from D1
+                moon_d1_deg_in_sign = moon_d1_longitude % 30.0
+                if moon_d1_deg_in_sign < 0:
+                    moon_d1_deg_in_sign += 30.0
+                moon_d4_deg_in_sign = moon_varga_data["degrees_in_sign"]
+                assert abs(moon_d4_deg_in_sign - moon_d1_deg_in_sign) < 1e-10, \
+                    f"Moon D4 degrees_in_sign must equal D1 degrees_in_sign ({moon_d1_deg_in_sign}), got {moon_d4_deg_in_sign}"
+                # 🔒 INVARIANT CHECK: Ascendant D4 degrees_in_sign must equal D1 degrees_in_sign (preserved from D1)
+                d1_asc_deg_in_sign = d1_ascendant % 30.0
+                if d1_asc_deg_in_sign < 0:
+                    d1_asc_deg_in_sign += 30.0
+                assert abs(varga_asc_data["degrees_in_sign"] - d1_asc_deg_in_sign) < 1e-10, \
+                    f"Ascendant D4 degrees_in_sign must equal D1 degrees_in_sign ({d1_asc_deg_in_sign}), got {varga_asc_data['degrees_in_sign']}"
+                print("=" * 80)
         
         # For D24-D60: NO HOUSE CALCULATION (pure sign charts)
         # For D1-D20: Calculate house using Whole Sign system
@@ -133,7 +251,25 @@ def build_varga_chart(
         for planet_name, d1_longitude in d1_planets.items():
             # NOTE: D24 is locked to method 1, chart_method parameter is ignored for D24
             varga_data = _calculate_varga_internal(d1_longitude, varga_type, chart_method=chart_method if varga_type != 24 else None)
-            varga_sign_index = varga_data["sign"]
+            
+            # 🔒 MANDATORY VALIDATION: Ensure varga_data is complete for each planet
+            if not varga_data:
+                raise ValueError(f"D4 planet {planet_name} calculation returned None or empty dict for varga_type={varga_type}, longitude={d1_longitude}")
+            if "sign" not in varga_data:
+                raise ValueError(f"D4 planet {planet_name} calculation missing 'sign' key: {varga_data}")
+            if "sign_name" not in varga_data:
+                raise ValueError(f"D4 planet {planet_name} calculation missing 'sign_name' key: {varga_data}")
+            if "longitude" not in varga_data:
+                raise ValueError(f"D4 planet {planet_name} calculation missing 'longitude' key: {varga_data}")
+            if "degrees_in_sign" not in varga_data:
+                raise ValueError(f"D4 planet {planet_name} calculation missing 'degrees_in_sign' key: {varga_data}")
+            
+            # 🔒 MANDATORY: Normalize sign_index IMMEDIATELY after _calculate_varga_internal()
+            # This is a data integrity fix - ensures sign_index is ALWAYS 0-11
+            varga_sign_index_raw = varga_data["sign"]
+            if varga_sign_index_raw is None:
+                raise ValueError(f"D4 planet {planet_name} sign_index is None: {varga_data}")
+            varga_sign_index = _normalize_sign_index(varga_sign_index_raw)
             
             # For D24-D60: No house calculation (pure sign charts)
             if varga_type in (24, 27, 30, 40, 45, 60):
@@ -165,10 +301,11 @@ def build_varga_chart(
             varga_degree_formatted = f"{varga_dms_degrees}° {varga_dms_minutes:02d}′ {varga_dms_seconds:02d}″"
             
             # Build planet response - only include house for D1-D20
+            # 🔒 CRITICAL: Use normalized sign_index (0-11) in response
             planet_response = {
                 "degree": round(varga_data["longitude"], 4),
                 "sign": varga_data["sign_name"],
-                "sign_index": varga_sign_index,
+                "sign_index": varga_sign_index,  # Already normalized above
                 "degrees_in_sign": round(varga_data["degrees_in_sign"], 4),
                 # Add JHORA deg-min-sec format (EXACT Prokerala/JHora precision)
                 "degree_dms": varga_dms_degrees,
@@ -181,7 +318,33 @@ def build_varga_chart(
             if varga_house is not None:
                 planet_response["house"] = varga_house
             
+            # 🔒 D4 VERIFICATION LOG (MANDATORY) - Log each planet
+            if varga_type == 4:
+                d4_sign_name = get_sign_name(varga_sign_index)
+                print(f"{planet_name:<12} | {d1_longitude:>11.6f}° | {d4_sign_name:<12} | {varga_house:<12}")
+            
             result["planets"][planet_name] = planet_response
+        
+        # 🔒 D4 VERIFICATION LOG (MANDATORY) - Close table
+        if varga_type == 4:
+            print("-" * 80)
+            print("🔒 VERIFICATION: Compare above table line-by-line with Prokerala D4")
+            print("If ANY mismatch → BUG IS IN MATH, NOT UI")
+            print("=" * 80)
+            
+            # 🔒 MANDATORY D4 COMPLETENESS CHECK: Ensure result is complete before returning
+            if not result or "ascendant" not in result:
+                raise ValueError(f"D4 result missing ascendant: {result}")
+            if not result.get("ascendant"):
+                raise ValueError(f"D4 ascendant is None or empty: {result.get('ascendant')}")
+            if result["ascendant"].get("sign_index") is None:
+                raise ValueError(f"D4 ascendant sign_index is None: {result.get('ascendant')}")
+            if "planets" not in result:
+                raise ValueError(f"D4 result missing planets key: {result}")
+            if not result["planets"] or len(result["planets"]) == 0:
+                raise ValueError(f"D4 planets dictionary is empty. Expected {len(d1_planets)} planets but got 0. d1_planets keys: {list(d1_planets.keys())}")
+            if len(result["planets"]) != len(d1_planets):
+                raise ValueError(f"D4 planets count mismatch: expected {len(d1_planets)} planets, got {len(result['planets'])}. Missing: {set(d1_planets.keys()) - set(result['planets'].keys())}")
         
         # Debug logging for validation (1995-05-16 18:38 Bangalore test case)
         import logging
@@ -190,26 +353,44 @@ def build_varga_chart(
         # For D24-D60: Log full_longitude, varga_longitude, varga_sign (NO HOUSE - pure sign charts)
         if varga_type in (24, 27, 30, 40, 45, 60):
             # Log Ascendant
-            asc_varga_data = _calculate_varga_internal(d1_ascendant, varga_type)
+            # 🔒 D4 SPECIAL: Pass is_ascendant=True for Lagna (D4 Lagna is SIGN-ONLY)
+            # 🔒 CRITICAL: Use explicit keyword arguments to ensure is_ascendant=True is ALWAYS passed for Lagna
+            asc_varga_data = _calculate_varga_internal(
+                planet_longitude=d1_ascendant,
+                varga_type=varga_type,
+                is_ascendant=True  # 🔒 MANDATORY: Lagna must use is_ascendant=True
+            )
+            # 🔒 MANDATORY: Normalize sign_index IMMEDIATELY after _calculate_varga_internal()
+            asc_varga_sign = _normalize_sign_index(asc_varga_data["sign"])
             asc_full_longitude = d1_ascendant
             asc_varga_longitude = asc_varga_data["longitude"]
-            asc_varga_sign = result['ascendant']['sign_index']
+            # Use normalized sign_index from result (already normalized above)
+            assert asc_varga_sign == result['ascendant']['sign_index'], \
+                f"Debug log sign mismatch: calculated={asc_varga_sign}, result={result['ascendant']['sign_index']}"
             logger.info(f"🔍 D{varga_type} DEBUG (Ascendant): full_longitude={asc_full_longitude:.6f}°, varga_longitude={asc_varga_longitude:.6f}°, varga_sign={asc_varga_sign} ({result['ascendant']['sign']}) [PURE SIGN CHART - NO HOUSE]")
             
             # Log Sun
             if "Sun" in d1_planets:
                 sun_full_longitude = d1_planets["Sun"]
                 sun_varga_data = _calculate_varga_internal(sun_full_longitude, varga_type)
+                # 🔒 MANDATORY: Normalize sign_index IMMEDIATELY after _calculate_varga_internal()
+                sun_varga_sign = _normalize_sign_index(sun_varga_data["sign"])
                 sun_varga_longitude = sun_varga_data["longitude"]
-                sun_varga_sign = result["planets"]["Sun"]["sign_index"]
+                # Use normalized sign_index from result (already normalized above)
+                assert sun_varga_sign == result["planets"]["Sun"]["sign_index"], \
+                    f"Debug log sign mismatch: calculated={sun_varga_sign}, result={result['planets']['Sun']['sign_index']}"
                 logger.info(f"🔍 D{varga_type} DEBUG (Sun): full_longitude={sun_full_longitude:.6f}°, varga_longitude={sun_varga_longitude:.6f}°, varga_sign={sun_varga_sign} ({result['planets']['Sun']['sign']}) [PURE SIGN CHART - NO HOUSE]")
             
             # Log Moon
             if "Moon" in d1_planets:
                 moon_full_longitude = d1_planets["Moon"]
                 moon_varga_data = _calculate_varga_internal(moon_full_longitude, varga_type)
+                # 🔒 MANDATORY: Normalize sign_index IMMEDIATELY after _calculate_varga_internal()
+                moon_varga_sign = _normalize_sign_index(moon_varga_data["sign"])
                 moon_varga_longitude = moon_varga_data["longitude"]
-                moon_varga_sign = result["planets"]["Moon"]["sign_index"]
+                # Use normalized sign_index from result (already normalized above)
+                assert moon_varga_sign == result["planets"]["Moon"]["sign_index"], \
+                    f"Debug log sign mismatch: calculated={moon_varga_sign}, result={result['planets']['Moon']['sign_index']}"
                 logger.info(f"🔍 D{varga_type} DEBUG (Moon): full_longitude={moon_full_longitude:.6f}°, varga_longitude={moon_varga_longitude:.6f}°, varga_sign={moon_varga_sign} ({result['planets']['Moon']['sign']}) [PURE SIGN CHART - NO HOUSE]")
         else:
             # For D1-D20: Log raw varga sign outputs for verification
@@ -264,7 +445,7 @@ def build_all_varga_charts(
     return results
 
 
-def get_varga_ascendant_only(d1_ascendant: float, varga_type: int) -> Dict:
+def get_varga_ascendant_only(d1_ascendant: float, varga_type: int, chart_method: Optional[int] = None) -> Dict:
     """
     Get only varga ascendant (for cases where planets aren't needed).
     
@@ -287,8 +468,16 @@ def get_varga_ascendant_only(d1_ascendant: float, varga_type: int) -> Dict:
     
     try:
         # NOTE: D24 is locked to method 1, chart_method parameter is ignored for D24
-        varga_asc_data = _calculate_varga_internal(d1_ascendant, varga_type, chart_method=chart_method if varga_type != 24 else None)
-        varga_asc_sign_index = varga_asc_data["sign"]
+        # 🔒 CRITICAL: Use explicit keyword arguments to ensure is_ascendant=True is ALWAYS passed for Lagna
+        # Note: is_ascendant flag is passed but D4 uses SAME modality-based logic for Ascendant and Planets
+        varga_asc_data = _calculate_varga_internal(
+            planet_longitude=d1_ascendant,
+            varga_type=varga_type,
+            chart_method=chart_method if varga_type != 24 else None,
+            is_ascendant=True  # 🔒 MANDATORY: Lagna must use is_ascendant=True
+        )
+        # 🔒 MANDATORY: Normalize sign_index IMMEDIATELY after _calculate_varga_internal()
+        varga_asc_sign_index = _normalize_sign_index(varga_asc_data["sign"])
         
         # For D24-D60: NO HOUSE CALCULATION (pure sign charts)
         # For D1-D20: Calculate house using Whole Sign system

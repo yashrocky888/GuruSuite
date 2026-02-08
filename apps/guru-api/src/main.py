@@ -172,6 +172,12 @@ app.include_router(daily_routes.router, prefix="/api/v1", tags=["Daily"])
 app.include_router(transit_routes.router, prefix="/api/v1", tags=["Transits"])
 app.include_router(panchang_routes.router, prefix="/api/v1", tags=["Panchang"])
 app.include_router(user_routes.router, prefix="/api/v1", tags=["Users"])
+from src.api import location_routes
+app.include_router(location_routes.router, prefix="/api/v1", tags=["Location"])
+from src.api import yoga_activation_routes
+app.include_router(yoga_activation_routes.router, prefix="/api/v1", tags=["Yoga Activation"])
+from src.api import prediction_routes
+app.include_router(prediction_routes.router, prefix="/api/v1", tags=["Predictions"])
 
 
 @app.get("/")

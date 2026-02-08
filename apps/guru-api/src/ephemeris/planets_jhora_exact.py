@@ -128,10 +128,20 @@ def calculate_ascendant_jhora_exact(julian_day: float, latitude: float, longitud
     cusps, ascmc = result
     sidereal_asc = float(ascmc[0])  # Ascendant (already sidereal due to FLG_SIDEREAL)
     
+    # 🔍 D4 TRACE STEP 1: Swiss Ephemeris raw output
+    print("=" * 80)
+    print("🔍 D4 TRACE STEP 1: Swiss Ephemeris Output (calculate_ascendant_jhora_exact)")
+    print("=" * 80)
+    print(f"Raw swe.houses_ex() ascmc[0] = {ascmc[0]}")
+    print(f"sidereal_asc BEFORE modulo = {sidereal_asc}")
+    
     # Step 2: Normalize sidereal ascendant
     sidereal_asc = sidereal_asc % 360.0
     if sidereal_asc < 0:
         sidereal_asc += 360.0
+    
+    print(f"sidereal_asc AFTER modulo = {sidereal_asc}")
+    print("=" * 80)
     
     # Convert to DMS EXACTLY as specified (NO ROUNDING, NO ceil)
     sign_index = int(sidereal_asc // 30.0)

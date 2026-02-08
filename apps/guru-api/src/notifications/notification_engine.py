@@ -142,6 +142,8 @@ def generate_notification_for_user(user: User, birth_detail: BirthDetail) -> Opt
         is_premium = user.subscription_level in ["premium", "lifetime"]
         
         if is_premium:
+            # HARD CUTOVER: Daily predictions MUST come from POST /api/v1/predict only.
+            raise RuntimeError("DEPRECATED: Use /api/v1/predict ONLY")
             # Premium users get full AI prediction
             ai_prediction = interpret_daily(context, use_local=False)
             

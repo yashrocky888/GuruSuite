@@ -9,6 +9,21 @@ import math
 from typing import Tuple
 
 
+def longitude_to_sign_index(longitude: float) -> int:
+    """
+    LOCK: Sign index 0-11 from longitude. Uses floor. Never round.
+    Guard: longitude normalized to 0-360.
+    29.999° → 0, 30.000° → 1, 359.999° → 11, 360.000° → 0.
+    """
+    lon = float(longitude)
+    if lon >= 360.0:
+        lon = lon % 360.0
+    lon = lon % 360.0
+    if lon < 0:
+        lon += 360.0
+    return int(math.floor(lon / 30.0)) % 12
+
+
 def degrees_to_dms(degrees: float) -> Tuple[int, int, float]:
     """
     Convert decimal degrees to degrees, minutes, seconds.
@@ -59,8 +74,7 @@ def normalize_degrees(degrees: float) -> float:
 def degrees_to_sign(degrees: float) -> Tuple[int, float]:
     """
     Convert absolute degrees to sign and degrees within sign.
-    
-    In Vedic astrology, each sign is 30 degrees.
+    LOCK: Uses floor for sign. Guard longitude normalization.
     
     Args:
         degrees: Absolute degrees (0-360)
@@ -69,8 +83,10 @@ def degrees_to_sign(degrees: float) -> Tuple[int, float]:
         Tuple of (sign_number (0-11), degrees_in_sign (0-30))
     """
     degrees = normalize_degrees(degrees)
-    sign = int(degrees / 30)
-    degrees_in_sign = degrees % 30
+    if degrees >= 360.0:
+        degrees = degrees % 360.0
+    sign = longitude_to_sign_index(degrees)
+    degrees_in_sign = degrees % 30.0
     return (sign, degrees_in_sign)
 
 

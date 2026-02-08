@@ -1,0 +1,30 @@
+SHADBALA GO-LIVE STATUS
+=======================
+
+BACKEND STATUS: ✅ CODE READY
+- SHADBALA_CONFIG: PURE BPHS (1.0 / 1.0 / 1.0)
+- Status function: calculate_bphs_status() implemented
+- API endpoint: /strength/shadbala
+- Response includes: status, ratio, total_shadbala, shadbala_in_rupas, relative_rank
+- Action Required: Restart backend service
+
+FRONTEND STATUS: ✅ BUILT & READY
+- Build: Successful
+- Route: /shadbala generated
+- Components: Status badges, tooltips, transparency note
+- Action Required: Deploy to hosting service
+
+DEPLOYMENT URLS:
+- Backend API: https://guru-api-660206747784.asia-south1.run.app
+- Frontend: (Your Vercel/hosting URL)/shadbala
+
+VERIFICATION:
+- Run: bash SHADBALA_GO_LIVE_VERIFICATION.sh
+- Or test API: curl "https://guru-api-660206747784.asia-south1.run.app/strength/shadbala?dob=2006-02-03&time=22:30&lat=12.9716&lon=77.5946" | jq '.shadbala.Sun.status'
+
+NEXT STEPS:
+1. Restart backend service (Cloud Run / Docker / Python)
+2. Deploy frontend build (Vercel / hosting service)
+3. Clear caches
+4. Verify live UI
+

@@ -8,32 +8,65 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { SparklesIcon, ArrowRightIcon, ArrowLeftIcon, DocumentDuplicateIcon } from '@heroicons/react/24/outline';
+import { SparklesIcon, ArrowRightIcon, ArrowLeftIcon, DocumentDuplicateIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import { FadeIn, SlideUp } from '@/frontend/animations';
 import { useKundliStore } from '@/store/useKundliStore';
 import { useBirthStore } from '@/store/useBirthStore';
 import { getKundli } from '@/services/api';
+import apiClient from '@/services/api';
 import KundliChart from '@/components/KundliChart';
-import DataTable from '@/components/DataTable';
 import { fetchAndDisplayKundliJson, copyKundliJsonToClipboard } from '@/utils/fetchKundliJson';
+import { useMaxLoadTime } from '@/hooks/useMaxLoadTime';
 
 export default function KundliPage() {
   const { kundliData, setKundliData, loading, setLoading, error, setError } = useKundliStore();
-  const { userId, birthDetails } = useBirthStore();
-  const [planetData, setPlanetData] = useState<any[]>([]);
+  const { userId, birthDetails, hasHydrated } = useBirthStore();
   const [jsonCopied, setJsonCopied] = useState(false);
   const [showJson, setShowJson] = useState(false);
   const [jsonString, setJsonString] = useState<string>('');
+  const [retryCount, setRetryCount] = useState(0);
+  const [planetFunctionalStrength, setPlanetFunctionalStrength] = useState<Record<string, any> | null>(null);
+
+  // 🔒 MAX LOAD TIME: Auto-stop spinner after 8 seconds
+  useMaxLoadTime({
+    loading,
+    setLoading,
+    maxTime: 8000,
+    onTimeout: () => {
+      setError('Loading took too long. Please try again.');
+    },
+  });
 
   useEffect(() => {
+    // 🔒 RACE CONDITION FIX 1: Client-side only
+    if (typeof window === 'undefined') return;
+
+    // 🔒 RACE CONDITION FIX 2: Hydration complete
+    if (!hasHydrated) return;
+
+    // 🔒 RACE CONDITION FIX 3: Prevent duplicate calls
+    if (loading) return;
+
+    // 🔒 RACE CONDITION FIX 4: Ensure API client is ready
+    if (!apiClient || !apiClient.defaults?.baseURL) {
+      console.warn('⚠️ API client not ready, waiting...');
+      return;
+    }
+
     const fetchKundli = async () => {
       setLoading(true);
+      setError(null);
       try {
         // Pass user_id and birth details to get kundli
         // The deployed API needs birth details as query parameters
         const response = await getKundli(userId || undefined, birthDetails || undefined);
         
-        // Debug: Log the response structure
+        // 🔒 HARD FAILSAFE: Validate API response
+        if (!response) {
+          throw new Error("API returned null or undefined response");
+        }
+        
+        // 🔒 AUDIT: Log the response structure (MANDATORY)
         console.log('📥 API Response Structure:', {
           hasSuccess: !!(response as any).success,
           hasData: !!(response as any).data,
@@ -41,7 +74,21 @@ export default function KundliPage() {
           hasD1: !!(response as any).D1 || !!(response as any).data?.kundli?.D1,
           topLevelKeys: Object.keys(response as any),
           kundliKeys: (response as any).data?.kundli ? Object.keys((response as any).data.kundli) : [],
-          d1Keys: (response as any).D1 ? Object.keys((response as any).D1) : []
+          d1Keys: (response as any).D1 ? Object.keys((response as any).D1) : [],
+          // 🔒 CRITICAL: Check for D4 specifically
+          hasD4: !!(response as any).D4 || !!(response as any).data?.kundli?.D4,
+          // 🔒 CRITICAL: Check for ascendant and planets
+          hasAscendant: !!(response as any).D1?.Ascendant || !!(response as any).data?.kundli?.D1?.Ascendant,
+          hasPlanets: !!(response as any).D1?.Planets || !!(response as any).data?.kundli?.D1?.Planets,
+        });
+        
+        // 🔒 AUDIT: Log expected vs actual keys
+        const expectedKeys = ['D1', 'D2', 'D3', 'D4', 'D7', 'D9', 'D10', 'D12'];
+        const actualKeys = Object.keys(response as any).filter(k => k.startsWith('D'));
+        console.log('📊 Expected vs Actual Keys:', {
+          expected: expectedKeys,
+          actual: actualKeys,
+          missing: expectedKeys.filter(k => !actualKeys.includes(k)),
         });
         
         // Check if we need to extract D1 from the response
@@ -63,88 +110,85 @@ export default function KundliPage() {
           }
         }
         
+        // 🔒 HARD FAILSAFE: Validate chart data before setting
+        if (!dataForChart) {
+          throw new Error("Chart data extraction failed - no valid data found");
+        }
+        
+        // 🔒 HARD FAILSAFE: Validate D1 has required structure
+        if (!(dataForChart as any).Ascendant && !(dataForChart as any).Planets) {
+          console.error("❌ Kundli: Invalid chart data structure", {
+            dataForChartKeys: Object.keys(dataForChart || {}),
+            hasAscendant: !!(dataForChart as any).Ascendant,
+            hasPlanets: !!(dataForChart as any).Planets,
+          });
+          throw new Error("Chart data missing required fields (Ascendant or Planets)");
+        }
+        
         // Pass data to ChartContainer - it will handle extraction
         setKundliData(dataForChart);
         
-        // Format planet data for table - handle both formats
-        // Extract data from response for table display
-        let dataForTable = dataForChart;
-        if ((dataForChart as any).data?.kundli) {
-          dataForTable = (dataForChart as any).data.kundli;
-        } else if ((dataForChart as any).D1) {
-          dataForTable = (dataForChart as any).D1;
-        } else if ((dataForChart as any).data?.kundli?.D1) {
-          dataForTable = (dataForChart as any).data.kundli.D1;
-        }
+        // Extract planet_functional_strength from top-level response (admin-only, D1-only)
+        const strengthData = (response as any).planet_functional_strength;
         
-        let planetsForTable: any[] = [];
-        if ((dataForTable as any).planets && Array.isArray((dataForTable as any).planets)) {
-          // Direct planets array (old format)
-          planetsForTable = (dataForTable as any).planets;
-        } else if ((dataForTable as any).Planets && typeof (dataForTable as any).Planets === 'object') {
-          // Nested Planets object (new format)
-          planetsForTable = Object.entries((dataForTable as any).Planets).map(([name, planetData]: [string, any]) => {
-            // 🔒 ASTROLOGY LOCK: UI must NEVER calculate astrology.
-            // API is the single source of truth.
-            // Use API-provided degree_dms, arcminutes, arcseconds directly - NO CALCULATIONS
-            
-            let degreeDisplay = 'N/A';
-            
-            // Use API-provided DMS values directly (NO CALCULATIONS)
-            if (planetData.degree_dms !== undefined && planetData.degree_dms !== null) {
-              const deg = planetData.degree_dms;
-              const min = planetData.arcminutes ?? 0;
-              const sec = planetData.arcseconds ?? 0;
-              
-              // Format: "1°24'49\"" or "1°24'" if seconds are 0
-              if (sec > 0) {
-                degreeDisplay = `${deg}°${min}'${sec}"`;
-              } else if (min > 0) {
-                degreeDisplay = `${deg}°${min}'`;
-              } else {
-                degreeDisplay = `${deg}°`;
-              }
-            } else if (planetData.degrees_in_sign !== undefined && planetData.degrees_in_sign !== null) {
-              // Fallback: Use degrees_in_sign as-is (NO CALCULATION)
-              degreeDisplay = `${planetData.degrees_in_sign.toFixed(2)}°`;
-            }
-            
-            return {
-              name,
-              sign: planetData.sign_sanskrit || planetData.sign || 'N/A',
-              house: planetData.house ?? 'N/A',
-              degree: degreeDisplay,
-              nakshatra: planetData.nakshatra || 'N/A',
-            };
-          });
-        }
+        // 🧪 API PAYLOAD DEBUG (TEMP - VERIFY API RESPONSE)
+        console.log('🧪 API RESPONSE - planet_functional_strength', {
+          exists: !!strengthData,
+          type: typeof strengthData,
+          keys: strengthData ? Object.keys(strengthData) : [],
+          sample: strengthData ? Object.entries(strengthData).slice(0, 2) : [],
+          fullResponseKeys: Object.keys(response || {}),
+          // 🔒 VERIFICATION: Check if data structure matches expected format
+          firstPlanetData: strengthData && Object.keys(strengthData).length > 0 
+            ? strengthData[Object.keys(strengthData)[0]] 
+            : null,
+        });
         
-        if (planetsForTable.length > 0) {
-          setPlanetData(planetsForTable.map((planet: any) => ({
-            planet: planet.name,
-            sign: planet.sign,
-            house: planet.house,
-            degree: planet.degree, // Already formatted as "31°24'" - don't add another °
-            nakshatra: planet.nakshatra || '-',
-          })));
+        if (strengthData && typeof strengthData === 'object') {
+          setPlanetFunctionalStrength(strengthData);
+        } else {
+          console.warn('🧪 API RESPONSE - planet_functional_strength is missing or invalid');
+          setPlanetFunctionalStrength(null);
         }
       } catch (err: any) {
-        setError(err.message || 'Failed to load kundli');
+        console.error("🔍 KUNDLI FETCH ERROR", err);
+        const errorMessage = err?.message || 'Failed to load kundli';
+        setError(errorMessage);
+        // 🔒 HARD FAILSAFE: Clear invalid data on error
+        setKundliData(null as any);
+        setPlanetFunctionalStrength(null);
       } finally {
+        console.log("🔍 KUNDLI FETCH END - Setting loading to false");
         setLoading(false);
       }
     };
 
     fetchKundli();
-  }, [setKundliData, setLoading, setError, userId]);
+  }, [setKundliData, setLoading, setError, userId, hasHydrated, retryCount]); // Added retryCount
 
-  const planetColumns = [
-    { key: 'planet', label: 'Planet' },
-    { key: 'sign', label: 'Rashi (Vedic)' },
-    { key: 'house', label: 'House' },
-    { key: 'degree', label: 'Degree' },
-    { key: 'nakshatra', label: 'Nakshatra' },
-  ];
+  // 🔒 HARD FAILSAFE: Show error state with retry if loading failed
+  if (error && !loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center max-w-md">
+          <div className="p-6 rounded-lg bg-red-500/10 border border-red-500/20 mb-4">
+            <p className="text-red-600 dark:text-red-400 mb-4">{error}</p>
+            <button
+              onClick={() => {
+                setRetryCount(prev => prev + 1);
+                setError(null);
+                setLoading(true);
+              }}
+              className="px-4 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-blue-600 text-white font-semibold flex items-center mx-auto"
+            >
+              <ArrowPathIcon className="w-5 h-5 mr-2" />
+              Retry
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -152,6 +196,28 @@ export default function KundliPage() {
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-600 dark:text-gray-400">Loading kundli chart...</p>
+          <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">This will timeout after 8 seconds</p>
+        </div>
+      </div>
+    );
+  }
+
+  // 🔒 HARD FAILSAFE: Show error if no chart data
+  if (!kundliData) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center max-w-md">
+          <div className="p-6 rounded-lg bg-yellow-500/10 border border-yellow-500/20 mb-4">
+            <p className="text-yellow-600 dark:text-yellow-400 mb-4">
+              No chart data available. Please submit birth details first.
+            </p>
+            <Link
+              href="/"
+              className="px-4 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-blue-600 text-white font-semibold inline-block"
+            >
+              Go to Birth Details
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -221,21 +287,12 @@ export default function KundliPage() {
           <div className="mb-8">
             <KundliChart 
               chartData={kundliData} 
+              chartType="D1"
               lagna={kundliData?.lagna || 1}
+              planetFunctionalStrength={planetFunctionalStrength || undefined}
             />
           </div>
         </SlideUp>
-
-        {/* Planet Table */}
-        {planetData.length > 0 && (
-          <SlideUp delay={0.4}>
-            <DataTable
-              columns={planetColumns}
-              data={planetData}
-              title="Planetary Positions"
-            />
-          </SlideUp>
-        )}
 
         {/* JSON Display */}
         {showJson && jsonString && (

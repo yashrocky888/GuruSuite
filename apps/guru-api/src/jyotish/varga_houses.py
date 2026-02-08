@@ -31,12 +31,14 @@ def calculate_varga_houses(d1_ascendant: float, d1_houses: List[float], varga_ty
     if varga_ascendant is not None:
         varga_ascendant_longitude = varga_ascendant
     else:
-        varga_asc_data = calculate_varga(d1_ascendant, varga_type)
+        # 🔒 D4 SPECIAL: Pass is_ascendant=True for Lagna (D4 Lagna is SIGN-ONLY)
+        varga_asc_data = calculate_varga(d1_ascendant, varga_type, is_ascendant=True)
         varga_ascendant_longitude = varga_asc_data["longitude"]
     
     # Calculate varga houses by applying varga formula to each D1 house cusp
     varga_houses = []
     for house_cusp in d1_houses:
+        # House cusps are NOT ascendant, so is_ascendant=False (default)
         house_varga_data = calculate_varga(house_cusp, varga_type)
         varga_houses.append(house_varga_data["longitude"])
     

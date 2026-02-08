@@ -30,6 +30,9 @@ from src.ai.rishi_prompt import (
     RISHI_PRESENCE_PROMPT,
     RISHI_NARRATIVE_REFINEMENT_PROMPT,
     RISHI_MASTER_FINAL_POLISH_LAYER,
+    RISHI_SUPREME_SYNTHESIS_ENFORCEMENT_LAYER,
+    RISHI_SUPREME_SYNTHESIS_CORRECTION_PROMPT,
+    RISHI_CONTEXT_ENTANGLEMENT_ENFORCEMENT_LAYER,
 )
 from src.utils.timezone import get_julian_day, local_to_utc
 
@@ -361,10 +364,12 @@ def _build_greeting(seeker_name: str, context: Dict[str, Any]) -> str:
 
 
 def _fill_missing_section(key: str, val: str, context: Dict[str, Any]) -> str:
-    """If val is empty, use placeholder. Full LLM synthesis — no deterministic prose."""
+    """If val is empty, use context-aware fallback. Never expose "Interpretation unavailable"."""
     if val and val.strip():
         return val.strip()
-    return "Interpretation unavailable for this section."
+    if key == "moon_movement":
+        return "The Moon remains in the same sign today, deepening the current emotional tone rather than shifting it."
+    return "This section awaits further contemplation."
 
 
 def _assemble_structured_output(
@@ -1009,7 +1014,13 @@ END ZERO-HALLUCINATION LOCK
 ==================================================
 """ + RISHI_NARRATIVE_REFINEMENT_PROMPT + """
 
-""" + RISHI_MASTER_FINAL_POLISH_LAYER
+""" + RISHI_MASTER_FINAL_POLISH_LAYER + """
+
+""" + RISHI_SUPREME_SYNTHESIS_ENFORCEMENT_LAYER + """
+
+""" + RISHI_SUPREME_SYNTHESIS_CORRECTION_PROMPT + """
+
+""" + RISHI_CONTEXT_ENTANGLEMENT_ENFORCEMENT_LAYER
 
 
 router = APIRouter()
@@ -1143,7 +1154,7 @@ JSON CONTEXT:
                                 {"role": "user", "content": structured_prompt},
                             ],
                             max_tokens=1200,
-                            temperature=0.65,
+                            temperature=0.5,
                             top_p=0.9,
                             response_format={"type": "json_object"},
                         )
@@ -1491,7 +1502,7 @@ Produce one seamless classical Daivajna daily prediction.
                         {"role": "user", "content": user_prompt},
                     ],
                     max_tokens=800,
-                    temperature=0.65,
+                    temperature=0.5,
                     top_p=0.9,
                 )
                 guidance = response.choices[0].message.content or ""

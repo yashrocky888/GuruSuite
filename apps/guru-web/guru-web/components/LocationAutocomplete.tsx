@@ -28,6 +28,7 @@ export default function LocationAutocomplete({
   const [selectedLocation, setSelectedLocation] = useState<LocationSuggestion | null>(null);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isSelectingLocation, setIsSelectingLocation] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -52,8 +53,13 @@ export default function LocationAutocomplete({
     };
   }, []);
 
-  // Search locations when query changes
+  // Search locations when query changes (with debounce and selection guard)
   useEffect(() => {
+    // Ignore API updates while user is selecting a location
+    if (isSelectingLocation) {
+      return;
+    }
+
     if (query.length < 3) {
       setResults([]);
       setOpen(false);
@@ -61,61 +67,103 @@ export default function LocationAutocomplete({
     }
 
     const fetch = async () => {
+      // Double-check: still not selecting
+      if (isSelectingLocation) {
+        return;
+      }
+
       setLoading(true);
       try {
         const data = await searchLocation(query);
-        setResults(data);
-        setOpen(data.length > 0);
+        
+        // Triple-check: user might have clicked while we were fetching
+        if (!isSelectingLocation) {
+          setResults(data);
+          setOpen(data.length > 0);
+        }
       } catch (error: any) {
         // CRITICAL: Properly classify error (Axios vs runtime)
         // searchLocation uses axios, so this is likely an Axios error
         // But we classify it properly to prevent {} errors
         handleError(error, "LocationAutocomplete.fetch");
         // Silently fail for UX (errors already logged by handleError)
-        setResults([]);
-        setOpen(false);
+        if (!isSelectingLocation) {
+          setResults([]);
+          setOpen(false);
+        }
       } finally {
-        setLoading(false);
+        if (!isSelectingLocation) {
+          setLoading(false);
+        }
       }
     };
 
     const debounceTimer = setTimeout(fetch, 300);
     return () => clearTimeout(debounceTimer);
-  }, [query]);
+  }, [query, isSelectingLocation]);
 
   const handleSelect = async (item: { label: string; lat: number; lon: number; display_name?: string; name?: string; country?: string; state?: string }) => {
-    // Update input
+    // Immediately set selecting flag to prevent API overwrites
+    setIsSelectingLocation(true);
+    
+    // Immediately update UI (no waiting for async operations)
     setQuery(item.label);
+    setResults([]);
+    setOpen(false);
+    setLoading(false);
     
-    // Get timezone for full LocationSuggestion
-    const timezone = await getTimezoneFromCoordinates(item.lat, item.lon);
-    
-    // Create full LocationSuggestion object
-    const fullLocation: LocationSuggestion = {
+    // Immediately notify parent with basic data (lat/lon available now)
+    const immediateLocation: LocationSuggestion = {
       city: item.name || item.label.split(',')[0] || '',
       country: item.country || item.label.split(',').pop()?.trim() || 'Unknown',
       latitude: item.lat,
       longitude: item.lon,
-      timezone: timezone,
+      timezone: '', // Will be updated below
       displayName: item.display_name || item.label,
     };
     
-    // Store selection
-    setSelectedLocation(fullLocation);
-    setResults([]);
-    setOpen(false);
+    // Notify parent immediately with available data
+    onChange(immediateLocation);
     
-    // Notify parent
-    onChange(fullLocation);
+    // Get timezone asynchronously (non-blocking)
+    try {
+      const timezone = await getTimezoneFromCoordinates(item.lat, item.lon);
+      
+      // Create full LocationSuggestion object with timezone
+      const fullLocation: LocationSuggestion = {
+        ...immediateLocation,
+        timezone: timezone,
+      };
+      
+      // Store selection and notify parent again with complete data
+      setSelectedLocation(fullLocation);
+      onChange(fullLocation);
+    } catch (error: any) {
+      // If timezone fetch fails, keep the immediate location (already set)
+      handleError(error, "LocationAutocomplete.handleSelect.timezone");
+      setSelectedLocation(immediateLocation);
+    } finally {
+      // Re-enable API updates after selection is complete
+      setIsSelectingLocation(false);
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newQuery = e.target.value;
     setQuery(newQuery);
     setSelectedLocation(null);
+    setIsSelectingLocation(false); // Reset selection flag on new input
     
     if (newQuery.length < 3) {
       onChange(null);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    // Pressing Enter auto-selects first suggestion
+    if (e.key === 'Enter' && results.length > 0 && !isSelectingLocation) {
+      e.preventDefault();
+      handleSelect(results[0]);
     }
   };
 
@@ -135,6 +183,7 @@ export default function LocationAutocomplete({
           value={query}
           onChange={handleInputChange}
           onFocus={handleInputFocus}
+          onKeyDown={handleKeyDown}
           placeholder={placeholder}
           className="w-full pl-10 pr-10 py-3 rounded-lg glass border border-white/20 focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900 dark:text-gray-100"
         />

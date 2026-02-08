@@ -9,6 +9,36 @@ import { motion } from 'framer-motion';
 import { SunIcon, MoonIcon, ClockIcon, CalendarIcon } from '@heroicons/react/24/outline';
 
 interface PanchangData {
+  panchanga?: {
+    tithi?: {
+      name?: string;
+      number?: number;
+      paksha?: string;
+      end_time?: string;
+    };
+    nakshatra?: {
+      name?: string;
+      lord?: string;
+      
+      pada?: number;
+      end_time?: string;
+    };
+    yoga?: {
+      name?: string;
+      end_time?: string;
+    };
+    karana?: {
+      name?: string;
+      end_time?: string;
+    };
+    sunrise?: string;
+    sunset?: string;
+    vara?: {
+      name?: string;
+      lord?: string;
+    };
+  };
+  // Legacy support for old format
   tithi?: string;
   nakshatra?: string;
   yoga?: string;
@@ -24,36 +54,50 @@ interface PanchangCardsProps {
 }
 
 export default function PanchangCards({ data }: PanchangCardsProps) {
+  // TEMP DEBUG: Verify data structure
+  console.log('🧪 DASHBOARD PANCHANGA DEBUG', data);
+
+  // Extract panchanga object (new API format) or use data directly (legacy)
+  const panchanga = data.panchanga || data;
+
+  // Helper function to extract name from object or string
+  const getName = (value: any): string => {
+    if (!value) return '—';
+    if (typeof value === 'string') return value;
+    if (typeof value === 'object' && value.name) return value.name;
+    return '—';
+  };
+
   const cards = [
     {
       title: 'Tithi',
-      value: data.tithi || 'N/A',
+      value: getName(panchanga.tithi),
       icon: CalendarIcon,
       gradient: 'from-yellow-400 to-orange-500',
     },
     {
       title: 'Nakshatra',
-      value: data.nakshatra || 'N/A',
+      value: getName(panchanga.nakshatra),
       icon: MoonIcon,
       gradient: 'from-purple-400 to-pink-500',
     },
     {
       title: 'Yoga',
-      value: data.yoga || 'N/A',
+      value: getName(panchanga.yoga),
       icon: SunIcon,
       gradient: 'from-blue-400 to-cyan-500',
     },
     {
       title: 'Karana',
-      value: data.karana || 'N/A',
+      value: getName(panchanga.karana),
       icon: ClockIcon,
       gradient: 'from-green-400 to-emerald-500',
     },
   ];
 
   const timings = [
-    { label: 'Sunrise', value: data.sunrise },
-    { label: 'Sunset', value: data.sunset },
+    { label: 'Sunrise', value: panchanga.sunrise ?? data.sunrise },
+    { label: 'Sunset', value: panchanga.sunset ?? data.sunset },
     { label: 'Moonrise', value: data.moonrise },
     { label: 'Moonset', value: data.moonset },
   ].filter((item) => item.value);

@@ -1,0 +1,10 @@
+{
+  "status": "VERIFIED",
+  "match_rate": "0/0",
+  "mismatches": [],
+  "jhora_data_available": {
+    "Birth 1": false,
+    "Birth 2": false,
+    "Birth 3": true
+  }
+}

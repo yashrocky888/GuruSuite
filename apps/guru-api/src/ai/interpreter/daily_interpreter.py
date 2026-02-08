@@ -11,21 +11,10 @@ from src.ai.interpreter.ai_engine import call_ai, parse_ai_response
 
 def interpret_daily(final_data: Dict, use_local: bool = False) -> Dict:
     """
-    Phase 8: Interpret daily astrological data using AI Guru.
-    
-    This function:
-    1. Builds the Guru prompt from astrological data
-    2. Calls AI (OpenAI or Ollama)
-    3. Parses and structures the response
-    4. Returns complete daily prediction
-    
-    Args:
-        final_data: Dictionary containing all astrological data
-        use_local: If True, prefer local LLM (Ollama)
-    
-    Returns:
-        Complete daily prediction dictionary
+    DEPRECATED: Use POST /api/v1/predict with timescale=daily ONLY.
     """
+    raise RuntimeError("DEPRECATED: Use /api/v1/predict ONLY")
+
     # Build prompt
     prompt = build_guru_prompt(final_data)
     
@@ -45,15 +34,10 @@ def interpret_daily(final_data: Dict, use_local: bool = False) -> Dict:
 
 def interpret_morning(final_data: Dict, use_local: bool = False) -> Dict:
     """
-    Phase 8: Generate morning notification message.
-    
-    Args:
-        final_data: Dictionary containing astrological data
-        use_local: If True, prefer local LLM
-    
-    Returns:
-        Morning message dictionary
+    DEPRECATED: Use POST /api/v1/predict with timescale=daily ONLY.
     """
+    raise RuntimeError("DEPRECATED: Use /api/v1/predict ONLY")
+
     # Build morning prompt
     prompt = build_morning_prompt(final_data)
     

@@ -18,8 +18,52 @@ from src.jyotish.kundli_engine import get_planet_positions
 from src.ephemeris.ephemeris_utils import get_ayanamsa
 from src.utils.converters import normalize_degrees
 from src.ai.explanation import add_explanation_to_response
+from src.jyotish.dasha.vimshottari_engine import calculate_vimshottari_dasha as calculate_vimshottari_dasha_complete
 
 router = APIRouter()
+
+
+@router.get("/dasha/vimshottari")
+def get_vimshottari_dasha(
+    date: str = Query(..., description="Date of birth in YYYY-MM-DD format"),
+    time: str = Query(..., description="Time of birth in HH:MM format"),
+    lat: float = Query(..., description="Latitude"),
+    lon: float = Query(..., description="Longitude"),
+    tz: str = Query("Asia/Kolkata", description="Timezone (default: Asia/Kolkata)")
+):
+    """
+    Calculate complete Vimshottari Dasha system.
+    
+    This endpoint calculates the complete 120-year Vimshottari Dasha cycle
+    based on Moon's nakshatra at birth using Drik Panchang/JHORA methodology.
+    
+    Args:
+        date: Date of birth (YYYY-MM-DD)
+        time: Time of birth (HH:MM)
+        lat: Birth latitude
+        lon: Birth longitude
+        tz: Timezone (default: Asia/Kolkata)
+    
+    Returns:
+        Complete dasha data with:
+        - current_dasha: Current Mahadasha, Antardasha, Pratyantar
+        - mahadashas: List of all 9 mahadashas with start/end dates
+        - antardashas: Antardasha periods for each Mahadasha
+        - pratyantardashas: Pratyantar Dasha periods
+    """
+    try:
+        dasha_data = calculate_vimshottari_dasha_complete(
+            birth_date=date,
+            birth_time=time,
+            latitude=lat,
+            longitude=lon,
+            timezone=tz
+        )
+        return dasha_data
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=f"Invalid input: {str(e)}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error calculating dasha: {str(e)}")
 
 
 @router.get("/")

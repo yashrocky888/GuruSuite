@@ -1,0 +1,944 @@
+{
+  "Birth 1": {
+    "D3": {
+      "maitreya8": {
+        "Ascendant": "Scorpio",
+        "Sun": "Taurus",
+        "Moon": "Cancer",
+        "Mars": "Leo",
+        "Mercury": "Capricorn",
+        "Jupiter": "Pisces",
+        "Venus": "Aries",
+        "Saturn": "Libra",
+        "Rahu": "Aquarius",
+        "Ketu": "Leo"
+      },
+      "our_engine": {
+        "Ascendant": "Scorpio",
+        "Sun": "Taurus",
+        "Moon": "Cancer",
+        "Mars": "Leo",
+        "Mercury": "Capricorn",
+        "Jupiter": "Pisces",
+        "Venus": "Aries",
+        "Saturn": "Libra",
+        "Rahu": "Aquarius",
+        "Ketu": "Leo"
+      }
+    },
+    "D4": {
+      "maitreya8": {
+        "Ascendant": "Scorpio",
+        "Sun": "Taurus",
+        "Moon": "Leo",
+        "Mars": "Leo",
+        "Mercury": "Scorpio",
+        "Jupiter": "Taurus",
+        "Venus": "Aries",
+        "Saturn": "Scorpio",
+        "Rahu": "Capricorn",
+        "Ketu": "Cancer"
+      },
+      "our_engine": {
+        "Ascendant": "Scorpio",
+        "Sun": "Taurus",
+        "Moon": "Scorpio",
+        "Mars": "Leo",
+        "Mercury": "Taurus",
+        "Jupiter": "Scorpio",
+        "Venus": "Aries",
+        "Saturn": "Aquarius",
+        "Rahu": "Libra",
+        "Ketu": "Aries"
+      }
+    },
+    "D7": {
+      "maitreya8": {
+        "Ascendant": "Taurus",
+        "Sun": "Scorpio",
+        "Moon": "Libra",
+        "Mars": "Leo",
+        "Mercury": "Aries",
+        "Jupiter": "Virgo",
+        "Venus": "Taurus",
+        "Saturn": "Leo",
+        "Rahu": "Sagittarius",
+        "Ketu": "Gemini"
+      },
+      "our_engine": {
+        "Ascendant": "Taurus",
+        "Sun": "Scorpio",
+        "Moon": "Sagittarius",
+        "Mars": "Leo",
+        "Mercury": "Gemini",
+        "Jupiter": "Capricorn",
+        "Venus": "Taurus",
+        "Saturn": "Leo",
+        "Rahu": "Sagittarius",
+        "Ketu": "Gemini"
+      }
+    },
+    "D10": {
+      "maitreya8": {
+        "Ascendant": "Cancer",
+        "Sun": "Capricorn",
+        "Moon": "Pisces",
+        "Mars": "Leo",
+        "Mercury": "Leo",
+        "Jupiter": "Capricorn",
+        "Venus": "Taurus",
+        "Saturn": "Scorpio",
+        "Rahu": "Capricorn",
+        "Ketu": "Cancer"
+      },
+      "our_engine": {
+        "Ascendant": "Cancer",
+        "Sun": "Capricorn",
+        "Moon": "Pisces",
+        "Mars": "Leo",
+        "Mercury": "Leo",
+        "Jupiter": "Capricorn",
+        "Venus": "Taurus",
+        "Saturn": "Scorpio",
+        "Rahu": "Capricorn",
+        "Ketu": "Cancer"
+      }
+    },
+    "D12": {
+      "maitreya8": {
+        "Ascendant": "Scorpio",
+        "Sun": "Taurus",
+        "Moon": "Virgo",
+        "Mars": "Leo",
+        "Mercury": "Capricorn",
+        "Jupiter": "Gemini",
+        "Venus": "Gemini",
+        "Saturn": "Capricorn",
+        "Rahu": "Aquarius",
+        "Ketu": "Leo"
+      },
+      "our_engine": {
+        "Ascendant": "Scorpio",
+        "Sun": "Taurus",
+        "Moon": "Virgo",
+        "Mars": "Leo",
+        "Mercury": "Capricorn",
+        "Jupiter": "Gemini",
+        "Venus": "Gemini",
+        "Saturn": "Capricorn",
+        "Rahu": "Aquarius",
+        "Ketu": "Leo"
+      }
+    },
+    "D16": {
+      "maitreya8": {
+        "Ascendant": "Virgo",
+        "Sun": "Leo",
+        "Moon": "Virgo",
+        "Mars": "Virgo",
+        "Mercury": "Cancer",
+        "Jupiter": "Taurus",
+        "Venus": "Cancer",
+        "Saturn": "Scorpio",
+        "Rahu": "Virgo",
+        "Ketu": "Virgo"
+      },
+      "our_engine": {
+        "Ascendant": "Virgo",
+        "Sun": "Leo",
+        "Moon": "Virgo",
+        "Mars": "Virgo",
+        "Mercury": "Cancer",
+        "Jupiter": "Taurus",
+        "Venus": "Cancer",
+        "Saturn": "Scorpio",
+        "Rahu": "Virgo",
+        "Ketu": "Virgo"
+      }
+    },
+    "D20": {
+      "maitreya8": {
+        "Ascendant": "Capricorn",
+        "Sun": "Sagittarius",
+        "Moon": "Aries",
+        "Mars": "Capricorn",
+        "Mercury": "Aquarius",
+        "Jupiter": "Sagittarius",
+        "Venus": "Cancer",
+        "Saturn": "Cancer",
+        "Rahu": "Scorpio",
+        "Ketu": "Scorpio"
+      },
+      "our_engine": {
+        "Ascendant": "Capricorn",
+        "Sun": "Sagittarius",
+        "Moon": "Aries",
+        "Mars": "Capricorn",
+        "Mercury": "Aquarius",
+        "Jupiter": "Sagittarius",
+        "Venus": "Cancer",
+        "Saturn": "Cancer",
+        "Rahu": "Scorpio",
+        "Ketu": "Scorpio"
+      }
+    },
+    "D27": {
+      "maitreya8": {
+        "Ascendant": "Pisces",
+        "Sun": "Leo",
+        "Moon": "Scorpio",
+        "Mars": "Gemini",
+        "Mercury": "Aquarius",
+        "Jupiter": "Taurus",
+        "Venus": "Virgo",
+        "Saturn": "Sagittarius",
+        "Rahu": "Cancer",
+        "Ketu": "Capricorn"
+      },
+      "our_engine": {
+        "Ascendant": "Pisces",
+        "Sun": "Leo",
+        "Moon": "Scorpio",
+        "Mars": "Gemini",
+        "Mercury": "Aquarius",
+        "Jupiter": "Taurus",
+        "Venus": "Virgo",
+        "Saturn": "Sagittarius",
+        "Rahu": "Cancer",
+        "Ketu": "Capricorn"
+      }
+    },
+    "D30": {
+      "maitreya8": {
+        "Ascendant": "Taurus",
+        "Sun": "Taurus",
+        "Moon": "Scorpio",
+        "Mars": "Aries",
+        "Mercury": "Capricorn",
+        "Jupiter": "Capricorn",
+        "Venus": "Aquarius",
+        "Saturn": "Libra",
+        "Rahu": "Sagittarius",
+        "Ketu": "Sagittarius"
+      },
+      "our_engine": {
+        "Ascendant": "Taurus",
+        "Sun": "Taurus",
+        "Moon": "Scorpio",
+        "Mars": "Aries",
+        "Mercury": "Capricorn",
+        "Jupiter": "Pisces",
+        "Venus": "Aquarius",
+        "Saturn": "Libra",
+        "Rahu": "Sagittarius",
+        "Ketu": "Sagittarius"
+      }
+    },
+    "D40": {
+      "maitreya8": {
+        "Ascendant": "Capricorn",
+        "Sun": "Scorpio",
+        "Moon": "Cancer",
+        "Mars": "Cancer",
+        "Mercury": "Pisces",
+        "Jupiter": "Libra",
+        "Venus": "Scorpio",
+        "Saturn": "Gemini",
+        "Rahu": "Gemini",
+        "Ketu": "Gemini"
+      },
+      "our_engine": {
+        "Ascendant": "Capricorn",
+        "Sun": "Sagittarius",
+        "Moon": "Aries",
+        "Mars": "Capricorn",
+        "Mercury": "Pisces",
+        "Jupiter": "Libra",
+        "Venus": "Sagittarius",
+        "Saturn": "Gemini",
+        "Rahu": "Taurus",
+        "Ketu": "Taurus"
+      }
+    },
+    "D45": {
+      "maitreya8": {
+        "Ascendant": "Scorpio",
+        "Sun": "Libra",
+        "Moon": "Virgo",
+        "Mars": "Scorpio",
+        "Mercury": "Taurus",
+        "Jupiter": "Sagittarius",
+        "Venus": "Sagittarius",
+        "Saturn": "Pisces",
+        "Rahu": "Leo",
+        "Ketu": "Leo"
+      },
+      "our_engine": {
+        "Ascendant": "Scorpio",
+        "Sun": "Libra",
+        "Moon": "Virgo",
+        "Mars": "Scorpio",
+        "Mercury": "Taurus",
+        "Jupiter": "Sagittarius",
+        "Venus": "Sagittarius",
+        "Saturn": "Pisces",
+        "Rahu": "Leo",
+        "Ketu": "Leo"
+      }
+    },
+    "D60": {
+      "maitreya8": {
+        "Ascendant": "Pisces",
+        "Sun": "Cancer",
+        "Moon": "Capricorn",
+        "Mars": "Sagittarius",
+        "Mercury": "Capricorn",
+        "Jupiter": "Sagittarius",
+        "Venus": "Pisces",
+        "Saturn": "Scorpio",
+        "Rahu": "Cancer",
+        "Ketu": "Capricorn"
+      },
+      "our_engine": {
+        "Ascendant": "Pisces",
+        "Sun": "Cancer",
+        "Moon": "Capricorn",
+        "Mars": "Sagittarius",
+        "Mercury": "Capricorn",
+        "Jupiter": "Sagittarius",
+        "Venus": "Pisces",
+        "Saturn": "Scorpio",
+        "Rahu": "Cancer",
+        "Ketu": "Capricorn"
+      }
+    }
+  },
+  "Birth 2": {
+    "D3": {
+      "maitreya8": {
+        "Ascendant": "Aquarius",
+        "Sun": "Scorpio",
+        "Moon": "Scorpio",
+        "Mars": "Cancer",
+        "Mercury": "Aries",
+        "Jupiter": "Leo",
+        "Venus": "Taurus",
+        "Saturn": "Pisces",
+        "Rahu": "Taurus",
+        "Ketu": "Scorpio"
+      },
+      "our_engine": {
+        "Ascendant": "Aquarius",
+        "Sun": "Scorpio",
+        "Moon": "Scorpio",
+        "Mars": "Cancer",
+        "Mercury": "Aries",
+        "Jupiter": "Leo",
+        "Venus": "Taurus",
+        "Saturn": "Pisces",
+        "Rahu": "Taurus",
+        "Ketu": "Scorpio"
+      }
+    },
+    "D4": {
+      "maitreya8": {
+        "Ascendant": "Sagittarius",
+        "Sun": "Sagittarius",
+        "Moon": "Scorpio",
+        "Mars": "Virgo",
+        "Mercury": "Aries",
+        "Jupiter": "Virgo",
+        "Venus": "Leo",
+        "Saturn": "Pisces",
+        "Rahu": "Gemini",
+        "Ketu": "Sagittarius"
+      },
+      "our_engine": {
+        "Ascendant": "Gemini",
+        "Sun": "Pisces",
+        "Moon": "Scorpio",
+        "Mars": "Pisces",
+        "Mercury": "Aries",
+        "Jupiter": "Sagittarius",
+        "Venus": "Taurus",
+        "Saturn": "Pisces",
+        "Rahu": "Virgo",
+        "Ketu": "Pisces"
+      }
+    },
+    "D7": {
+      "maitreya8": {
+        "Ascendant": "Libra",
+        "Sun": "Aquarius",
+        "Moon": "Gemini",
+        "Mars": "Sagittarius",
+        "Mercury": "Taurus",
+        "Jupiter": "Taurus",
+        "Venus": "Capricorn",
+        "Saturn": "Libra",
+        "Rahu": "Leo",
+        "Ketu": "Aquarius"
+      },
+      "our_engine": {
+        "Ascendant": "Libra",
+        "Sun": "Aries",
+        "Moon": "Aries",
+        "Mars": "Gemini",
+        "Mercury": "Taurus",
+        "Jupiter": "Taurus",
+        "Venus": "Virgo",
+        "Saturn": "Leo",
+        "Rahu": "Libra",
+        "Ketu": "Aries"
+      }
+    },
+    "D10": {
+      "maitreya8": {
+        "Ascendant": "Capricorn",
+        "Sun": "Gemini",
+        "Moon": "Leo",
+        "Mars": "Aries",
+        "Mercury": "Taurus",
+        "Jupiter": "Cancer",
+        "Venus": "Aries",
+        "Saturn": "Capricorn",
+        "Rahu": "Sagittarius",
+        "Ketu": "Gemini"
+      },
+      "our_engine": {
+        "Ascendant": "Taurus",
+        "Sun": "Gemini",
+        "Moon": "Leo",
+        "Mars": "Aries",
+        "Mercury": "Taurus",
+        "Jupiter": "Scorpio",
+        "Venus": "Aries",
+        "Saturn": "Capricorn",
+        "Rahu": "Sagittarius",
+        "Ketu": "Gemini"
+      }
+    },
+    "D12": {
+      "maitreya8": {
+        "Ascendant": "Aquarius",
+        "Sun": "Sagittarius",
+        "Moon": "Capricorn",
+        "Mars": "Virgo",
+        "Mercury": "Taurus",
+        "Jupiter": "Virgo",
+        "Venus": "Leo",
+        "Saturn": "Taurus",
+        "Rahu": "Gemini",
+        "Ketu": "Sagittarius"
+      },
+      "our_engine": {
+        "Ascendant": "Aquarius",
+        "Sun": "Sagittarius",
+        "Moon": "Capricorn",
+        "Mars": "Virgo",
+        "Mercury": "Taurus",
+        "Jupiter": "Virgo",
+        "Venus": "Leo",
+        "Saturn": "Taurus",
+        "Rahu": "Gemini",
+        "Ketu": "Sagittarius"
+      }
+    },
+    "D16": {
+      "maitreya8": {
+        "Ascendant": "Scorpio",
+        "Sun": "Sagittarius",
+        "Moon": "Libra",
+        "Mars": "Leo",
+        "Mercury": "Gemini",
+        "Jupiter": "Sagittarius",
+        "Venus": "Capricorn",
+        "Saturn": "Pisces",
+        "Rahu": "Sagittarius",
+        "Ketu": "Sagittarius"
+      },
+      "our_engine": {
+        "Ascendant": "Scorpio",
+        "Sun": "Sagittarius",
+        "Moon": "Libra",
+        "Mars": "Leo",
+        "Mercury": "Gemini",
+        "Jupiter": "Sagittarius",
+        "Venus": "Capricorn",
+        "Saturn": "Pisces",
+        "Rahu": "Sagittarius",
+        "Ketu": "Sagittarius"
+      }
+    },
+    "D20": {
+      "maitreya8": {
+        "Ascendant": "Libra",
+        "Sun": "Scorpio",
+        "Moon": "Pisces",
+        "Mars": "Cancer",
+        "Mercury": "Gemini",
+        "Jupiter": "Scorpio",
+        "Venus": "Gemini",
+        "Saturn": "Sagittarius",
+        "Rahu": "Scorpio",
+        "Ketu": "Scorpio"
+      },
+      "our_engine": {
+        "Ascendant": "Libra",
+        "Sun": "Scorpio",
+        "Moon": "Pisces",
+        "Mars": "Cancer",
+        "Mercury": "Gemini",
+        "Jupiter": "Scorpio",
+        "Venus": "Gemini",
+        "Saturn": "Sagittarius",
+        "Rahu": "Scorpio",
+        "Ketu": "Scorpio"
+      }
+    },
+    "D27": {
+      "maitreya8": {
+        "Ascendant": "Aries",
+        "Sun": "Libra",
+        "Moon": "Taurus",
+        "Mars": "Aries",
+        "Mercury": "Leo",
+        "Jupiter": "Sagittarius",
+        "Venus": "Pisces",
+        "Saturn": "Gemini",
+        "Rahu": "Aries",
+        "Ketu": "Libra"
+      },
+      "our_engine": {
+        "Ascendant": "Aries",
+        "Sun": "Libra",
+        "Moon": "Taurus",
+        "Mars": "Aries",
+        "Mercury": "Leo",
+        "Jupiter": "Sagittarius",
+        "Venus": "Pisces",
+        "Saturn": "Gemini",
+        "Rahu": "Aries",
+        "Ketu": "Libra"
+      }
+    },
+    "D30": {
+      "maitreya8": {
+        "Ascendant": "Gemini",
+        "Sun": "Capricorn",
+        "Moon": "Virgo",
+        "Mars": "Pisces",
+        "Mercury": "Aries",
+        "Jupiter": "Gemini",
+        "Venus": "Virgo",
+        "Saturn": "Virgo",
+        "Rahu": "Capricorn",
+        "Ketu": "Capricorn"
+      },
+      "our_engine": {
+        "Ascendant": "Gemini",
+        "Sun": "Capricorn",
+        "Moon": "Gemini",
+        "Mars": "Sagittarius",
+        "Mercury": "Aries",
+        "Jupiter": "Gemini",
+        "Venus": "Gemini",
+        "Saturn": "Gemini",
+        "Rahu": "Capricorn",
+        "Ketu": "Capricorn"
+      }
+    },
+    "D40": {
+      "maitreya8": {
+        "Ascendant": "Leo",
+        "Sun": "Taurus",
+        "Moon": "Aries",
+        "Mars": "Leo",
+        "Mercury": "Virgo",
+        "Jupiter": "Libra",
+        "Venus": "Libra",
+        "Saturn": "Gemini",
+        "Rahu": "Taurus",
+        "Ketu": "Taurus"
+      },
+      "our_engine": {
+        "Ascendant": "Aries",
+        "Sun": "Cancer",
+        "Moon": "Aries",
+        "Mars": "Libra",
+        "Mercury": "Leo",
+        "Jupiter": "Gemini",
+        "Venus": "Libra",
+        "Saturn": "Leo",
+        "Rahu": "Cancer",
+        "Ketu": "Cancer"
+      }
+    },
+    "D45": {
+      "maitreya8": {
+        "Ascendant": "Cancer",
+        "Sun": "Scorpio",
+        "Moon": "Pisces",
+        "Mars": "Capricorn",
+        "Mercury": "Libra",
+        "Jupiter": "Libra",
+        "Venus": "Libra",
+        "Saturn": "Virgo",
+        "Rahu": "Scorpio",
+        "Ketu": "Scorpio"
+      },
+      "our_engine": {
+        "Ascendant": "Cancer",
+        "Sun": "Scorpio",
+        "Moon": "Pisces",
+        "Mars": "Capricorn",
+        "Mercury": "Libra",
+        "Jupiter": "Libra",
+        "Venus": "Libra",
+        "Saturn": "Virgo",
+        "Rahu": "Scorpio",
+        "Ketu": "Scorpio"
+      }
+    },
+    "D60": {
+      "maitreya8": {
+        "Ascendant": "Sagittarius",
+        "Sun": "Aquarius",
+        "Moon": "Virgo",
+        "Mars": "Sagittarius",
+        "Mercury": "Sagittarius",
+        "Jupiter": "Virgo",
+        "Venus": "Sagittarius",
+        "Saturn": "Pisces",
+        "Rahu": "Cancer",
+        "Ketu": "Capricorn"
+      },
+      "our_engine": {
+        "Ascendant": "Sagittarius",
+        "Sun": "Aquarius",
+        "Moon": "Virgo",
+        "Mars": "Sagittarius",
+        "Mercury": "Sagittarius",
+        "Jupiter": "Virgo",
+        "Venus": "Sagittarius",
+        "Saturn": "Pisces",
+        "Rahu": "Cancer",
+        "Ketu": "Capricorn"
+      }
+    }
+  },
+  "Birth 3": {
+    "D3": {
+      "maitreya8": {
+        "Ascendant": "Gemini",
+        "Sun": "Scorpio",
+        "Moon": "Capricorn",
+        "Mars": "Cancer",
+        "Mercury": "Pisces",
+        "Jupiter": "Virgo",
+        "Venus": "Cancer",
+        "Saturn": "Taurus",
+        "Rahu": "Libra",
+        "Ketu": "Aries"
+      },
+      "our_engine": {
+        "Ascendant": "Gemini",
+        "Sun": "Scorpio",
+        "Moon": "Capricorn",
+        "Mars": "Cancer",
+        "Mercury": "Pisces",
+        "Jupiter": "Virgo",
+        "Venus": "Cancer",
+        "Saturn": "Taurus",
+        "Rahu": "Libra",
+        "Ketu": "Aries"
+      }
+    },
+    "D4": {
+      "maitreya8": {
+        "Ascendant": "Gemini",
+        "Sun": "Sagittarius",
+        "Moon": "Sagittarius",
+        "Mars": "Leo",
+        "Mercury": "Gemini",
+        "Jupiter": "Leo",
+        "Venus": "Gemini",
+        "Saturn": "Taurus",
+        "Rahu": "Sagittarius",
+        "Ketu": "Gemini"
+      },
+      "our_engine": {
+        "Ascendant": "Gemini",
+        "Sun": "Pisces",
+        "Moon": "Virgo",
+        "Mars": "Scorpio",
+        "Mercury": "Pisces",
+        "Jupiter": "Taurus",
+        "Venus": "Pisces",
+        "Saturn": "Taurus",
+        "Rahu": "Gemini",
+        "Ketu": "Sagittarius"
+      }
+    },
+    "D7": {
+      "maitreya8": {
+        "Ascendant": "Cancer",
+        "Sun": "Aquarius",
+        "Moon": "Taurus",
+        "Mars": "Scorpio",
+        "Mercury": "Libra",
+        "Jupiter": "Aquarius",
+        "Venus": "Scorpio",
+        "Saturn": "Sagittarius",
+        "Rahu": "Virgo",
+        "Ketu": "Pisces"
+      },
+      "our_engine": {
+        "Ascendant": "Cancer",
+        "Sun": "Aries",
+        "Moon": "Capricorn",
+        "Mars": "Scorpio",
+        "Mercury": "Leo",
+        "Jupiter": "Leo",
+        "Venus": "Cancer",
+        "Saturn": "Libra",
+        "Rahu": "Virgo",
+        "Ketu": "Pisces"
+      }
+    },
+    "D10": {
+      "maitreya8": {
+        "Ascendant": "Leo",
+        "Sun": "Gemini",
+        "Moon": "Leo",
+        "Mars": "Aries",
+        "Mercury": "Capricorn",
+        "Jupiter": "Taurus",
+        "Venus": "Aquarius",
+        "Saturn": "Aquarius",
+        "Rahu": "Scorpio",
+        "Ketu": "Taurus"
+      },
+      "our_engine": {
+        "Ascendant": "Sagittarius",
+        "Sun": "Gemini",
+        "Moon": "Leo",
+        "Mars": "Aries",
+        "Mercury": "Capricorn",
+        "Jupiter": "Taurus",
+        "Venus": "Aquarius",
+        "Saturn": "Aquarius",
+        "Rahu": "Pisces",
+        "Ketu": "Virgo"
+      }
+    },
+    "D12": {
+      "maitreya8": {
+        "Ascendant": "Leo",
+        "Sun": "Sagittarius",
+        "Moon": "Capricorn",
+        "Mars": "Libra",
+        "Mercury": "Gemini",
+        "Jupiter": "Libra",
+        "Venus": "Cancer",
+        "Saturn": "Gemini",
+        "Rahu": "Sagittarius",
+        "Ketu": "Gemini"
+      },
+      "our_engine": {
+        "Ascendant": "Leo",
+        "Sun": "Sagittarius",
+        "Moon": "Capricorn",
+        "Mars": "Libra",
+        "Mercury": "Gemini",
+        "Jupiter": "Libra",
+        "Venus": "Cancer",
+        "Saturn": "Gemini",
+        "Rahu": "Sagittarius",
+        "Ketu": "Gemini"
+      }
+    },
+    "D16": {
+      "maitreya8": {
+        "Ascendant": "Pisces",
+        "Sun": "Sagittarius",
+        "Moon": "Gemini",
+        "Mars": "Scorpio",
+        "Mercury": "Aries",
+        "Jupiter": "Pisces",
+        "Venus": "Taurus",
+        "Saturn": "Libra",
+        "Rahu": "Leo",
+        "Ketu": "Leo"
+      },
+      "our_engine": {
+        "Ascendant": "Pisces",
+        "Sun": "Sagittarius",
+        "Moon": "Gemini",
+        "Mars": "Scorpio",
+        "Mercury": "Aries",
+        "Jupiter": "Pisces",
+        "Venus": "Taurus",
+        "Saturn": "Libra",
+        "Rahu": "Leo",
+        "Ketu": "Leo"
+      }
+    },
+    "D20": {
+      "maitreya8": {
+        "Ascendant": "Sagittarius",
+        "Sun": "Scorpio",
+        "Moon": "Pisces",
+        "Mars": "Cancer",
+        "Mercury": "Capricorn",
+        "Jupiter": "Virgo",
+        "Venus": "Pisces",
+        "Saturn": "Pisces",
+        "Rahu": "Cancer",
+        "Ketu": "Cancer"
+      },
+      "our_engine": {
+        "Ascendant": "Sagittarius",
+        "Sun": "Scorpio",
+        "Moon": "Pisces",
+        "Mars": "Cancer",
+        "Mercury": "Capricorn",
+        "Jupiter": "Virgo",
+        "Venus": "Pisces",
+        "Saturn": "Pisces",
+        "Rahu": "Cancer",
+        "Ketu": "Cancer"
+      }
+    },
+    "D27": {
+      "maitreya8": {
+        "Ascendant": "Aries",
+        "Sun": "Libra",
+        "Moon": "Taurus",
+        "Mars": "Pisces",
+        "Mercury": "Cancer",
+        "Jupiter": "Leo",
+        "Venus": "Libra",
+        "Saturn": "Scorpio",
+        "Rahu": "Capricorn",
+        "Ketu": "Cancer"
+      },
+      "our_engine": {
+        "Ascendant": "Aries",
+        "Sun": "Libra",
+        "Moon": "Taurus",
+        "Mars": "Pisces",
+        "Mercury": "Cancer",
+        "Jupiter": "Leo",
+        "Venus": "Libra",
+        "Saturn": "Scorpio",
+        "Rahu": "Capricorn",
+        "Ketu": "Cancer"
+      }
+    },
+    "D30": {
+      "maitreya8": {
+        "Ascendant": "Aquarius",
+        "Sun": "Capricorn",
+        "Moon": "Pisces",
+        "Mars": "Scorpio",
+        "Mercury": "Virgo",
+        "Jupiter": "Pisces",
+        "Venus": "Pisces",
+        "Saturn": "Taurus",
+        "Rahu": "Sagittarius",
+        "Ketu": "Sagittarius"
+      },
+      "our_engine": {
+        "Ascendant": "Aquarius",
+        "Sun": "Capricorn",
+        "Moon": "Sagittarius",
+        "Mars": "Scorpio",
+        "Mercury": "Gemini",
+        "Jupiter": "Sagittarius",
+        "Venus": "Sagittarius",
+        "Saturn": "Taurus",
+        "Rahu": "Sagittarius",
+        "Ketu": "Sagittarius"
+      }
+    },
+    "D40": {
+      "maitreya8": {
+        "Ascendant": "Capricorn",
+        "Sun": "Taurus",
+        "Moon": "Capricorn",
+        "Mars": "Sagittarius",
+        "Mercury": "Leo",
+        "Jupiter": "Taurus",
+        "Venus": "Sagittarius",
+        "Saturn": "Aries",
+        "Rahu": "Aquarius",
+        "Ketu": "Aquarius"
+      },
+      "our_engine": {
+        "Ascendant": "Virgo",
+        "Sun": "Cancer",
+        "Moon": "Pisces",
+        "Mars": "Sagittarius",
+        "Mercury": "Libra",
+        "Jupiter": "Taurus",
+        "Venus": "Aquarius",
+        "Saturn": "Aries",
+        "Rahu": "Libra",
+        "Ketu": "Libra"
+      }
+    },
+    "D45": {
+      "maitreya8": {
+        "Ascendant": "Scorpio",
+        "Sun": "Scorpio",
+        "Moon": "Aries",
+        "Mars": "Pisces",
+        "Mercury": "Scorpio",
+        "Jupiter": "Gemini",
+        "Venus": "Aries",
+        "Saturn": "Aquarius",
+        "Rahu": "Capricorn",
+        "Ketu": "Capricorn"
+      },
+      "our_engine": {
+        "Ascendant": "Scorpio",
+        "Sun": "Scorpio",
+        "Moon": "Aries",
+        "Mars": "Pisces",
+        "Mercury": "Scorpio",
+        "Jupiter": "Gemini",
+        "Venus": "Aries",
+        "Saturn": "Aquarius",
+        "Rahu": "Capricorn",
+        "Ketu": "Capricorn"
+      }
+    },
+    "D60": {
+      "maitreya8": {
+        "Ascendant": "Leo",
+        "Sun": "Aquarius",
+        "Moon": "Cancer",
+        "Mars": "Leo",
+        "Mercury": "Gemini",
+        "Jupiter": "Libra",
+        "Venus": "Sagittarius",
+        "Saturn": "Aquarius",
+        "Rahu": "Pisces",
+        "Ketu": "Virgo"
+      },
+      "our_engine": {
+        "Ascendant": "Leo",
+        "Sun": "Aquarius",
+        "Moon": "Cancer",
+        "Mars": "Leo",
+        "Mercury": "Gemini",
+        "Jupiter": "Libra",
+        "Venus": "Sagittarius",
+        "Saturn": "Aquarius",
+        "Rahu": "Pisces",
+        "Ketu": "Virgo"
+      }
+    }
+  }
+}

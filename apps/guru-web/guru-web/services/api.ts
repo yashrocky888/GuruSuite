@@ -6,13 +6,17 @@
 
 import axios from 'axios';
 
-// CANONICAL API URL - asia-south1 region (DO NOT CHANGE)
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://guru-api-660206747784.asia-south1.run.app';
+// 🔒 CRITICAL: Use environment variable for API base URL
+// Cloud Run URL: https://guru-api-660206747784.asia-south1.run.app
+// Environment variable: NEXT_PUBLIC_API_BASE_URL
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://guru-api-660206747784.asia-south1.run.app/api/v1';
+
 const LOCATION_API_BASE_URL = process.env.NEXT_PUBLIC_ASTRO_API_URL || 'http://localhost:3001/api';
 
 // Create axios instance with default config
+// 🔒 CRITICAL: Use environment-based baseURL (NOT hardcoded localhost)
 const apiClient = axios.create({
-  baseURL: `${API_BASE_URL}/api/v1`,
+  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -235,6 +239,7 @@ apiClient.interceptors.response.use(
 // ==================== TYPES ====================
 
 export interface BirthDetails {
+  name?: string;
   date: string;
   time: string;
   city: string;
@@ -354,32 +359,29 @@ export interface DashaData {
 // ==================== BIRTH DETAILS ====================
 
 export const submitBirthDetails = async (details: BirthDetails): Promise<BirthDetailsResponse> => {
-  try {
-    const response = await apiClient.post<BirthDetailsResponse>('/birth-details', details);
-    return response.data;
-  } catch (error: any) {
-    // Check for 404 FIRST - this means /birth-details endpoint doesn't exist
-    // Handle this gracefully without throwing an error
-    // Also handle network errors and empty error objects
-    if (error?.response?.status === 404 || !error?.response) {
-      // Generate user_id locally
-      const userId = `user_${Date.now()}`;
-      
-      // Return success response - birth details are already stored in Zustand store
-      // The /birth-details endpoint doesn't exist, but we can still proceed
-      // The kundli will be fetched directly when needed
-      return {
-        success: true,
-        message: 'Birth details stored locally (API /birth-details endpoint not available)',
-        user_id: userId,
-        lagna: 1, // Default, will be calculated when kundli is fetched
-        lagnaSign: 'Mesha', // Default, will be calculated when kundli is fetched
-      };
-    }
-    
-    // Only throw error if it's not a 404 (404 is handled above)
-    throw error;
-  }
+  // 🔒 FIX: Skip /birth-details API call entirely - endpoint doesn't exist
+  // The /birth-details endpoint doesn't exist in the backend API
+  // Birth details are stored in Zustand store and used directly for kundli calculation
+  // This prevents 404 errors in console and improves UX
+  
+  // Generate user_id locally (no backend storage needed)
+  const userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  
+  // Return success response immediately
+  // Birth details are stored in Zustand store by the calling component
+  // The kundli will be fetched directly using birth details when needed
+  return {
+    success: true,
+    message: 'Birth details stored locally',
+    user_id: userId,
+    lagna: 1, // Default, will be calculated when kundli is fetched
+    lagnaSign: 'Mesha', // Default, will be calculated when kundli is fetched
+  };
+  
+  // OLD CODE (REMOVED - was causing 404 errors):
+  // The /birth-details endpoint doesn't exist, so we skip the API call entirely
+  // Instead, we generate a local user_id and return success immediately
+  // Birth details are stored in Zustand store by the calling component
 };
 
 // ==================== DASHBOARD ====================
@@ -419,13 +421,91 @@ export const getKundli = async (userId?: string, birthDetails?: BirthDetails): P
   // If birth details are provided, add them as query parameters
   // The deployed API might need these even with user_id
   if (birthDetails) {
-    params.dob = birthDetails.date;
-    params.time = birthDetails.time;
+    // 🔒 DATE PRESERVATION: Treat date as pure string - NEVER parse or convert
+    // Date must remain EXACTLY as user entered it (YYYY-MM-DD format)
+    
+    // 🔒 HARD ASSERTION: Date must be a string
+    if (typeof birthDetails.date !== 'string') {
+      console.error('❌ FATAL: birthDetails.date is not a string!', {
+        type: typeof birthDetails.date,
+        value: birthDetails.date,
+      });
+      throw new Error('Date must be a string - never use Date objects or parsed dates');
+    }
+    
+    // 🔒 HARD ASSERTION: Validate date format (YYYY-MM-DD)
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(birthDetails.date)) {
+      console.error('❌ FATAL: Invalid date format!', {
+        date: birthDetails.date,
+        expectedFormat: 'YYYY-MM-DD',
+      });
+      throw new Error(`Invalid date format: ${birthDetails.date}. Must be YYYY-MM-DD`);
+    }
+    
+    // 🔒 INPUT VALIDATION: Preserve user-entered date and time exactly
+    params.dob = birthDetails.date; // 🔒 PURE STRING ASSIGNMENT - NO PARSING, NO CONVERSION
+    params.time = birthDetails.time; // 🔒 PURE STRING ASSIGNMENT - NO PARSING, NO CONVERSION
+    
     params.lat = birthDetails.latitude;
     params.lon = birthDetails.longitude;
-    // Add timezone if available (API may use it for time conversion)
-    if (birthDetails.timezone) {
-      params.timezone = birthDetails.timezone;
+    
+    // 🔒 TIMEZONE FIX: Ensure Indian locations use Asia/Kolkata, not UTC
+    let timezone = birthDetails.timezone;
+    
+    // Validate: If country is India and timezone is UTC, fix it
+    if (birthDetails.country && 
+        (birthDetails.country.toLowerCase().includes('india') || 
+         birthDetails.country.toLowerCase() === 'in') &&
+        (!timezone || timezone === 'UTC' || timezone === 'utc')) {
+      console.warn('⚠️ Indian location detected with UTC timezone. Fixing to Asia/Kolkata.');
+      timezone = 'Asia/Kolkata';
+    }
+    
+    // Default to Asia/Kolkata if timezone is missing (safer than UTC)
+    if (!timezone) {
+      console.warn('⚠️ Timezone missing. Defaulting to Asia/Kolkata.');
+      timezone = 'Asia/Kolkata';
+    }
+    
+    params.timezone = timezone;
+    
+    // 🧪 INPUT DEBUG: Log exact params being sent to API
+    console.log('🧪 API INPUT DEBUG — Birth Details Sent to Backend:', {
+      dob: params.dob,
+      time: params.time,
+      lat: params.lat,
+      lon: params.lon,
+      timezone: params.timezone,
+      country: birthDetails.country,
+      city: birthDetails.city,
+      // 🔒 VERIFICATION: Show that date is unchanged
+      dateUnchanged: params.dob === birthDetails.date,
+      originalDate: birthDetails.date,
+      sentDate: params.dob,
+    });
+    
+    // 🔒 HARD ASSERTION: Validate date/time are unchanged (byte-for-byte)
+    if (params.dob !== birthDetails.date) {
+      console.error('❌ FATAL: Date was modified before API call!', {
+        original: birthDetails.date,
+        modified: params.dob,
+        originalType: typeof birthDetails.date,
+        modifiedType: typeof params.dob,
+      });
+      throw new Error('Date modification detected - this is a bug');
+    }
+    
+    // 🔒 HARD ASSERTION: Validate timezone for Indian locations
+    if (birthDetails.country && 
+        (birthDetails.country.toLowerCase().includes('india') || 
+         birthDetails.country.toLowerCase() === 'in') &&
+        params.timezone === 'UTC') {
+      console.error('❌ FATAL: Indian location with UTC timezone!', {
+        country: birthDetails.country,
+        timezone: params.timezone,
+      });
+      throw new Error('Indian location must use Asia/Kolkata timezone, not UTC');
     }
   }
   
@@ -449,14 +529,64 @@ export const getKundli = async (userId?: string, birthDetails?: BirthDetails): P
       throw new Error("Invalid response from server");
     }
     
-    // Return the full response - includes D1 (main kundli) and all divisional charts (D2, D3, D4, D7, D9, D10, D12)
-    if (response.data && response.data.success && response.data.data?.kundli) {
-      return response.data; // Return full nested structure with all divisional charts
+    // 🔒 CRITICAL FIX: Backend returns charts directly at top level: { D1: {...}, D2: {...}, ... }
+    // NOT nested format: { success: true, data: { kundli: { D1: {...} } } }
+    // Check for direct format first (production API format)
+    if (response.data && typeof response.data === 'object' && 'D1' in response.data) {
+      // Direct format: { D1: {...}, D2: {...}, D3: {...}, ... }
+      return response.data;
     }
     
-    // Fallback for old format
+    // Check for nested format (legacy/alternative format)
+    if (response.data && response.data.success && response.data.data?.kundli) {
+      return response.data.data.kundli; // Extract kundli object from nested structure
+    }
+    
+    // Check for alternative nested format: { data: { D1: {...}, D2: {...} } }
+    if (response.data && response.data.data && typeof response.data.data === 'object' && 'D1' in response.data.data) {
+      return response.data.data;
+    }
+    
+    // Fallback: return as-is
     return response.data;
   } catch (error: any) {
+    // Handle 404 - user_id not found in database, try with birth details
+    if (error?.response?.status === 404 && userId && birthDetails) {
+      console.warn('⚠️ User ID not found in database, retrying with birth details...');
+      const retryParams = {
+        dob: birthDetails.date,
+        time: birthDetails.time,
+        lat: birthDetails.latitude,
+        lon: birthDetails.longitude,
+        ...(birthDetails.timezone && { timezone: birthDetails.timezone }),
+        _t: Date.now(),
+      };
+      try {
+        const retryResponse = await apiClient.get<any>('/kundli', { 
+          params: retryParams,
+          headers: {
+            'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0',
+          },
+        });
+        
+        // Normalize retry response (same logic as above)
+        if (retryResponse.data && typeof retryResponse.data === 'object' && 'D1' in retryResponse.data) {
+          return retryResponse.data;
+        }
+        if (retryResponse.data && retryResponse.data.success && retryResponse.data.data?.kundli) {
+          return retryResponse.data.data.kundli;
+        }
+        if (retryResponse.data && retryResponse.data.data && typeof retryResponse.data.data === 'object' && 'D1' in retryResponse.data.data) {
+          return retryResponse.data.data;
+        }
+        return retryResponse.data;
+      } catch (retryError: any) {
+        throw new Error(retryError?.message || 'Failed to fetch kundli data. Please check your birth details.');
+      }
+    }
+    
     // Handle 422 validation errors - API needs birth details
     if (error?.response?.status === 422) {
       // If we have birth details in store, try fetching them
@@ -472,13 +602,27 @@ export const getKundli = async (userId?: string, birthDetails?: BirthDetails): P
           lat: birthDetails.latitude,
           lon: birthDetails.longitude,
           ...(birthDetails.timezone && { timezone: birthDetails.timezone }),
+          _t: Date.now(),
         };
         try {
-          const retryResponse = await apiClient.get<any>('/kundli', { params: retryParams });
+          const retryResponse = await apiClient.get<any>('/kundli', { 
+            params: retryParams,
+            headers: {
+              'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+              'Pragma': 'no-cache',
+              'Expires': '0',
+            },
+          });
           
-          // Process retry response
-          if (retryResponse.data && retryResponse.data.success && retryResponse.data.data?.kundli) {
+          // Normalize retry response (same logic as above)
+          if (retryResponse.data && typeof retryResponse.data === 'object' && 'D1' in retryResponse.data) {
             return retryResponse.data;
+          }
+          if (retryResponse.data && retryResponse.data.success && retryResponse.data.data?.kundli) {
+            return retryResponse.data.data.kundli;
+          }
+          if (retryResponse.data && retryResponse.data.data && typeof retryResponse.data.data === 'object' && 'D1' in retryResponse.data.data) {
+            return retryResponse.data.data;
           }
           return retryResponse.data;
         } catch (retryError: any) {
@@ -569,13 +713,171 @@ export const getDasha = async (userId?: string): Promise<DashaData> => {
 };
 
 export const getDashaTimeline = async (userId?: string) => {
+  // DEPRECATED: Use getVimshottariDasha instead
+  // This function is kept for backward compatibility
   const response = await apiClient.get('/dasha/timeline', {
     params: userId ? { user_id: userId } : {},
   });
   return response.data;
 };
 
-// ==================== TRANSITS ====================
+export const getVimshottariDasha = async (
+  date: string,
+  time: string,
+  lat: number,
+  lon: number,
+  tz: string
+) => {
+  const response = await apiClient.get('/dasha/vimshottari', {
+    params: {
+      date,
+      time,
+      lat,
+      lon,
+      tz,
+    },
+  });
+  return response.data;
+};
+
+export const getShadbala = async (
+  date: string,
+  time: string,
+  lat: number,
+  lon: number,
+  timezone?: string
+) => {
+  // Shadbala endpoint is at /strength/shadbala (not under /api/v1)
+  const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL?.replace('/api/v1', '') || 'https://guru-api-660206747784.asia-south1.run.app';
+  const response = await axios.get(`${baseURL}/strength/shadbala`, {
+    params: {
+      dob: date,
+      time,
+      lat,
+      lon,
+      ...(timezone ? { timezone } : {}),
+    },
+    timeout: 30000,
+  });
+  return response.data;
+};
+
+export const getYogas = async (
+  date: string,
+  time: string,
+  lat: number,
+  lon: number,
+  timezone?: string
+) => {
+  // Yoga endpoint is at /strength/yogas (not under /api/v1)
+  const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL?.replace('/api/v1', '') || 'https://guru-api-660206747784.asia-south1.run.app';
+  const response = await axios.get(`${baseURL}/strength/yogas`, {
+    params: {
+      dob: date,
+      time,
+      lat,
+      lon,
+      ...(timezone ? { timezone } : {}),
+    },
+    timeout: 30000,
+  });
+  return response.data;
+};
+
+export const getYogasTimeline = async (
+  date: string,
+  time: string,
+  lat: number,
+  lon: number,
+  timezone?: string
+) => {
+  // Yoga timeline endpoint is at /strength/yogas/timeline (not under /api/v1)
+  const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL?.replace('/api/v1', '') || 'https://guru-api-660206747784.asia-south1.run.app';
+  const response = await axios.get(`${baseURL}/strength/yogas/timeline`, {
+    params: {
+      dob: date,
+      time,
+      lat,
+      lon,
+      ...(timezone ? { timezone } : {}),
+    },
+    timeout: 30000,
+  });
+  return response.data;
+};
+
+// ==================== TRANSITS / YOGA ACTIVATION ====================
+
+/** Yoga Transit Activation — backend-only. Call ONLY this for yoga activation on /transits. */
+export const getYogaActivation = async (
+  params: {
+    dob: string;
+    time: string;
+    lat: number;
+    lon: number;
+    timezone?: string;
+    mode?: 'summary' | 'forecast';
+    years?: number;
+  }
+): Promise<{ transit_activation: any[]; forecast: any[]; error: string | null }> => {
+  const response = await apiClient.get('/yoga-activation', {
+    params: {
+      dob: params.dob,
+      time: params.time,
+      lat: params.lat,
+      lon: params.lon,
+      timezone: params.timezone || 'Asia/Kolkata',
+      mode: params.mode || 'summary',
+      ...(params.mode === 'forecast' && params.years != null && { years: params.years }),
+    },
+  });
+  return response.data;
+};
+
+/** Guru Context AI prediction — POST /api/v1/predict. Returns guidance + technical breakdown. */
+export const getPredict = async (
+  birthDetails: BirthDetails,
+  timescale: 'daily' | 'monthly' | 'yearly' = 'daily',
+  seekerName?: string
+): Promise<{ message?: string; guidance?: string; structured?: Record<string, string>; context: any; technical_breakdown: any }> => {
+  const name = seekerName ?? birthDetails.name ?? 'Seeker';
+  const response = await apiClient.post('/predict', {
+    birth_details: {
+      name,
+      dob: birthDetails.date,
+      time: birthDetails.time,
+      lat: birthDetails.latitude,
+      lon: birthDetails.longitude,
+      timezone: birthDetails.timezone || 'Asia/Kolkata',
+    },
+    timescale,
+  });
+  return response.data;
+};
+
+/** Current planetary transit positions (requires birth details). Uses GET /api/v1/all. */
+export const getTransitAll = async (params: {
+  dob: string;
+  time: string;
+  lat: number;
+  lon: number;
+  timezone?: string;
+  current_date?: string;
+  current_time?: string;
+}): Promise<any> => {
+  const response = await apiClient.get('/all', {
+    params: {
+      dob: params.dob,
+      time: params.time,
+      lat: params.lat,
+      lon: params.lon,
+      timezone: params.timezone || 'Asia/Kolkata',
+      ...(params.current_date && { current_date: params.current_date }),
+      ...(params.current_time && { current_time: params.current_time }),
+    },
+  });
+  return response.data;
+};
 
 export const getTransits = async (date?: string, userId?: string) => {
   const response = await apiClient.get('/transits', {
@@ -587,13 +889,53 @@ export const getTransits = async (date?: string, userId?: string) => {
   return response.data;
 };
 
+export const getKundliTransits = async (
+  userId?: string, 
+  datetime?: string,
+  lat?: number, 
+  lon?: number, 
+  timezone?: string
+): Promise<any> => {
+  const response = await apiClient.get('/kundli/transits', {
+    params: {
+      ...(userId && { user_id: userId }),
+      ...(datetime && { datetime }),
+      ...(lat !== undefined && { lat }),
+      ...(lon !== undefined && { lon }),
+      ...(timezone && { timezone }),
+    },
+  });
+  return response.data;
+};
+
 // ==================== PANCHANG ====================
 
 export const getPanchang = async (date?: string, location?: { lat: number; lng: number }) => {
-  const response = await apiClient.get('/panchang', {
+  // DEPRECATED: Use getPanchanga instead with proper timezone support
+  // This function is kept for backward compatibility but uses the new endpoint
+  const dateStr = date || new Date().toISOString().split('T')[0];
+  const lat = location?.lat || 12.9716; // Default: Bangalore
+  const lon = location?.lng || 77.5946;
+  const tz = 'Asia/Kolkata'; // Default timezone
+  
+  const response = await apiClient.get('/panchanga', {
     params: {
-      date: date || new Date().toISOString().split('T')[0],
-      ...(location && { latitude: location.lat, longitude: location.lng }),
+      date: dateStr,
+      lat,
+      lon,
+      tz,
+    },
+  });
+  return response.data;
+};
+
+export const getPanchanga = async (date: string, lat: number, lon: number, tz: string) => {
+  const response = await apiClient.get('/panchanga', {
+    params: {
+      date,
+      lat,
+      lon,
+      tz,
     },
   });
   return response.data;
@@ -706,10 +1048,39 @@ export async function searchLocation(query: string): Promise<Array<{ label: stri
   if (!query || query.length < 3) return [];
 
   try {
-    const res = await axios.get("/api/location/search", {
-      params: { q: query },
-      timeout: 8000,
-    });
+    const makeRequest = async () =>
+      axios.get("/api/location/search", {
+        params: { q: query },
+        timeout: 15000, // 15 seconds
+      });
+
+    let res;
+    let attempt = 0;
+
+    while (true) {
+      try {
+        res = await makeRequest();
+        break;
+      } catch (error: any) {
+        const isTimeout =
+          error?.code === "ECONNABORTED" ||
+          /timeout/i.test(error?.message || "");
+        if (isTimeout && attempt === 0) {
+          attempt += 1;
+          console.warn("⚠️ Location search timeout, retrying once", {
+            query,
+          });
+          continue;
+        }
+        // Properly classify error - this is an Axios error (axios.get call)
+        const { message } = handleError(error, "searchLocation");
+        console.warn("⚠️ Location search failed, returning empty results", {
+          query,
+          message,
+        });
+        return [];
+      }
+    }
 
     // NORMALIZE HERE - Simple format for UI
     return (res.data || []).map((item: any) => ({
@@ -722,9 +1093,12 @@ export async function searchLocation(query: string): Promise<Array<{ label: stri
       state: item.state,
     }));
   } catch (error: any) {
-    // Properly classify error - this is an Axios error (axios.get call)
-    const { message } = handleError(error, "searchLocation");
-    // Silently return empty array for UX (errors already logged by interceptor/handleError)
+    // Fallback safety (should rarely be hit)
+    const { message } = handleError(error, "searchLocation.fallback");
+    console.warn("⚠️ Location search fallback error, returning empty results", {
+      query,
+      message,
+    });
     return [];
   }
 }
@@ -748,12 +1122,38 @@ export const searchLocations = async (query: string): Promise<LocationSuggestion
   try {
     // Call Next.js API route (which proxies to Guru API)
     // This enforces the architectural law: Browser → Next.js → Guru API → Nominatim
-    const response = await axios.get('/api/location/search', {
-      params: {
-        q: query,
-      },
-      timeout: 8000, // 8 seconds (Next.js route handles longer timeouts)
-    });
+    const makeRequest = async () =>
+      axios.get('/api/location/search', {
+        params: {
+          q: query,
+        },
+        timeout: 15000, // 15 seconds (Next.js route handles longer timeouts)
+      });
+
+    let response;
+    let attempt = 0;
+    while (true) {
+      try {
+        response = await makeRequest();
+        break;
+      } catch (error: any) {
+        const isTimeout =
+          error?.code === "ECONNABORTED" ||
+          /timeout/i.test(error?.message || "");
+        if (isTimeout && attempt === 0) {
+          attempt += 1;
+          console.warn("⚠️ Location search proxy timeout, retrying once", {
+            query,
+          });
+          continue;
+        }
+        console.warn('⚠️ Location search proxy failed, returning empty suggestions', {
+          query,
+          message: error?.message || 'Unknown error',
+        });
+        return [];
+      }
+    }
     
     const results = response.data || [];
     
@@ -791,10 +1191,10 @@ export const searchLocations = async (query: string): Promise<LocationSuggestion
     
     return suggestions;
   } catch (error: any) {
-    if (process.env.NODE_ENV === 'development') {
-      console.error('❌ Location search error:', error.message);
-    }
-    // Return empty array on error (silent failure for UX)
+    console.warn('⚠️ Location search unexpected error, returning empty suggestions', {
+      query,
+      message: error?.message || 'Unknown error',
+    });
     return [];
   }
 };
@@ -816,12 +1216,38 @@ export const getLocationCoordinates = async (city: string, country: string): Pro
   try {
     const searchQuery = country ? `${city}, ${country}` : city;
     // Call Next.js API route (which proxies to Guru API)
-    const response = await axios.get('/api/location/search', {
-      params: {
-        q: searchQuery,
-      },
-      timeout: 8000, // 8 seconds (Next.js route handles longer timeouts)
-    });
+    const makeRequest = async () =>
+      axios.get('/api/location/search', {
+        params: {
+          q: searchQuery,
+        },
+        timeout: 15000, // 15 seconds (Next.js route handles longer timeouts)
+      });
+
+    let response;
+    let attempt = 0;
+    while (true) {
+      try {
+        response = await makeRequest();
+        break;
+      } catch (error: any) {
+        const isTimeout =
+          error?.code === "ECONNABORTED" ||
+          /timeout/i.test(error?.message || "");
+        if (isTimeout && attempt === 0) {
+          attempt += 1;
+          console.warn("⚠️ Get coordinates timeout, retrying once", {
+            searchQuery,
+          });
+          continue;
+        }
+        console.warn('⚠️ Get coordinates failed, returning undefined', {
+          searchQuery,
+          message: error?.message || 'Unknown error',
+        });
+        return undefined;
+      }
+    }
     
     const results = response.data || [];
     if (results.length === 0) {
@@ -846,9 +1272,11 @@ export const getLocationCoordinates = async (city: string, country: string): Pro
       timezone: timezone,
     };
   } catch (error: any) {
-    if (process.env.NODE_ENV === 'development') {
-      console.error('❌ Get coordinates error:', error.message);
-    }
+    console.warn('⚠️ Get coordinates unexpected error, returning undefined', {
+      city,
+      country,
+      message: error?.message || 'Unknown error',
+    });
     return undefined;
   }
 };

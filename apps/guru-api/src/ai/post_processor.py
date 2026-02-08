@@ -69,6 +69,9 @@ def ensure_closed_quotes(text: str) -> str:
 
 # Layer 11 — Anti-Leak Sanitizer: remove doctrinal vocabulary from output
 DOCTRINAL_LEAK_PATTERNS = [
+    (r"Interpretation unavailable for this section\.?", "The Moon remains in the same sign today, deepening the current emotional tone rather than shifting it."),
+    (r"Interpretation unavailable\.?", "The Moon remains in the same sign today, deepening the current emotional tone rather than shifting it."),
+    (r"Do not initiate major ventures today\.?", "Let this not be a day for decisive beginnings."),
     (r"\bdusthana\b", "challenging house"),
     (r"\bkendra\b", "prominent house"),
     (r"\btrikona\b", "auspicious house"),

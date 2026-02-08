@@ -31,4 +31,4 @@ ENV PYTHONUNBUFFERED=1
 ENV DEPLOYMENT_ENV=production
 
 # Run the application (Cloud Run compatible - uses PORT env var)
-CMD uvicorn api.main:app --host 0.0.0.0 --port ${PORT:-8080}
+CMD uvicorn src.main:app --host 0.0.0.0 --port ${PORT:-8080}

@@ -9,7 +9,7 @@ import axios from 'axios';
 
 // CANONICAL API URL - asia-south1 region (DO NOT CHANGE)
 const DEPLOYED_API_URL = 'https://guru-api-660206747784.asia-south1.run.app';
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || `${DEPLOYED_API_URL}/api/v1`;
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || `${DEPLOYED_API_URL}/api/v1`;
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,

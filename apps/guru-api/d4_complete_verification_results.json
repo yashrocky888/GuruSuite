@@ -1,0 +1,24 @@
+{
+  "verification_date": "2024",
+  "varga": "D4",
+  "total_planets": 30,
+  "verified_planets": 30,
+  "available_planets": 30,
+  "pending_planets": 0,
+  "mismatches": 0,
+  "status": "VERIFIED",
+  "births": {
+    "Birth 1": {
+      "available": 10,
+      "pending": 0
+    },
+    "Birth 2": {
+      "available": 10,
+      "pending": 0
+    },
+    "Birth 3": {
+      "available": 10,
+      "pending": 0
+    }
+  }
+}

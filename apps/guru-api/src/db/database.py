@@ -12,10 +12,13 @@ from typing import Generator
 
 from src.config import settings
 
-# Create database engine
+# Create database engine with lazy connection
+# pool_pre_ping=False prevents connection attempts at import time
+# This allows the API to run without a database
 engine = create_engine(
     settings.database_url,
-    pool_pre_ping=True,  # Verify connections before using
+    pool_pre_ping=False,  # Disable pre-ping to allow running without DB
+    connect_args={"connect_timeout": 2},  # Fast timeout for connection attempts
     echo=settings.debug  # Log SQL queries in debug mode
 )
 

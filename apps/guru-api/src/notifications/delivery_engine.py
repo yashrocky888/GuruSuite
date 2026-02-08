@@ -132,6 +132,8 @@ def send_to_user(user: User, data: Dict, prefs: NotificationPreferences, db: Ses
     is_premium = user.subscription_level in ["premium", "lifetime"]
     
     if is_premium:
+        # HARD CUTOVER: Daily predictions MUST come from POST /api/v1/predict only.
+        raise RuntimeError("DEPRECATED: Use /api/v1/predict ONLY")
         # Get full AI prediction
         try:
             ai_prediction = interpret_daily(data, use_local=False)

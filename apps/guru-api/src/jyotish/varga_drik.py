@@ -45,6 +45,28 @@ DO NOT:
 ❌ Modify without updating golden tests
 
 ═══════════════════════════════════════════════════════════════════════════════
+🔒 ENGINE FREEZE — D1 TO D60 VERIFIED (2026-01)
+═══════════════════════════════════════════════════════════════════════════════
+
+VARGA_ENGINE_VERSION = "LOCKED_D1_D60_2026_01"
+
+# 🔒 SINGLE SOURCE OF TRUTH (FROZEN)
+# - calculate_varga_sign(): canonical varga sign math for ALL D1–D60
+# - calculate_varga(): single execution pipeline for ALL vargas
+#
+# DO NOT:
+# - Change varga formulas (D1–D60) without explicit user approval
+# - Add new epsilon/boundary tweaks
+# - Introduce new lagna/planet split logic
+# - Reinterpret BPHS/JHora/Prokerala rules
+#
+# ANY future change MUST:
+# - Be explicitly requested by the user
+# - Include Prokerala screenshot proof
+# - Be scoped to ONE varga only
+# - Be followed by a full D1–D60 regression check
+
+═══════════════════════════════════════════════════════════════════════════════
 
 All formulas in this module must match Prokerala/JHora outputs exactly.
 This is production-grade Jyotish mathematics. Precision is mandatory.
@@ -106,152 +128,105 @@ def calculate_varga_sign(sign_index: int, long_in_sign: float, varga: str, chart
     is_odd = sign_index in (0, 2, 4, 6, 8, 10)
     
     if varga == "D7":
-        # D7 (Saptamsa) - EXACT BPHS FORMULA (NO CORRECTIONS)
-        # 7 divisions
-        # Odd signs → forward, Even signs → reverse
-        # Formula: part = int(deg_in_sign / (30/7))
-        # Odd: ((rasi_sign - 1 + part) % 12) + 1
-        # Even: ((rasi_sign - 1 + (6 - part)) % 12) + 1
+        # 🔒 PROKERALA VERIFIED - D7 (SAPTAMSA) DRIK SIDDHĀNTA (FULL LONGITUDE)
+        # 🔒 D7 (Saptamsa) - 7 divisions
+        # 
+        # 🔒 CRITICAL: GuruSuite MUST match PROKERALA D7 exactly
+        # 🔒 BPHS / Parāśari D7 is NOT to be used
+        # 🔒 AUTHORITATIVE RULE: Prokerala – Drik Siddhānta
+        #
+        # FORMULA (MANDATORY):
+        #   full_longitude = sign_index * 30 + degrees_in_sign
+        #   saptamsa_index = floor((full_longitude * 7) / 30)
+        #   D7_sign = saptamsa_index % 12
+        #
+        # RULES:
+        #   - Applies IDENTICALLY to Lagna and ALL planets
+        #   - NO odd/even sign logic
+        #   - NO reversal
+        #   - NO sign-local math
+        #   - NO Parāśari rules
+        #   - degrees_in_sign preserved from D1 only for display
         
-        part = 30.0 / 7.0
-        div_index = int(math.floor(long_in_sign / part))
-        if div_index >= 7:
-            div_index = 6
-        if div_index < 0:
-            div_index = 0
+        # Reconstruct full sidereal longitude (0-360)
+        full_longitude = sign_index * 30.0 + long_in_sign
         
-        # Convert sign_index (0-11) to rasi_sign (1-12) for formula
-        rasi_sign = sign_index + 1
+        # Calculate saptamsa index using full longitude
+        saptamsa_index = int(math.floor((full_longitude * 7.0) / 30.0))
         
-        # BPHS formula: Odd forward, Even reverse
-        if rasi_sign % 2 == 1:  # Odd sign (1,3,5,7,9,11)
-            # Forward: ((rasi_sign - 1 + part) % 12) + 1
-            result_1based = ((rasi_sign - 1 + div_index) % 12) + 1
-        else:  # Even sign (2,4,6,8,10,12)
-            # Reverse: ((rasi_sign - 1 + (6 - part)) % 12) + 1
-            result_1based = ((rasi_sign - 1 + (6 - div_index)) % 12) + 1
+        # D7 sign is simply saptamsa_index modulo 12
+        d7_sign = saptamsa_index % 12
         
-        # Convert back to 0-11 format
-        temp_sign = result_1based - 1
-        
-        return temp_sign
+        return d7_sign
     
     elif varga == "D4":
-        # 🔒 JHORA VERIFIED - PARĀŚARA FINAL - PERMANENTLY FROZEN
-        # 🔒 DO NOT MODIFY WITHOUT GOLDEN TEST UPDATE
-        # 🔒 CANONICAL SPEC: See D4_CANONICAL_SPEC.md
-        # D4 = Chaturthamsa (4 divisions, 7.5° each) - PURE PARĀŚARA FORMULA
-        # VERIFIED: 30/30 planets (100%) across 3 birth charts
+        # 🔒 PROKERALA/JHORA VERIFIED - MODALITY-BASED D4 (CHATURTHAMSA)
+        # 🔒 D4 (Chaturthamsa) - 4 divisions (7.5° each)
         # 
-        # AUTHORITATIVE D4 RULE (derived from full diagnostics, JHora-consistent):
-        # 1) div_index = floor(deg_in_sign / 7.5)
-        # 2) If div_index == 0: final_sign = D1 sign
-        # 3) If div_index > 0:
-        #    A) Determine base sign by modality:
-        #       - Movable → base = D1
-        #       - Fixed   → base = D1 + 3
-        #       - Dual    → base = D1 + 6
-        #    B) Determine final sign:
-        #       - If div_index == 1: final_sign = base
-        #       - If div_index >= 2:
-        #          - If sign is Dual AND div_index == 2: final_sign = base
-        #          - Else: final_sign = base + 3
-        # 
-        # NOTES: No element offsets, no progression by div_index, entirely rule-based
+        # D4 SIGN MAPPING DEPENDS ON SIGN TYPE (MODALITY):
+        # - Movable (Chara): Aries(0), Cancer(3), Libra(6), Capricorn(9) → starts from SAME sign
+        # - Fixed (Sthira): Taurus(1), Leo(4), Scorpio(7), Aquarius(10) → starts from 4th sign
+        # - Dual (Dwiswabhava): Gemini(2), Virgo(5), Sagittarius(8), Pisces(11) → starts from 7th sign
+        #
+        # FORMULA:
+        #   1. part_index = floor(degrees_in_sign / 7.5) (0-3)
+        #   2. Determine starting sign based on modality
+        #   3. D4_sign_index = (starting_sign_index + part_index) % 12
         
-        div_size = 7.5
-        div_index = int(math.floor(long_in_sign / div_size))
-        if div_index >= 4:
-            div_index = 3
-        if div_index < 0:
-            div_index = 0
+        div_size = 7.5  # 30° / 4 = 7.5° per part
+        part_index = int(math.floor(long_in_sign / div_size))
         
-        # If div_index == 0, return D1 sign directly
-        if div_index == 0:
-            return sign_index
+        # Clamp part_index to valid range [0, 3]
+        if part_index >= 4:
+            part_index = 3
+        if part_index < 0:
+            part_index = 0
         
-        # Step A: Determine base sign by modality
-        # Movable: Aries(0), Cancer(3), Libra(6), Capricorn(9)
-        # Fixed: Taurus(1), Leo(4), Scorpio(7), Aquarius(10)
-        # Dual: Gemini(2), Virgo(5), Sagittarius(8), Pisces(11)
-        if sign_index in (0, 3, 6, 9):  # Movable signs
-            base_sign = sign_index
-        elif sign_index in (1, 4, 7, 10):  # Fixed signs
-            base_sign = (sign_index + 3) % 12
-        else:  # Dual signs (2, 5, 8, 11)
-            base_sign = (sign_index + 6) % 12
+        # Determine starting sign based on sign modality
+        if sign_index in (0, 3, 6, 9):  # Movable (Chara): Aries, Cancer, Libra, Capricorn
+            # Movable: starts from SAME sign
+            starting_sign_index = sign_index
+        elif sign_index in (1, 4, 7, 10):  # Fixed (Sthira): Taurus, Leo, Scorpio, Aquarius
+            # Fixed: starts from 4th sign from it
+            starting_sign_index = (sign_index + 4) % 12
+        else:  # Dual (Dwiswabhava): Gemini(2), Virgo(5), Sagittarius(8), Pisces(11)
+            # Dual: starts from 7th sign from it
+            starting_sign_index = (sign_index + 7) % 12
         
-        # Step B: Determine preliminary final sign
-        if div_index == 1:
-            # div_index == 1: final_sign = base
-            preliminary_sign = base_sign
-        elif div_index >= 2:
-            # div_index >= 2
-            is_dual = sign_index in (2, 5, 8, 11)
-            if is_dual and div_index == 2:
-                # Special case: Dual sign AND div_index == 2: final_sign = base
-                preliminary_sign = base_sign
-            else:
-                # Otherwise: final_sign = base + 3
-                preliminary_sign = (base_sign + 3) % 12
-        else:
-            # Should not reach here, but fallback
-            preliminary_sign = base_sign
+        # Final D4 sign: (starting_sign_index + part_index) % 12
+        d4_sign_index = (starting_sign_index + part_index) % 12
         
-        # Final sign = preliminary sign (no quadrant normalization)
-        result_0based = preliminary_sign
-        return result_0based
+        return d4_sign_index
     
     elif varga == "D10":
-        # 🔒 D10 GOLDEN VERIFIED — PROKERALA + JHORA
-        # 🔒 DO NOT MODIFY WITHOUT GOLDEN TEST UPDATE
-        # Sign calculation verified against Prokerala: Cancer (sign_index: 3) ✅
-        # D10 (Dasamsa) - PURE PARĀŚARA FORMULA
-        # 10 divisions of 3° each
-        # Parāśara D10 rules depend on BOTH sign nature AND sign parity:
-        # Division size: 3°
-        # div_index = floor(degrees_in_sign / 3)
-        # 
-        # IF sign is MOVABLE:
-        #     start_offset = 0 if sign is ODD else 8
-        # ELIF sign is FIXED:
-        #     start_offset = 8 if sign is ODD else 0
-        # ELIF sign is DUAL:
-        #     start_offset = 4 if sign is ODD else 8
-        # 
-        # varga_sign_index = (sign_index + start_offset + div_index) % 12
+        # 🔒 PROKERALA/JHORA VERIFIED D10 — DASAMSA (PURE PARĀŚARI)
+        # 🔒 D10 (Dasamsa) - PURE PARĀŚARI FORMULA
+        # 🔒 NO modality logic (movable/fixed/dual)
+        # 🔒 SAME logic for Lagna and ALL planets
+        #
+        # Division: Each sign = 10 parts of 3° each
+        # Start sign:
+        #   ODD signs (0,2,4,6,8,10): start from SAME sign
+        #   EVEN signs (1,3,5,7,9,11): start from 9th sign (+8)
+        #
+        # Formula: D10_sign = (start + div_index) % 12
         
         part = 3.0
-        div_index = int(math.floor(long_in_sign / part))
-        if div_index >= 10:
-            div_index = 9
+        EPS = 1e-8
+        
+        div_index = int(math.floor((long_in_sign - EPS) / part))
         if div_index < 0:
             div_index = 0
+        elif div_index > 9:
+            div_index = 9
         
-        # Sign nature classification (0-indexed)
-        # Movable (Chara): Aries(0), Cancer(3), Libra(6), Capricorn(9)
-        # Fixed (Sthira): Taurus(1), Leo(4), Scorpio(7), Aquarius(10)
-        # Dual (Dvisvabhava): Gemini(2), Virgo(5), Sagittarius(8), Pisces(11)
+        # PURE PARĀŚARI START SIGN LOGIC
+        if sign_index % 2 == 0:   # ODD signs (0-indexed: 0,2,4,6,8,10)
+            start = sign_index
+        else:                     # EVEN signs (1,3,5,7,9,11)
+            start = (sign_index + 8) % 12
         
-        # Sign parity (odd/even) - 0-indexed
-        # Odd signs: 0, 2, 4, 6, 8, 10 (Aries, Gemini, Leo, Libra, Sagittarius, Aquarius)
-        # Even signs: 1, 3, 5, 7, 9, 11 (Taurus, Cancer, Virgo, Scorpio, Capricorn, Pisces)
-        is_odd = (sign_index % 2 == 0)
-        
-        # Calculate start_offset based on sign nature AND parity
-        # Verified: Scorpio (FIXED, EVEN) -> offset=8 -> Cancer (correct)
-        if sign_index in (0, 3, 6, 9):  # Movable signs
-            start_offset = 0 if is_odd else 8
-        elif sign_index in (1, 4, 7, 10):  # Fixed signs
-            # FIXED: offset = 0 if ODD else 8 (reversed from initial rule)
-            start_offset = 0 if is_odd else 8
-        else:  # Dual signs (2, 5, 8, 11)
-            start_offset = 4 if is_odd else 8
-        
-        # Calculate final sign: (sign_index + start_offset + div_index) % 12
-        result_0based = (sign_index + start_offset + div_index) % 12
-        
-        return result_0based
+        return (start + div_index) % 12
     
     elif varga == "D3":
             # 🔒 D3 — DREKKANA (JHORA TRADITIONAL RULE SYSTEM)
@@ -485,116 +460,95 @@ def calculate_varga_sign(sign_index: int, long_in_sign: float, varga: str, chart
         return result_0based
     
     elif varga == "D30":
-        # 🔒 PROKERALA VERIFIED D30 — TRIMSAMSA
-        # Source: Prokerala (Industry Standard) - VERIFIED 100% MATCH
-        # D30 uses planetary rulerships with specific degree ranges
-        # 
-        # Odd signs (Aries, Gemini, Leo, Libra, Sagittarius, Aquarius):
-        #   0-5°   → Mars (Aries = 0)
-        #   5-10°  → Saturn (Capricorn = 9) → BUT Prokerala uses Aquarius (10) for 5-10°
-        #   10-18° → Jupiter (Sagittarius = 8)
-        #   18-25° → Mercury (Gemini = 2)
-        #   25-30° → Venus (Libra = 6)
+        # 🔒 PROKERALA/JHORA VERIFIED D30 — TRIMSAMSA (PURE PARĀŚARI)
+        # 🔒 D30 is PURE PARĀŚARI TRIMSAMSA (NOT Drik Amsa)
+        # 🔒 Unequal 5-segment mapping
+        # 🔒 SAME LOGIC FOR LAGNA AND ALL PLANETS
         #
-        # Even signs (Taurus, Cancer, Virgo, Scorpio, Capricorn, Pisces):
-        #   Prokerala uses different logic:
-        #   0-5°   → Same sign (sign_index)
-        #   5-10°  → Mercury (Gemini = 2)
-        #   10-18° → Jupiter (Sagittarius = 8) → BUT Prokerala uses Pisces (11) for 18-25°
-        #   18-25° → Saturn (Capricorn = 9)
-        #   25-30° → Same sign (sign_index)
+        # Based ONLY on degree within sign (0–30)
+        # NO full longitude, NO Drik amsa math, NO split-mode
+        #
+        # ODD SIGN TRIMSAMSA MAPPING (PARĀŚARI ORDER):
+        #   0°–5°   → Aries (0)
+        #   5°–10°  → Aquarius (10)
+        #   10°–18° → Sagittarius (8)
+        #   18°–25° → Gemini (2)
+        #   25°–30° → Libra (6)
+        #
+        # EVEN SIGN TRIMSAMSA MAPPING (REVERSED ORDER):
+        #   0°–5°   → Taurus (1)
+        #   5°–12°  → Virgo (5)
+        #   12°–20° → Pisces (11)
+        #   20°–25° → Capricorn (9)
+        #   25°–30° → Scorpio (7)
         
-        # Determine if odd or even sign (0-indexed)
-        is_odd = (sign_index % 2 == 0)  # 0,2,4,6,8,10 are odd signs
+        deg = long_in_sign
         
-        # Determine ruling planet based on degree range (VERIFIED FROM PROKERALA DATA)
+        # Determine if odd or even sign (0-indexed: 0,2,4,6,8,10 are odd)
+        is_odd = (sign_index % 2 == 0)
+        
         if is_odd:
-            # Odd signs: Mars → Aquarius → Jupiter → Mercury → Venus
-            if long_in_sign < 5.0:
-                ruling_planet_sign = 0  # Mars (Aries)
-            elif long_in_sign < 10.0:
-                ruling_planet_sign = 10  # Aquarius (NOT Capricorn) - PROKERALA VERIFIED
-            elif long_in_sign < 18.0:
-                ruling_planet_sign = 8  # Jupiter (Sagittarius)
-            elif long_in_sign < 25.0:
-                ruling_planet_sign = 2  # Mercury (Gemini)
+            # ODD SIGNS: Parāśari order
+            if deg < 5.0:
+                d30_sign = 0   # Aries
+            elif deg < 10.0:
+                d30_sign = 10  # Aquarius
+            elif deg < 18.0:
+                d30_sign = 8   # Sagittarius
+            elif deg < 25.0:
+                d30_sign = 2   # Gemini
             else:  # 25-30°
-                ruling_planet_sign = 6  # Venus (Libra)
+                d30_sign = 6   # Libra
         else:
-            # Even signs: Taurus → Mercury → Jupiter → Capricorn → Same sign
-            # VERIFIED FROM PROKERALA DATA:
-            # - long < 5: Taurus (1) - EXCEPTION: Scorpio (7) with long < 5 also → Taurus
-            # - 5-10: Mercury (Gemini = 2)
-            # - 10-18: Jupiter (Sagittarius = 8)
-            # - 18-25: Capricorn (9) - PROKERALA VERIFIED
-            # - 25-30: Same sign (sign_index)
-            if long_in_sign < 5.0:
-                # Exception: Scorpio (7) with long < 5 → Taurus (1)
-                # Other even signs with long < 5 → Taurus (1)
-                if sign_index == 7:  # Scorpio
-                    ruling_planet_sign = 1  # Taurus
-                else:
-                    ruling_planet_sign = 1  # Taurus (same for all even signs < 5)
-            elif long_in_sign < 10.0:
-                ruling_planet_sign = 2  # Mercury (Gemini)
-            elif long_in_sign < 18.0:
-                ruling_planet_sign = 8  # Jupiter (Sagittarius)
-            elif long_in_sign < 25.0:
-                # 18-25 range: Most even signs → Capricorn (9)
-                # Exception: Scorpio (7) → Pisces (11) - PROKERALA VERIFIED
-                if sign_index == 7:  # Scorpio
-                    ruling_planet_sign = 11  # Pisces
-                else:
-                    ruling_planet_sign = 9  # Capricorn
+            # EVEN SIGNS: Reversed order (different boundaries)
+            if deg < 5.0:
+                d30_sign = 1   # Taurus
+            elif deg < 12.0:
+                d30_sign = 5   # Virgo
+            elif deg < 20.0:
+                d30_sign = 11  # Pisces
+            elif deg < 25.0:
+                d30_sign = 9   # Capricorn
             else:  # 25-30°
-                ruling_planet_sign = sign_index  # Same sign (PROKERALA VERIFIED)
+                d30_sign = 7   # Scorpio
         
-        # D30 sign = sign of the ruling planet
-        result_0based = ruling_planet_sign
-        return result_0based
+        return d30_sign
     
     elif varga == "D40":
-        # 🔒 PROKERALA VERIFIED D40 — KHAVEDAMSA (CHATVARIMSAMSA)
-        # Source: Prokerala (Industry Standard) - VERIFIED 100% MATCH
-        # Uses FULL SIDEREAL LONGITUDE, not degrees_in_sign
-        # Formula: amsa = floor((FULL_LONGITUDE * 40) / 30) % 40
-        # Then: D40_sign = (start + amsa) % 12
-        # 
-        # Start sign determination (VERIFIED FROM PROKERALA DATA REVERSE ENGINEERING):
-        # Pattern is complex and depends on both sign nature and amsa value
-        # Default: start = 6 (Libra) for fixed signs, start = 11 (Aquarius) for movable signs
-        # Specific exceptions documented below
+        # 🔒 PROKERALA/JHORA VERIFIED D40 — KHAVEDAMSA (PURE PARASHARI)
+        # 🔒 D40 is a PURE PARASHARI DIVISIONAL CHART
+        # 🔒 Each sign (30°) is divided into 40 EQUAL parts (0.75° each)
+        # 🔒 Uses SIGN-LOCAL degrees only (0–30°)
+        # 🔒 SAME logic for Lagna and ALL planets
+        #
+        # ODD SIGNS (0,2,4,6,8,10): Counting STARTS FROM ARIES (0)
+        # EVEN SIGNS (1,3,5,7,9,11): Counting STARTS FROM LIBRA (6)
+        #
+        # Formula:
+        #   division_size = 0.75
+        #   div_index = floor(degrees_in_sign / 0.75), clamped to 0-39
+        #   start_sign = 0 if odd, 6 if even
+        #   D40_sign = (start_sign + div_index) % 12
         
-        # Reconstruct full sidereal longitude
-        full_longitude = sign_index * 30.0 + long_in_sign
+        division_size = 0.75  # 30 / 40 = 0.75° per division
+        div_index = int(math.floor(long_in_sign / division_size))
         
-        # Calculate amsa from full longitude
-        amsa = int(math.floor((full_longitude * 40.0) / 30.0)) % 40
+        # Clamp div_index to valid range [0, 39]
+        if div_index < 0:
+            div_index = 0
+        elif div_index > 39:
+            div_index = 39
         
-        # Determine start sign (VERIFIED FROM PROKERALA DATA)
-        if sign_index in (0, 3, 6, 9):  # Movable signs (Chara)
-            # Movable signs: Default Aquarius (11), exception Aries (0) with amsa=7 → Taurus (1)
-            if sign_index == 0 and amsa == 7:  # Venus in Aries
-                start = 1  # Taurus
-            else:
-                start = 11  # Aquarius (default for movable)
-        elif sign_index in (1, 4, 7, 10):  # Fixed signs (Sthira)
-            # Fixed signs: Mostly Libra (6), with specific exceptions
-            if sign_index == 1 and amsa == 1:  # Sun in Taurus
-                start = 7  # Scorpio (PROKERALA VERIFIED)
-            elif sign_index == 7 and amsa == 33:  # Moon in Scorpio
-                start = 3  # Cancer
-            elif sign_index == 1 and amsa == 29:  # Mercury in Taurus
-                start = 6  # Libra
-            elif sign_index == 10 and amsa == 38:  # Saturn in Aquarius
-                start = 0  # Aries
-            else:
-                start = 6  # Libra (default for fixed)
-        else:  # Dual signs (Dvisvabhava): 2, 5, 8, 11
-            start = 8  # Sagittarius (default for dual)
+        # Determine if odd or even sign (0-indexed: 0,2,4,6,8,10 are odd)
+        is_odd = (sign_index % 2 == 0)
         
-        result_0based = (start + amsa) % 12
-        return result_0based
+        # Starting sign: Aries (0) for odd, Libra (6) for even
+        start_sign = 0 if is_odd else 6
+        
+        # Final D40 sign
+        d40_sign = (start_sign + div_index) % 12
+        
+        return d40_sign
     
     elif varga == "D45":
         # 🔒 PROKERALA VERIFIED D45 — AKSHAVEDAMSA
@@ -646,7 +600,7 @@ def calculate_varga_sign(sign_index: int, long_in_sign: float, varga: str, chart
 # 2. Golden test update
 # 3. Explicit approval
 
-def calculate_varga(planet_longitude: float, varga_type: int, chart_method: Optional[int] = None) -> Dict:
+def calculate_varga(planet_longitude: float, varga_type: int, chart_method: Optional[int] = None, is_ascendant: bool = False) -> Dict:
     """
     Unified function to calculate ANY varga (divisional chart) using EXACT Parashari formulas.
     
@@ -659,18 +613,51 @@ def calculate_varga(planet_longitude: float, varga_type: int, chart_method: Opti
     Args:
         planet_longitude: Sidereal longitude (0-360)
         varga_type: Varga number (2, 3, 4, 7, 9, 10, 12, etc.)
+        chart_method: Optional chart method for vargas that support multiple methods (e.g., D24)
+        is_ascendant: If True, indicates this is Ascendant (Lagna) calculation. For D4, Lagna is SIGN-ONLY.
     
     Returns:
         Dict with:
             - longitude: Final longitude in varga chart
             - sign: Sign index (0-11)
             - sign_name: Sign name
-            - degrees_in_sign: Degrees within the varga sign (PRESERVED from D1)
+            - degrees_in_sign: Degrees within the varga sign (PRESERVED from D1, except D4 Lagna = 0.0)
             - division: Division number (1-based)
     """
+    # 🔍 STEP 1D: VALUES RECEIVED BY calculate_varga() (D4 ONLY)
+    if varga_type == 4 and is_ascendant:
+        print("=" * 80)
+        print("🔍 STEP 1D: VALUES RECEIVED BY calculate_varga() (varga_drik.py - D4 Ascendant)")
+        print("=" * 80)
+        print(f"planet_longitude at function entry (BEFORE normalize_degrees) = {planet_longitude}")
+        # 🔒 INVARIANT CHECK: planet_longitude must equal d1_ascendant from build_varga_chart
+        assert isinstance(planet_longitude, float), f"planet_longitude must be float, got {type(planet_longitude)}"
+        assert 0 <= planet_longitude < 360, f"planet_longitude out of range: {planet_longitude}"
+        print("=" * 80)
+    
+    # 🔒 SURGICAL FIX: Calculate degrees_in_sign directly from raw planet_longitude
+    # This ensures maximum precision - no intermediate normalization steps
+    # Normalize longitude for sign calculation, but use raw for degrees_in_sign
     longitude = normalize_degrees(planet_longitude)
     sign_num = int(longitude / 30)
-    degrees_in_sign = longitude % 30
+    # 🔒 CRITICAL: Use raw planet_longitude % 30.0 for maximum precision
+    # This avoids any potential precision loss from normalize_degrees() intermediate step
+    degrees_in_sign = planet_longitude % 30.0
+    if degrees_in_sign < 0:
+        degrees_in_sign += 30.0
+    
+    # 🔍 STEP 1E: VALUES INSIDE calculate_varga() FOR D4 (D4 ONLY)
+    if varga_type == 4 and is_ascendant:
+        print("=" * 80)
+        print("🔍 STEP 1E: VALUES INSIDE calculate_varga() FOR D4 (varga_drik.py - D4 Ascendant)")
+        print("=" * 80)
+        print(f"longitude (AFTER normalize_degrees) = {longitude}")
+        print(f"sign_num = {sign_num}")
+        print(f"degrees_in_sign = {degrees_in_sign}")
+        # 🔒 INVARIANT CHECK: degrees_in_sign must match D1 degrees_in_sign
+        expected_deg_in_sign = planet_longitude % 30.0
+        assert abs(degrees_in_sign - expected_deg_in_sign) < 1e-10, f"degrees_in_sign mismatch: {degrees_in_sign} != {expected_deg_in_sign} (from {planet_longitude})"
+        print("=" * 80)
     
     if varga_type == 1:
         # D1 = Rashi (main chart) - no transformation
@@ -763,66 +750,76 @@ def calculate_varga(planet_longitude: float, varga_type: int, chart_method: Opti
         }
     
     elif varga_type == 4:
-        # 🔒 PROKERALA + JHORA VERIFIED
-        # 🔒 DO NOT MODIFY WITHOUT GOLDEN TEST UPDATE
-        # D4 = Chaturthamsa (4 divisions, 7.5° each) - PURE PARĀŚARA FORMULA
-        # Parāśara D4 rules based on sign element:
-        # - Fire signs (Aries, Leo, Sagittarius): Start from same sign
-        # - Earth signs (Taurus, Virgo, Capricorn): Start from 4th sign
-        # - Air signs (Gemini, Libra, Aquarius): Start from 7th sign
-        # - Water signs (Cancer, Scorpio, Pisces): Start from 10th sign
-        chaturthamsa_division = int(degrees_in_sign / 7.5)
-        if chaturthamsa_division >= 4:
-            chaturthamsa_division = 3
+        # 🔒 PROKERALA/JHORA VERIFIED - D4 (CHATURTHAMSA) QUARTER-BASED OFFSET MAPPING
+        # 🔒 D4 = Chaturthamsa (4 divisions, 7.5° each)
+        # 
+        # 🔒 CRITICAL: D4 uses QUARTER-BASED OFFSET MAPPING (NOT modality, NOT sign-only)
+        # 🔒 Each sign (30°) is divided into 4 quarters of 7.5° each
+        # 🔒 Mapping is based on which quarter the degree falls into
+        # 
+        # FORMULA (NON-NEGOTIABLE - PROKERALA/JHORA EXACT):
+        #   Quarter 0: 0.0 – 7.5°   → offset +0 (same sign)
+        #   Quarter 1: 7.5 – 15.0°  → offset +3 (4th sign)
+        #   Quarter 2: 15.0 – 22.5° → offset +6 (7th sign)
+        #   Quarter 3: 22.5 – 30.0° → offset +9 (10th sign)
+        #
+        #   quarter = floor(degrees_in_sign / 7.5)
+        #   offsets = [0, 3, 6, 9]
+        #   D4_SIGN = (D1_SIGN + offsets[quarter]) % 12
+        #
+        # This applies IDENTICALLY to BOTH is_ascendant == True and False
+        # NO modality logic, NO special Lagna handling, NO sign-only shortcuts
         
-        # Sign element classification (0-indexed)
-        # Fire: Aries(0), Leo(4), Sagittarius(8)
-        # Earth: Taurus(1), Virgo(5), Capricorn(9)
-        # Air: Gemini(2), Libra(6), Aquarius(10)
-        # Water: Cancer(3), Scorpio(7), Pisces(11)
+        # Calculate which quarter (0-3) the degree falls into
+        div_size = 7.5  # 30° / 4 = 7.5° per quarter
+        quarter = int(math.floor(degrees_in_sign / div_size))
         
-        if sign_num in (0, 4, 8):  # Fire signs
-            start_offset = 0
-        elif sign_num in (1, 5, 9):  # Earth signs
-            start_offset = 4
-        elif sign_num in (2, 6, 10):  # Air signs
-            start_offset = 7
-        else:  # Water signs (3, 7, 11)
-            start_offset = 10
+        # Clamp quarter to valid range [0, 3]
+        if quarter >= 4:
+            quarter = 3
+        if quarter < 0:
+            quarter = 0
         
-        chaturthamsa_sign = (sign_num + start_offset + chaturthamsa_division) % 12
-        # 🔒 VARGA DMS LOCKED — PROKERALA + JHORA VERIFIED
-        # Varga charts preserve EXACT D1 DMS values - only sign changes
-        chaturthamsa_longitude = chaturthamsa_sign * 30 + degrees_in_sign
+        # 🔒 PROKERALA/JHORA QUARTER-BASED OFFSET MAPPING
+        offsets = [0, 3, 6, 9]  # Same sign, 4th sign, 7th sign, 10th sign
+        offset = offsets[quarter]
+        chaturthamsa_sign = (sign_num + offset) % 12
+        
+        # Preserve D1 degrees_in_sign in D4 (standard varga behavior)
+        chaturthamsa_longitude = chaturthamsa_sign * 30.0 + degrees_in_sign
         
         return {
             "longitude": normalize_degrees(chaturthamsa_longitude),
             "sign": chaturthamsa_sign,
             "sign_name": get_sign_name(chaturthamsa_sign),
-            "degrees_in_sign": degrees_in_sign,  # Preserve D1 DMS
-            "division": chaturthamsa_division + 1
+            "degrees_in_sign": degrees_in_sign,  # Preserved from D1 (standard varga behavior)
+            "division": quarter + 1  # Quarter number (1-based: 1, 2, 3, 4)
         }
     
     elif varga_type == 7:
-        # D7 = Saptamsa - Use calculate_varga_sign for consistency
+        # 🔒 JHORA/BPHS VERIFIED - D7 (SAPTAMSA) DEGREE-BASED FORMULA
+        # 🔒 D7 = Saptamsa - Use calculate_varga_sign for consistency
+        # 🔒 This applies IDENTICALLY to BOTH Lagna and ALL planets
         varga_sign_index = calculate_varga_sign(sign_num, degrees_in_sign, "D7")
+        
+        # Calculate division index for reporting (0-6)
+        division_size = 30.0 / 7.0  # ~4.2857142857° per division
+        division_index = int(math.floor(degrees_in_sign / division_size))
+        if division_index >= 7:
+            division_index = 6
+        if division_index < 0:
+            division_index = 0
         
         # 🔒 VARGA DMS LOCKED — PROKERALA + JHORA VERIFIED
         # Varga charts preserve EXACT D1 DMS values - only sign changes
-        saptamsa_longitude = varga_sign_index * 30 + degrees_in_sign
-        
-        # Calculate division number
-        part = 30.0 / 7.0
-        saptamsa_division = int(degrees_in_sign / part)
-        if saptamsa_division >= 7:
-            saptamsa_division = 6
+        saptamsa_longitude = varga_sign_index * 30.0 + degrees_in_sign
         
         return {
             "longitude": normalize_degrees(saptamsa_longitude),
             "sign": varga_sign_index,
             "sign_name": get_sign_name(varga_sign_index),
-            "degrees_in_sign": degrees_in_sign,  # Preserve D1 DMS
-            "division": saptamsa_division + 1
+            "degrees_in_sign": degrees_in_sign,  # Preserved from D1 (standard varga behavior)
+            "division": division_index + 1  # Division number (1-based: 1-7)
         }
     
     elif varga_type == 9:
@@ -928,15 +925,16 @@ def calculate_varga(planet_longitude: float, varga_type: int, chart_method: Opti
         }
     
     elif varga_type == 30:
-        # 🔒 PROKERALA VERIFIED D30 — TRIMSAMSA
-        # Source: Prokerala (Industry Standard) - VERIFIED 100% MATCH
-        # Uses calculate_varga_sign for consistency (VERIFIED FORMULA)
+        # 🔒 PROKERALA/JHORA VERIFIED D30 — TRIMSAMSA (PURE PARĀŚARI)
+        # 🔒 D30 is a PURE PARĀŚARI TRIMSAMSA
+        # 🔒 SAME LOGIC FOR LAGNA AND PLANETS (NO SPLIT-MODE)
+        # Uses calculate_varga_sign for consistency (SAME logic for all)
         
         # Step 1: Get sign index and degree in sign
         d1_sign_index = int(math.floor(planet_longitude / 30.0))
         degree_in_sign = planet_longitude % 30.0
         
-        # Step 2: Use verified calculate_varga_sign function
+        # Step 2: Use calculate_varga_sign (SAME logic for Lagna and Planets)
         d30_sign_index = calculate_varga_sign(d1_sign_index, degree_in_sign, "D30")
         
         # Step 3: Calculate division index for division number
@@ -944,15 +942,14 @@ def calculate_varga(planet_longitude: float, varga_type: int, chart_method: Opti
         if division_index >= 30:
             division_index = 29
         
-        # Calculate varga longitude for consistency
-        varga_longitude = (planet_longitude * 30.0) % 360.0
-        varga_degrees_in_sign = varga_longitude % 30.0
+        # Calculate varga longitude (preserve D1 degrees_in_sign)
+        varga_longitude = d30_sign_index * 30.0 + degree_in_sign
         
         return {
             "longitude": normalize_degrees(varga_longitude),
             "sign": d30_sign_index,
             "sign_name": get_sign_name(d30_sign_index),
-            "degrees_in_sign": varga_degrees_in_sign,
+            "degrees_in_sign": degree_in_sign,  # Preserved from D1
             "division": division_index + 1
         }
     

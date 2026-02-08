@@ -11,6 +11,7 @@ import { NextResponse } from "next/server";
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const q = searchParams.get("q");
+  const startedAt = Date.now();
 
   if (!q || q.length < 3) {
     // MANDATORY: Always return JSON array, never empty object
@@ -18,10 +19,13 @@ export async function GET(req: Request) {
   }
 
   try {
-    const guruApiUrl = process.env.NEXT_PUBLIC_GURU_API_URL || 
+    const guruApiUrl = process.env.NEXT_PUBLIC_API_BASE_URL?.replace('/api/v1', '') || 
+                      process.env.NEXT_PUBLIC_GURU_API_URL || 
                       process.env.NEXT_PUBLIC_API_URL || 
                       'https://guru-api-660206747784.asia-south1.run.app';
     
+    const provider = "guru-api:/api/v1/location/search";
+
     const response = await fetch(
       `${guruApiUrl}/api/v1/location/search?q=${encodeURIComponent(q)}`,
       {
@@ -36,7 +40,14 @@ export async function GET(req: Request) {
     if (!response.ok) {
       // MANDATORY: Always return JSON array on error (empty array for UX)
       // Log error but don't expose it to user
-      console.error(`❌ Location search API error: ${response.status} ${response.statusText}`);
+      const durationMs = Date.now() - startedAt;
+      console.warn("⚠️ Location search API non-OK response", {
+        provider,
+        query: q,
+        status: response.status,
+        statusText: response.statusText,
+        durationMs,
+      });
       return NextResponse.json([], { status: 200 });
     }
 
@@ -60,10 +71,21 @@ export async function GET(req: Request) {
   } catch (error: any) {
     // MANDATORY: Always return JSON array, never throw or return empty object
     const errorMessage = error?.message || String(error) || 'Unknown error';
-    console.error("❌ Guru Web Location Proxy Error:", {
+    const durationMs = Date.now() - startedAt;
+    const provider = "guru-api:/api/v1/location/search";
+    const isTimeout =
+      error?.name === "TimeoutError" ||
+      error?.code === "ETIMEDOUT" ||
+      /timeout/i.test(errorMessage || "");
+
+    console.warn("⚠️ Guru Web Location Proxy Warning:", {
       message: errorMessage,
       name: error?.name || 'Unknown',
       type: typeof error,
+      provider,
+      query: q,
+      durationMs,
+      isTimeout,
     });
     // Return empty array for graceful UX (no results found)
     return NextResponse.json([], { status: 200 });

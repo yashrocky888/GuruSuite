@@ -24,10 +24,14 @@ class LLMClient:
         self.local_llm_url = settings.local_llm_url
         self.openai_api_key = settings.openai_api_key
         
-        # Initialize OpenAI client if API key is available
+        # Initialize OpenAI client if API key is available (resilient to library compat issues)
         if self.openai_api_key:
-            self.openai_client = OpenAI(api_key=self.openai_api_key)
-            self.mode = "openai"
+            try:
+                self.openai_client = OpenAI(api_key=self.openai_api_key)
+                self.mode = "openai"
+            except Exception:
+                self.openai_client = None
+                self.mode = "none"
         elif self.local_llm_url:
             self.mode = "local"
         else:

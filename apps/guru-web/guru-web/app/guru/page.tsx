@@ -11,29 +11,66 @@ import { motion } from 'framer-motion';
 import { SparklesIcon } from '@heroicons/react/24/outline';
 import { FadeIn } from '@/frontend/animations';
 import { useKundliStore } from '@/store/useKundliStore';
+import { useBirthStore } from '@/store/useBirthStore';
 import GuruReading from '@/components/GuruReading';
 import { getKundli } from '@/services/api';
+import apiClient from '@/services/api';
+import { useMaxLoadTime } from '@/hooks/useMaxLoadTime';
 
 export default function GuruPage() {
   const { kundliData, setKundliData } = useKundliStore();
+  const { hasHydrated } = useBirthStore();
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // 🔒 MAX LOAD TIME: Auto-stop spinner after 8 seconds
+  useMaxLoadTime({
+    loading,
+    setLoading,
+    maxTime: 8000,
+    onTimeout: () => {
+      setError('Loading took too long. Please try again.');
+    },
+  });
 
   useEffect(() => {
+    // 🔒 RACE CONDITION FIX 1: Client-side only
+    if (typeof window === 'undefined') return;
+
+    // 🔒 RACE CONDITION FIX 2: Hydration complete
+    if (!hasHydrated) return;
+
+    // 🔒 RACE CONDITION FIX 3: Prevent duplicate calls
+    if (loading && kundliData) return;
+
+    // 🔒 RACE CONDITION FIX 4: Ensure API client is ready
+    if (!apiClient || !apiClient.defaults?.baseURL) {
+      console.warn('⚠️ API client not ready, waiting...');
+      return;
+    }
+
     const fetchKundli = async () => {
       try {
+        setLoading(true);
+        setError(null);
         if (!kundliData) {
           const data = await getKundli();
+          // 🔒 HARD FAILSAFE: Validate data
+          if (!data) {
+            throw new Error("API returned null or undefined response");
+          }
           setKundliData(data);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Failed to fetch kundli:', error);
+        setError(error?.message || 'Failed to load kundli data');
       } finally {
         setLoading(false);
       }
     };
 
     fetchKundli();
-  }, [kundliData, setKundliData]);
+  }, [kundliData, setKundliData, hasHydrated, loading]);
 
   if (loading) {
     return (
@@ -41,6 +78,20 @@ export default function GuruPage() {
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-600 dark:text-gray-400">Loading...</p>
+          <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">This will timeout after 8 seconds</p>
+        </div>
+      </div>
+    );
+  }
+
+  // 🔒 HARD FAILSAFE: Show error state
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center max-w-md">
+          <div className="p-6 rounded-lg bg-red-500/10 border border-red-500/20">
+            <p className="text-red-600 dark:text-red-400">{error}</p>
+          </div>
         </div>
       </div>
     );
