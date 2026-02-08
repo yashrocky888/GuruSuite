@@ -23,16 +23,14 @@ from src.ai.post_processor import (
     validate_and_format_guidance,
     apply_dharma_graha_tone_to_section,
     apply_anti_leak_sanitizer,
+    sanitize_structured_dict,
 )
 from src.ai.llm_client import LLMClient
 from src.jyotish.ai.interpretation_engine import apply_tara_global_tone
 from src.ai.rishi_prompt import (
     RISHI_PRESENCE_PROMPT,
-    RISHI_NARRATIVE_REFINEMENT_PROMPT,
     RISHI_MASTER_FINAL_POLISH_LAYER,
-    RISHI_SUPREME_SYNTHESIS_ENFORCEMENT_LAYER,
-    RISHI_SUPREME_SYNTHESIS_CORRECTION_PROMPT,
-    RISHI_CONTEXT_ENTANGLEMENT_ENFORCEMENT_LAYER,
+    RISHI_MAHABHARATA_NIRNAYA_PARIHARA_LAYER,
 )
 from src.utils.timezone import get_julian_day, local_to_utc
 
@@ -77,6 +75,8 @@ STRUCTURED_KEYS = [
     "dharmic_guidance",
     "throne",
     "moon_movement",
+    "nirnaya",
+    "shanti_parihara",
 ]
 
 # Canonical section headings — NEVER collapse. Ceremonial structure preserved.
@@ -91,10 +91,13 @@ CANONICAL_SECTION_HEADINGS = {
     "dharmic_guidance": "⚖ DHARMA GUIDANCE",
     "throne": "🪔 JANMA NAKSHATRA THRONE",
     "moon_movement": "🔄 MOON MOVEMENT",
+    "nirnaya": "🔮 NIRNAYA (THE FINAL VERDICT)",
+    "shanti_parihara": "🛡️ SHANTI & PARIHARA (SACRED REMEDY)",
 }
 CANONICAL_SECTION_ORDER = [
     "greeting", "declarations", "panchanga", "dasha", "chandra_bala",
     "tara_bala", "major_transits", "dharmic_guidance", "throne", "moon_movement",
+    "nirnaya", "shanti_parihara",
 ]
 
 # Backend-owned interpretation for same-day Moon house shift (from_house, to_house) only.
@@ -200,6 +203,7 @@ def _safe_str(val: Any) -> str:
 REQUIRED_STRUCTURED_SECTIONS = [
     "panchanga", "dasha", "chandra_bala", "tara_bala",
     "major_transits", "dharmic_guidance", "throne", "moon_movement",
+    "nirnaya", "shanti_parihara",
 ]
 
 
@@ -369,6 +373,10 @@ def _fill_missing_section(key: str, val: str, context: Dict[str, Any]) -> str:
         return val.strip()
     if key == "moon_movement":
         return "The Moon remains in the same sign today, deepening the current emotional tone rather than shifting it."
+    if key == "nirnaya":
+        return "• Yatra: Proceed with measured awareness.\n• Karya: Steady effort advised.\n• Sambandha: Patience preserves harmony.\n• Varjya: Avoid impulsive decisions."
+    if key == "shanti_parihara":
+        return "Honor the day with a simple sattvic act."
     return "This section awaits further contemplation."
 
 
@@ -1012,15 +1020,9 @@ ONLY using verified JSON data.
 ==================================================
 END ZERO-HALLUCINATION LOCK
 ==================================================
-""" + RISHI_NARRATIVE_REFINEMENT_PROMPT + """
-
 """ + RISHI_MASTER_FINAL_POLISH_LAYER + """
 
-""" + RISHI_SUPREME_SYNTHESIS_ENFORCEMENT_LAYER + """
-
-""" + RISHI_SUPREME_SYNTHESIS_CORRECTION_PROMPT + """
-
-""" + RISHI_CONTEXT_ENTANGLEMENT_ENFORCEMENT_LAYER
+""" + RISHI_MAHABHARATA_NIRNAYA_PARIHARA_LAYER
 
 
 router = APIRouter()
@@ -1127,7 +1129,7 @@ ALLOWED RETROGRADE PLANETS (use Retrograde/Vakri only for these): {allowed_retro
                     structured_prompt = f"""Seeker: {seeker_name}
 
 Return ONLY a valid JSON object. No markdown, no code block, no other text.
-Keys (all required, use empty string "" if no content): greeting, panchanga, dasha, chandra_bala, tara_bala, major_transits, dharmic_guidance, throne, moon_movement
+Keys (all required, use empty string "" if no content): greeting, panchanga, dasha, chandra_bala, tara_bala, major_transits, dharmic_guidance, throne, moon_movement, nirnaya, shanti_parihara
 
 {remedy_note}
 
@@ -1140,6 +1142,8 @@ major_transits: MANDATORY full planet coverage. Every planet in CURRENT SKY POSI
 dharmic_guidance: 2 do's/don'ts, 1 Gita principle from context.gita. One classical maxim.
 throne: "You were born under [Nakshatra]...". Dynamic daily line. If not activated: "Today, no transit planet activates your throne." If activated: planet name only.
 moon_movement: If transit_events has Moon move, describe. Else "".
+nirnaya: FINAL VERDICT. Four bullet points only: Yatra (Travel), Karya (Important Action), Sambandha (Relationships), Varjya (To Avoid). 1–2 sentences each. Derived from Mahadasha + Antardasha + most pressured house + Moon + Tara + Panchanga. Royal counselor tone. No explanation.
+shanti_parihara: One remedy only. One solemn sentence. Identify primary dosha of day. Silence/water/Shiva if Moon weak. Cooling if combust. Introspection if retrograde dominant. Service to elderly if Saturn dominant. Else honor Day Lord. No gemstones. No expensive ritual. No promises.
 
 ALLOWED RETROGRADE: {allowed_retrograde_str}. Use retrograde words ONLY for these planets.
 Use transit.sign_index and transit.transit_house from JSON. Never invent.
@@ -1150,10 +1154,10 @@ JSON CONTEXT:
                         resp = client.openai_client.chat.completions.create(
                             model="gpt-4o",
                             messages=[
-                                {"role": "system", "content": GURU_SYSTEM_PROMPT + "\n\nReturn ONLY valid JSON. Keys: greeting, panchanga, dasha, chandra_bala, tara_bala, major_transits, dharmic_guidance, throne, moon_movement."},
+                                {"role": "system", "content": GURU_SYSTEM_PROMPT + "\n\nReturn ONLY valid JSON. Keys: greeting, panchanga, dasha, chandra_bala, tara_bala, major_transits, dharmic_guidance, throne, moon_movement, nirnaya, shanti_parihara."},
                                 {"role": "user", "content": structured_prompt},
                             ],
-                            max_tokens=1200,
+                            max_tokens=1400,
                             temperature=0.5,
                             top_p=0.9,
                             response_format={"type": "json_object"},
@@ -1180,6 +1184,7 @@ JSON CONTEXT:
                                 guidance, allowed_retrograde_set_out
                             ) if allowed_retrograde_set_out else guidance
                             guidance = apply_anti_leak_sanitizer(guidance)
+                            structured_out = sanitize_structured_dict(structured_out)
                             return {
                                 "guidance": guidance,
                                 "structured": structured_out,
@@ -1541,8 +1546,11 @@ Produce one seamless classical Daivajna daily prediction.
             "dharmic_guidance": placeholder,
             "throne": placeholder,
             "moon_movement": "No Moon sign change today." if not (context.get("transit_events") or []) else placeholder,
+            "nirnaya": "• Yatra: Proceed with measured awareness.\n• Karya: Steady effort advised.\n• Sambandha: Patience preserves harmony.\n• Varjya: Avoid impulsive decisions.",
+            "shanti_parihara": "Honor the day with a simple sattvic act.",
         }
         guidance = _build_guidance_with_structure(fallback_structured)
+        fallback_structured = sanitize_structured_dict(fallback_structured)
         return {
             "guidance": guidance,
             "structured": fallback_structured,
