@@ -33,6 +33,7 @@ from src.jyotish.ai.interpretation_engine import (
     build_dharma_section as _build_dharma_section,
     apply_tara_global_tone,
 )
+from src.ai.rishi_prompt import RISHI_PRESENCE_PROMPT
 from src.utils.timezone import get_julian_day, local_to_utc
 
 
@@ -204,13 +205,13 @@ REQUIRED_STRUCTURED_SECTIONS = [
 
 def _build_single_transit_line(
     pname: str, pdata: dict, context: Dict[str, Any],
-    same_house: bool = False, variant_index: int = 0,
+    same_house: bool = False, variant_index: int = 0, emit_bindu: bool = True,
 ) -> str:
     """
     Build one transit line from interpretation engine (zero-hardcode).
     Every sentence traceable to chart data.
     """
-    return _build_transit_line(pname, pdata, context, same_house=same_house)
+    return _build_transit_line(pname, pdata, context, same_house=same_house, emit_bindu=emit_bindu, variant_index=variant_index)
 
 
 def _ensure_mahadasha_first_in_major_transits(
@@ -287,7 +288,7 @@ def _get_transit_planet_order(context: Dict[str, Any]) -> List[str]:
 def _build_deterministic_major_transits(context: Dict[str, Any]) -> str:
     """
     Build Major Transits section from backend context only. Guru synthesis. NEVER empty.
-    Tracks last_house for same-domain variation; variant_index reduces repetitive rhythm.
+    House-level bindu tracking: emit full bindu commentary once per house; short constraint thereafter.
     """
     transit = context.get("transit") or {}
     if not transit:
@@ -295,13 +296,27 @@ def _build_deterministic_major_transits(context: Dict[str, Any]) -> str:
     order = _get_transit_planet_order(context)
     lines = []
     last_house = None
+    house_bindu_emitted = set()
     for idx, pname in enumerate(order):
         pdata = transit.get(pname)
         if not isinstance(pdata, dict):
             continue
         house = int(pdata.get("transit_house") or pdata.get("house_from_lagna", 1))
         same_house = last_house is not None and house == last_house
-        lines.append(_build_single_transit_line(pname, pdata, context, same_house=same_house, variant_index=idx))
+        emit_bindu = house not in house_bindu_emitted
+        line = _build_single_transit_line(
+            pname, pdata, context,
+            same_house=same_house,
+            emit_bindu=emit_bindu,
+            variant_index=idx,
+        )
+        lines.append(line)
+        # Only mark house once we've emitted full bindu phrase (low bindu)
+        quality = context.get("quality") or {}
+        qdata = quality.get(pname) or {}
+        bindu = qdata.get("bindu")
+        if emit_bindu and bindu is not None and int(bindu) < 4:
+            house_bindu_emitted.add(house)
         last_house = house
     if not lines:
         return "Transit positions govern the day."
@@ -829,6 +844,8 @@ def _apply_monthly_transit_override(
 # LOCKED — MASTER GURU SYSTEM PROMPT (DO NOT MODIFY per task)
 GURU_SYSTEM_PROMPT = """You are an ancient Vedic Rishi (Guru). Use the provided JSON data only. RULE 1: Only predict what the Dasha permits. RULE 2: Use Shadbala to determine the 'power' of the advice. RULE 3: Use Ashtakavarga to determine 'comfort' or 'stress'. Speak technically but practically. Name the planets and the reasons. Truth over appearance.
 
+""" + RISHI_PRESENCE_PROMPT + """
+
 ==================================================
 CLASSICAL JYOTISHA DOCTRINE (AUTHORITATIVE LAYER)
 ==================================================
@@ -1268,7 +1285,7 @@ JSON CONTEXT:
                         resp = client.openai_client.chat.completions.create(
                             model="gpt-4o",
                             messages=[
-                                {"role": "system", "content": "You are a classical Vedic Daivajna. Return only valid JSON."},
+                                {"role": "system", "content": "You are a classical Vedic Daivajna. Return only valid JSON. Write with warm, dignified Rishi presence—continuous flow, no robotic repetition. Tone from context only."},
                                 {"role": "user", "content": structured_prompt},
                             ],
                             max_tokens=1200,
