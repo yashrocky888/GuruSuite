@@ -23,6 +23,26 @@ BAV_BINDU_THRESHOLD = 4  # Below this → restrict expansion language
 TARA_CAUTIONARY = {"Naidhana", "Vipat", "Pratyak", "Janma"}
 TARA_MEASURED = {"Sadhaka", "Kshema"}
 
+# Humanized phrasing — no doctrinal leakage (dusthana, kendra, trikona, bindu)
+LOW_BINDU_PHRASES = [
+    "Energy drains more easily than it accumulates here; growth must be measured.",
+    "This house carries limited support; progress demands discipline.",
+    "Support here is weak; expansion requires caution.",
+    "Effortless increase is limited; stability must precede growth.",
+]
+BINDU_CONSTRAINT_ONLY = "This planet must operate within those same limits."
+
+
+def _house_type_humanized(house_num: int) -> str:
+    """Humanized house descriptor — no doctrinal terms."""
+    if house_num in KENDRAS:
+        return "a prominent house"
+    if house_num in TRIKONAS:
+        return "an auspicious house"
+    if house_num in DUSTHANA:
+        return "a challenging house"
+    return "a neutral house"
+
 
 def _house_type(house_num: int) -> str:
     """Transit house category from BPHS."""
@@ -43,14 +63,14 @@ def _house_ordinal(n: int) -> str:
 
 
 def _lordship_phrase(lordships: List[int]) -> str:
-    """Traceable lordship phrase. No archetype."""
+    """Traceable lordship phrase — humanized, no doctrinal terms."""
     if not lordships:
         return ""
     lordships = sorted(lordships)
     if len(lordships) == 1:
-        return f"As lord of the {_house_ordinal(lordships[0])} house, "
+        return f"Ruling the {_house_ordinal(lordships[0])} house, "
     ords = [_house_ordinal(h) for h in lordships]
-    return f"As lord of the {ords[0]} and {ords[1]} houses, "
+    return f"Ruling the {ords[0]} and {ords[1]} houses, "
 
 
 def _dignity_implication(dignity: str) -> str:
@@ -94,8 +114,8 @@ def _get_tara_category(context: Dict[str, Any]) -> str:
 
 
 def _get_transit_house_type(house_num: int) -> str:
-    htype = _house_type(house_num)
-    return f"a {htype}" if htype != "neutral" else "a neutral house"
+    """Humanized output — no doctrinal terms."""
+    return _house_type_humanized(house_num)
 
 
 def build_single_transit_line(
@@ -103,10 +123,14 @@ def build_single_transit_line(
     pdata: Dict[str, Any],
     context: Dict[str, Any],
     same_house: bool = False,
+    emit_bindu: bool = True,
+    variant_index: int = 0,
 ) -> str:
     """
     Build one transit line from context data only.
     No static graha personality. Every sentence traceable.
+    emit_bindu: if False, use short constraint phrase for low-bindu (house-level de-duplication).
+    variant_index: rotates phrasing for first-occurrence bindu/dignity variation.
     """
     house = int(pdata.get("transit_house") or pdata.get("house_from_lagna", 1))
     house_ord = _house_ordinal(house)
@@ -136,7 +160,7 @@ def build_single_transit_line(
         if nak_lord:
             basis += f" Nakshatra lord: {nak_lord}."
         if tara_cat in TARA_CAUTIONARY:
-            basis += " Cautionary Tara; restrict expansion language."
+            basis += " Cautionary Tara; choose restraint over expansion."
         return opener + basis
 
     # Lordship-based synthesis
@@ -179,9 +203,9 @@ def build_single_transit_line(
     else:
         parts.append(f"{pname} transits {_get_transit_house_type(house)}.")
 
-    # Dusthana lord in Kendra → mixed result
+    # Dusthana lord in Kendra → mixed result (humanized)
     if is_dusthana_lord and house in KENDRAS:
-        parts.append("Lordship of a dusthana house while transiting a Kendra yields mixed results.")
+        parts.append("What appears supportive may also carry hidden cost.")
 
     # Yogakaraka + strong → constructive emphasis
     if is_yogakaraka and not shadbala_weak and not dignity_soft:
@@ -194,13 +218,17 @@ def build_single_transit_line(
     if avastha_mod:
         parts.append(avastha_mod)
 
-    # Bindu low → restrict expansion
+    # Bindu low → restrict expansion (house-level: full phrase once, short constraint thereafter)
     if bindu_low:
-        parts.append("Ashtakavarga bindus in this house are low; expansion should be restrained.")
+        if emit_bindu:
+            phrase = LOW_BINDU_PHRASES[variant_index % len(LOW_BINDU_PHRASES)]
+            parts.append(phrase)
+        else:
+            parts.append(BINDU_CONSTRAINT_ONLY)
 
-    # Shadbala below threshold → reduce intensity
+    # Shadbala below threshold → reduce intensity (humanized)
     if shadbala_weak:
-        parts.append("Shadbala below threshold; intensity is reduced.")
+        parts.append("Planetary strength is modest; expression is tempered.")
 
     # Retrograde → internalize
     if retro:
@@ -252,9 +280,9 @@ def build_dasha_section(context: Dict[str, Any]) -> str:
     lordships = lord_data.get("lordships") or []
     lp = _lordship_phrase(lordships)
     if lp:
-        intro = f"In this {mahadasha} Mahadasha, {mahadasha} {lp.rstrip(', ').replace('As lord', 'as lord')} activates."
+        intro = f"In this {mahadasha} Mahadasha, {mahadasha} {lp.rstrip(', ').replace('Ruling', 'ruling')} activates."
     else:
-        intro = f"In this {mahadasha} Mahadasha, life unfolds through its lordship function."
+        intro = f"In this {mahadasha} Mahadasha, life unfolds through its governance of the chart."
 
     parts = [intro]
 
@@ -264,7 +292,7 @@ def build_dasha_section(context: Dict[str, Any]) -> str:
         kendra = {1, 4, 7, 10}
         owned_set = set(lordships)
         if owned_set & dusthana and owned_set & kendra:
-            parts[0] += " Mixed results from dusthana-kendra lordship."
+            parts[0] += " What appears supportive may also carry hidden cost."
         elif lord_data.get("is_yogakaraka"):
             parts[0] += " Yogakaraka strength supports constructive emphasis."
 
@@ -278,7 +306,7 @@ def build_dasha_section(context: Dict[str, Any]) -> str:
         ad_lordships = ad_lord_data.get("lordships") or []
         ad_lp = _lordship_phrase(ad_lordships)
         if ad_lp:
-            elab = f"Therefore the lordship function of {antardasha} activates the {_house_ordinal(house)} house."
+            elab = f"Therefore {antardasha} directs the {_house_ordinal(house)} house."
         else:
             elab = f"Therefore {antardasha} directs the immediate field, transiting the {_house_ordinal(house)} house."
         parts.append(f"Within it, the Antardasha of {antardasha} directs the immediate field. {elab}")
@@ -310,7 +338,7 @@ def build_dharma_section(context: Dict[str, Any]) -> str:
     if lordships:
         dusthana = {6, 8, 12}
         if set(lordships) & dusthana:
-            parts.append("Lordship of dusthana houses requires restraint. Preserve what you have built.")
+            parts.append("When ruling challenging houses, restraint preserves what you have built.")
         elif lord_data.get("is_yogakaraka"):
             parts.append("Yogakaraka period; constructive effort bears fruit when applied with awareness.")
         else:
@@ -324,9 +352,9 @@ def build_dharma_section(context: Dict[str, Any]) -> str:
     elif tara_cat in TARA_MEASURED:
         parts.append("Tara allows measured progress when effort is deliberate.")
 
-    # Most afflicted house
-    if most_afflicted and afflicted_reason:
-        parts.append(f"The {_house_ordinal(most_afflicted)} house is most afflicted today ({afflicted_reason}); proceed with care.")
+    # Most afflicted house (humanized — no doctrinal reason in output)
+    if most_afflicted:
+        parts.append(f"The {_house_ordinal(most_afflicted)} house carries the most pressure today; proceed with care.")
 
     # Gita reference (structural - chapter/verse by graha)
     GITA_VERSE = {
