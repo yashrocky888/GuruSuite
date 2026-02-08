@@ -67,6 +67,36 @@ def ensure_closed_quotes(text: str) -> str:
     return text
 
 
+# Layer 11 — Anti-Leak Sanitizer: remove doctrinal vocabulary from output
+DOCTRINAL_LEAK_PATTERNS = [
+    (r"\bdusthana\b", "challenging house"),
+    (r"\bkendra\b", "prominent house"),
+    (r"\btrikona\b", "auspicious house"),
+    (r"\bbindu\b", "planetary support"),
+    (r"\blow_bindu\b", "limited support"),
+    (r"\bstructural support\b", "support"),
+    (r"\bexpansion language\b", "optimistic phrasing"),
+    (r"\blordship function\b", "influence"),
+    (r"\byields mixed results\b", "carries both benefit and cost"),
+    (r"\brestrict expansion\b", "measure growth"),
+    (r"\bshadbala\b", "planetary strength"),
+    (r"[Aa]s lord of\b", "Governing"),
+]
+
+
+def apply_anti_leak_sanitizer(text: str) -> str:
+    """
+    Layer 11 — Remove doctrinal vocabulary before output.
+    Rewrites engine language into humanized equivalents.
+    """
+    if not text or not text.strip():
+        return text
+    result = text
+    for pattern, replacement in DOCTRINAL_LEAK_PATTERNS:
+        result = re.sub(pattern, replacement, result, flags=re.IGNORECASE)
+    return result
+
+
 def enforce_section_order(body: str, context: Dict[str, Any]) -> str:
     """
     Ensure strict section order:
@@ -534,6 +564,9 @@ def validate_and_format_guidance(guidance: str, context: Dict[str, Any]) -> str:
     if body:
         parts.append(body)
     final = "\n\n".join(parts).strip()
+
+    # Layer 11 — Anti-Leak Sanitizer (final pass)
+    final = apply_anti_leak_sanitizer(final)
 
     return final.strip()
 

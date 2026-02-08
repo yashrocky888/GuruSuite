@@ -22,10 +22,15 @@ from src.jyotish.ai.guru_payload import (
 from src.ai.post_processor import (
     validate_and_format_guidance,
     apply_dharma_graha_tone_to_section,
+    apply_anti_leak_sanitizer,
 )
 from src.ai.llm_client import LLMClient
 from src.jyotish.ai.interpretation_engine import apply_tara_global_tone
-from src.ai.rishi_prompt import RISHI_PRESENCE_PROMPT, RISHI_NARRATIVE_REFINEMENT_PROMPT
+from src.ai.rishi_prompt import (
+    RISHI_PRESENCE_PROMPT,
+    RISHI_NARRATIVE_REFINEMENT_PROMPT,
+    RISHI_MASTER_FINAL_POLISH_LAYER,
+)
 from src.utils.timezone import get_julian_day, local_to_utc
 
 
@@ -1002,7 +1007,9 @@ ONLY using verified JSON data.
 ==================================================
 END ZERO-HALLUCINATION LOCK
 ==================================================
-""" + RISHI_NARRATIVE_REFINEMENT_PROMPT
+""" + RISHI_NARRATIVE_REFINEMENT_PROMPT + """
+
+""" + RISHI_MASTER_FINAL_POLISH_LAYER
 
 
 router = APIRouter()
@@ -1136,7 +1143,8 @@ JSON CONTEXT:
                                 {"role": "user", "content": structured_prompt},
                             ],
                             max_tokens=1200,
-                            temperature=0,
+                            temperature=0.65,
+                            top_p=0.9,
                             response_format={"type": "json_object"},
                         )
                         raw = (resp.choices[0].message.content or "").strip()
@@ -1160,6 +1168,7 @@ JSON CONTEXT:
                             guidance = _strip_disallowed_retrograde(
                                 guidance, allowed_retrograde_set_out
                             ) if allowed_retrograde_set_out else guidance
+                            guidance = apply_anti_leak_sanitizer(guidance)
                             return {
                                 "guidance": guidance,
                                 "structured": structured_out,
@@ -1482,7 +1491,8 @@ Produce one seamless classical Daivajna daily prediction.
                         {"role": "user", "content": user_prompt},
                     ],
                     max_tokens=800,
-                    temperature=0,
+                    temperature=0.65,
+                    top_p=0.9,
                 )
                 guidance = response.choices[0].message.content or ""
             else:
