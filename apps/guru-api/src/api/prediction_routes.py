@@ -1501,8 +1501,13 @@ Produce one seamless classical Daivajna daily prediction.
     if timescale == "daily" and allowed_retrograde_set_out is not None:
         guidance = _strip_disallowed_retrograde(guidance, allowed_retrograde_set_out)
 
-    # Fallback: when LLM failed, return structure with placeholders. No deterministic prose.
-    if timescale == "daily" and declarations_block:
+    # Fallback: only when LLM failed (no valid guidance). Do not overwrite successful LLM output.
+    llm_failed = (
+        not guidance
+        or "Guidance could not be generated" in (guidance or "")
+        or "OPENAI_API_KEY not set" in (guidance or "")
+    )
+    if timescale == "daily" and declarations_block and llm_failed:
         placeholder = "Interpretation could not be generated. Full chart data is available in the context."
         fallback_structured: Dict[str, str] = {
             "greeting": f"{(seeker_name or 'Seeker').strip()}, the wheel of Time turns thus:",
