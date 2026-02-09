@@ -589,54 +589,74 @@ def _build_transit_declarations_and_retro(context: Dict[str, Any]) -> tuple:
 
 def _strip_disallowed_retrograde(guidance: str, allowed_retrograde: set) -> str:
     """
-    Remove only lines that mention retrograde/vakri for a planet not in allowed_retrograde.
-    LINE-PRESERVING: works line-by-line. No sentence splitting. No space-based joining.
-    Preserves headings, blank lines, bullet formatting, Nirnaya structure, SHANTI spacing.
-    Never touch backend declaration lines (X currently transits ... in your N house.).
+    Remove retrograde lines ONLY if planet is not allowed.
+    SECTION SAFE: Never allow entire MAJOR TRANSITS body to disappear.
     """
     if not guidance or not guidance.strip():
         return guidance
+
     allowed = {p.lower() for p in allowed_retrograde}
     planet_names = ["mercury", "venus", "mars", "jupiter", "saturn", "sun", "moon"]
-    retro_keywords = ["retrograde", "vakri", "revisitation", "reversal", "karmic return", "return cycle", "internalized", "reprocessing"]
-    # Backend declaration pattern: never strip these
-    declaration_re = re.compile(
-        r"^(Mercury|Venus|Mars|Jupiter|Saturn|Sun|Moon|Rahu|Ketu)\s+currently\s+transits\s+.+?\s+in\s+your\s+\d+(?:st|nd|rd|th)\s+house\.(?:\s*\(Retrograde\))?\s*$",
-        re.IGNORECASE,
-    )
+    retro_keywords = ["retrograde", "vakri", "revisitation", "reversal"]
+
     lines = guidance.split("\n")
-    out = []
+    out: List[str] = []
+
+    in_major = False
+    major_block_original: List[str] = []
+    major_block_new: List[str] = []
+
     for line in lines:
         stripped = line.strip()
-        # Blank lines: preserve exactly (maintain spacing)
-        if not stripped:
+
+        if stripped.startswith("🪐 MAJOR TRANSITS"):
+            in_major = True
+            out.append(line)
+            major_block_original = []
+            major_block_new = []
+            continue
+
+        if in_major and stripped.startswith(("⚖", "🪔", "🔄", "🔮", "🛡️")):
+            # End of major section
+            if not any(l.strip() for l in major_block_new):
+                # If we wiped all content, restore original block
+                out.extend(major_block_original)
+            else:
+                out.extend(major_block_new)
+
+            in_major = False
             out.append(line)
             continue
-        # Backend declarations: never remove
-        if declaration_re.match(stripped):
+
+        if in_major:
+            major_block_original.append(line)
+
+            lower = stripped.lower()
+            has_retro = any(k in lower for k in retro_keywords)
+
+            if has_retro:
+                remove = False
+                for planet in planet_names:
+                    if planet in allowed:
+                        continue
+                    if planet in lower:
+                        remove = True
+                        break
+                if not remove:
+                    major_block_new.append(line)
+            else:
+                major_block_new.append(line)
+        else:
             out.append(line)
-            continue
-        # No retrograde keywords: keep
-        lower = stripped.lower()
-        has_retro = any(kw in lower for kw in retro_keywords)
-        if not has_retro:
-            out.append(line)
-            continue
-        # Has retrograde: remove only if line mentions non-allowed planet
-        remove = False
-        for planet in planet_names:
-            if planet in allowed:
-                continue
-            if re.search(rf"\b{planet}\b", lower):
-                remove = True
-                break
-        if not remove:
-            out.append(line)
-    result = "\n".join(out)
-    # SAFETY: if result accidentally removed entire section, restore original
-    if "🪐 MAJOR TRANSITS" in guidance and "🪐 MAJOR TRANSITS" not in result:
-        return guidance
-    return result
+
+    # If guidance ended while still inside MAJOR TRANSITS
+    if in_major:
+        if not any(l.strip() for l in major_block_new):
+            out.extend(major_block_original)
+        else:
+            out.extend(major_block_new)
+
+    return "\n".join(out)
 
 
 def _strip_ai_later_today_moon(guidance: str) -> str:
@@ -1653,15 +1673,20 @@ Produce one seamless classical Daivajna daily prediction.
     # Post-LLM validation and formatting layer (final transformation before return)
     if guidance:
         guidance = validate_and_format_guidance(guidance, context)
+        # FINAL MAJOR TRANSITS PROTECTION: ensure section is never empty
+        if "🪐 MAJOR TRANSITS" in guidance:
+            pattern = r"🪐 MAJOR TRANSITS\s*\n\s*(?:\n|\s)*\n\s*(⚖|🪔|🔄|🔮|🛡️)"
+            if re.search(pattern, guidance):
+                fallback_text = (
+                    "The planetary movements today emphasize the houses currently activated. "
+                    "Interpretations remain governed by Mahadasha authority and Ashtakavarga strength."
+                )
+                guidance = re.sub(
+                    r"(🪐 MAJOR TRANSITS\s*\n)",
+                    r"\1\n" + fallback_text + "\n\n",
+                    guidance,
+                )
         guidance = _ensure_mandatory_sections_in_guidance(guidance, context)
-        # STRUCTURE SANITY CHECK: no heading immediately followed by another heading
-        section_emoji = r"(?:🪐|🕉|👑|🌙|⭐|⚖|🪔|🔄|🔮|🛡️)"
-        pattern = rf"({section_emoji}[^\n]*)\s*\n\s*\n\s*({section_emoji}[^\n]*)"
-        guidance = re.sub(
-            pattern,
-            r"\1\n\nThis section is under refinement.\n\n\2",
-            guidance,
-        )
 
     import logging as _log
     _log.getLogger(__name__).debug(
