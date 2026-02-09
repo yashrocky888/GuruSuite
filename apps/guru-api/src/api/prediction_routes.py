@@ -267,11 +267,12 @@ def _build_guidance_with_structure(structured: Dict[str, str]) -> str:
             if content:
                 parts.append(content)
         elif heading:
-            # Two blank lines before NIRNAYA and SHANTI for executive visual separation
-            if key in ("nirnaya", "shanti_parihara") and parts:
-                parts.append("")  # extra blank before
-            parts.append(heading)
+            # Do not render heading without content — prevents empty MAJOR TRANSITS
             if content:
+                # Two blank lines before NIRNAYA and SHANTI for executive visual separation
+                if key in ("nirnaya", "shanti_parihara") and parts:
+                    parts.append("")  # extra blank before
+                parts.append(heading)
                 parts.append(content)
         elif content:
             parts.append(content)
@@ -377,26 +378,36 @@ def _build_greeting(seeker_name: str, context: Dict[str, Any]) -> str:
 def _enforce_nirnaya_format(nirnaya_raw: str) -> str:
     """
     Force Nirnaya into strict markdown bullet format.
-    LLM decides content; backend enforces structure. Do not trust LLM formatting.
+    Strips existing labels before rebuilding — eliminates double-label corruption.
     """
-    DEFAULTS = [
-        "Proceed with measured awareness.",
-        "Steady effort advised.",
-        "Patience preserves harmony.",
-        "Avoid impulsive decisions.",
-    ]
     LABELS = ["Yatra", "Karya", "Sambandha", "Varjya"]
-    if not nirnaya_raw or not nirnaya_raw.strip():
-        return "\n".join(f"- **{k}:** {v}" for k, v in zip(LABELS, DEFAULTS))
 
-    raw = re.sub(r"\s+", " ", nirnaya_raw.strip())
-    # Split by sentence boundary; LLM typically returns 4 sentences in Yatra, Karya, Sambandha, Varjya order
-    sentences = re.split(r"(?<=[.!?])\s+", raw)
-    sentences = [s.strip() for s in sentences if s.strip() and len(s.strip()) > 2]
+    if not nirnaya_raw or not nirnaya_raw.strip():
+        return (
+            "- **Yatra:** Proceed with awareness.\n"
+            "- **Karya:** Consolidate existing efforts.\n"
+            "- **Sambandha:** Patience preserves harmony.\n"
+            "- **Varjya:** Avoid impulsive action."
+        )
+
+    # Remove existing bullet labels completely before parsing
+    cleaned = re.sub(r"-\s*\*\*(Yatra|Karya|Sambandha|Varjya):\*\*\s*", "", nirnaya_raw)
+    cleaned = re.sub(r"\*\*(Yatra|Karya|Sambandha|Varjya):\*\*\s*", "", cleaned, flags=re.IGNORECASE)
+
+    sentences = re.split(r"(?<=[.!?])\s+", cleaned.strip())
+    sentences = [s.strip() for s in sentences if s.strip()]
+
     while len(sentences) < 4:
-        sentences.append(DEFAULTS[len(sentences)])
+        sentences.append("Proceed with measured awareness.")
+
     s1, s2, s3, s4 = sentences[:4]
-    return f"- **Yatra:** {s1}\n- **Karya:** {s2}\n- **Sambandha:** {s3}\n- **Varjya:** {s4}"
+
+    return (
+        f"- **Yatra:** {s1}\n"
+        f"- **Karya:** {s2}\n"
+        f"- **Sambandha:** {s3}\n"
+        f"- **Varjya:** {s4}"
+    )
 
 
 def _fill_missing_section(key: str, val: str, context: Dict[str, Any]) -> str:
@@ -450,7 +461,10 @@ def _assemble_structured_output(
         structured[key] = val
     major_transits = structured.get("major_transits") or ""
     major_transits = apply_tara_global_tone(major_transits, context)
-    structured["major_transits"] = major_transits
+    # HARD PRODUCTION LOCK — MAJOR TRANSITS CANNOT BE EMPTY
+    if not major_transits.strip():
+        major_transits = "The planetary movements today emphasize the houses currently activated. Interpretations are constrained by Dasha authority and Ashtakavarga strength."
+    structured["major_transits"] = major_transits.strip()
     # Greeting from LLM (with Guru self-introduction)
     name = (seeker_name or "Seeker").strip()
     greeting = _safe_str(parsed.get("greeting"))
@@ -618,7 +632,11 @@ def _strip_disallowed_retrograde(guidance: str, allowed_retrograde: set) -> str:
                 break
         if not remove:
             out.append(line)
-    return "\n".join(out)
+    result = "\n".join(out)
+    # SAFETY: if result accidentally removed entire section, restore original
+    if "🪐 MAJOR TRANSITS" in guidance and "🪐 MAJOR TRANSITS" not in result:
+        return guidance
+    return result
 
 
 def _strip_ai_later_today_moon(guidance: str) -> str:
@@ -1636,6 +1654,14 @@ Produce one seamless classical Daivajna daily prediction.
     if guidance:
         guidance = validate_and_format_guidance(guidance, context)
         guidance = _ensure_mandatory_sections_in_guidance(guidance, context)
+        # STRUCTURE SANITY CHECK: no heading immediately followed by another heading
+        section_emoji = r"(?:🪐|🕉|👑|🌙|⭐|⚖|🪔|🔄|🔮|🛡️)"
+        pattern = rf"({section_emoji}[^\n]*)\s*\n\s*\n\s*({section_emoji}[^\n]*)"
+        guidance = re.sub(
+            pattern,
+            r"\1\n\nThis section is under refinement.\n\n\2",
+            guidance,
+        )
 
     import logging as _log
     _log.getLogger(__name__).debug(
