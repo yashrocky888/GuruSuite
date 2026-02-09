@@ -55,6 +55,7 @@ export default function PredictionsPage() {
         setTechnicalBreakdown(data.technical_breakdown ?? null);
         if (process.env.NODE_ENV === 'development' && g) {
           console.log('[Predictions] Full guidance length:', g.length, 'has NIRNAYA:', g.includes('NIRNAYA'), 'has SHANTI:', g.includes('SHANTI'));
+          console.log('[Predictions] RAW GUIDANCE:', g);
         }
       } catch (err: any) {
         setError(err?.response?.data?.detail || err?.message || 'Failed to load prediction');

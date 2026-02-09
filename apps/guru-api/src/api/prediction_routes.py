@@ -1672,7 +1672,8 @@ Produce one seamless classical Daivajna daily prediction.
 
     # Post-LLM validation and formatting layer (final transformation before return)
     if guidance:
-        guidance = validate_and_format_guidance(guidance, context)
+        # DIAGNOSIS: temporarily disabled to isolate MAJOR TRANSITS blank issue
+        # guidance = validate_and_format_guidance(guidance, context)
         # FINAL MAJOR TRANSITS PROTECTION: ensure section is never empty
         if "🪐 MAJOR TRANSITS" in guidance:
             pattern = r"🪐 MAJOR TRANSITS\s*\n\s*(?:\n|\s)*\n\s*(⚖|🪔|🔄|🔮|🛡️)"
