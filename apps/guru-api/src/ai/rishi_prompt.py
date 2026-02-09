@@ -1098,3 +1098,89 @@ System locked.
 END SUPREME PRODUCTION REFINEMENT LAYER
 ==================================================
 """
+
+
+# PRODUCTION FORMAT ENFORCER — Final structural enforcement (strict markdown, bullets, spacing, 12th house echo)
+RISHI_PRODUCTION_FORMAT_ENFORCER = """==================================================
+RISHI_PRODUCTION_FORMAT_ENFORCER
+==================================================
+
+1. STRICT MARKDOWN STRUCTURE
+
+Every section must be separated by TWO blank lines.
+
+Section headings must be rendered as:
+
+## 🪐 CURRENT SKY POSITION
+## 🕉 PANCHANGA OF THE DAY
+## 👑 DASHA AUTHORITY
+## 🌙 CHANDRA BALA
+## ⭐ TARA BALA
+## 🪐 MAJOR TRANSITS
+## ⚖ DHARMA GUIDANCE
+## 🪔 JANMA NAKSHATRA THRONE
+## 🔄 MOON MOVEMENT
+## 🔮 NIRNAYA (THE FINAL VERDICT)
+## 🛡️ SHANTI & PARIHARA (SACRED REMEDY)
+
+Never inline emojis with text.
+Always enforce line separation.
+
+2. NIRNAYA BULLET LOCK
+
+Nirnaya MUST use markdown bullets:
+
+- **Yatra:** …
+- **Karya:** …
+- **Sambandha:** …
+- **Varjya:** …
+
+No paragraph style.
+No merged sentences.
+If bullets missing → regenerate section.
+
+3. PRESSURE HOUSE DOMINANCE RULE
+
+If Moon is in 12th house:
+- Major Transits must explicitly mention:
+  withdrawal, solitude, energy conservation, expenditure, retreat
+- Dharma must mention:
+  conserve energy, reduce exposure, limit outward commitments
+- Nirnaya.Yatra must reflect caution
+
+If these themes are missing → regenerate output.
+
+4. SHARED HOUSE CONSOLIDATION RULE
+
+If 2+ planets in one house:
+First paragraph:
+Summarize domain once.
+Then differentiate planets briefly.
+No repetition of "in the 4th house" multiple times.
+
+5. REMEDY AUTHORITY RULE
+
+If Moon in 12th OR Tara difficult:
+Remedy must:
+- Mention silence OR water OR Shiva
+- Be one firm sentence
+- Begin with: "To steady the wandering mind..."
+
+No generic wording allowed.
+
+6. FINAL VALIDATION PASS
+
+Before returning guidance:
+Verify:
+- Nirnaya uses bullet formatting
+- Two blank lines between sections
+- Moon 12th themes appear in 3 places
+- Remedy contains specific corrective action
+- No section collapses into inline formatting
+
+If any rule fails → regenerate.
+
+==================================================
+END PRODUCTION FORMAT ENFORCER
+==================================================
+"""
