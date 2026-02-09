@@ -20,7 +20,7 @@ const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 30000, // 30 seconds
+  timeout: 120000, // 2 minutes (predict endpoint can take 60–90s for OpenAI)
 });
 
 // Request interceptor
@@ -841,6 +841,10 @@ export const getPredict = async (
   seekerName?: string
 ): Promise<{ message?: string; guidance?: string; structured?: Record<string, string>; context: any; technical_breakdown: any }> => {
   const name = seekerName ?? birthDetails.name ?? 'Seeker';
+  const t0 = Date.now();
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[getPredict] Request starting', { timescale });
+  }
   const response = await apiClient.post('/predict', {
     birth_details: {
       name,
@@ -851,7 +855,11 @@ export const getPredict = async (
       timezone: birthDetails.timezone || 'Asia/Kolkata',
     },
     timescale,
-  });
+  }, { timeout: 120000 });
+  const elapsed = Date.now() - t0;
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[getPredict] Response received in', elapsed, 'ms');
+  }
   return response.data;
 };
 

@@ -27,7 +27,7 @@ class LLMClient:
         # Initialize OpenAI client if API key is available (resilient to library compat issues)
         if self.openai_api_key:
             try:
-                self.openai_client = OpenAI(api_key=self.openai_api_key)
+                self.openai_client = OpenAI(api_key=self.openai_api_key, timeout=120.0)
                 self.mode = "openai"
             except Exception:
                 self.openai_client = None
@@ -101,7 +101,7 @@ class LLMClient:
                 }
             }
             
-            response = requests.post(url, json=payload, timeout=30)
+            response = requests.post(url, json=payload, timeout=120)
             response.raise_for_status()
             
             result = response.json()

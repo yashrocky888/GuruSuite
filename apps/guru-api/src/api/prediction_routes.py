@@ -5,7 +5,9 @@ POST /predict — build Guru Context JSON and get AI guidance (Daily/Monthly/Yea
 """
 
 import json
+import logging
 import re
+import time
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
@@ -440,6 +442,103 @@ def _ensure_mandatory_sections_in_guidance(guidance: str, context: Dict[str, Any
     if shanti_heading and shanti_heading not in g:
         g = g + "\n\n" + shanti_heading + "\n\n" + shanti_fallback
     return g.strip()
+
+
+def _build_content_depth_block(context: Dict[str, Any]) -> str:
+    """
+    Build content-depth enforcement block for structured prompt.
+    Extracts dasha, bindu, strength, pressure, tara, panchanga from context.
+    """
+    lines: List[str] = []
+    time_block = context.get("time") or {}
+    transit = context.get("transit") or {}
+    quality = context.get("quality") or {}
+    strength = context.get("strength") or {}
+    tara = context.get("tara_bala") or {}
+    panchanga = context.get("panchanga") or {}
+    most_afflicted = context.get("most_afflicted_house")
+    allowed_retrograde = context.get("_allowed_retrograde_names") or []
+
+    md = (time_block.get("mahadasha_lord") or "").strip()
+    ad = (time_block.get("antardasha_lord") or "").strip()
+    if md:
+        md_data = transit.get(md) if isinstance(transit, dict) else {}
+        md_house = md_data.get("transit_house") if isinstance(md_data, dict) else None
+        md_dignity = md_data.get("dignity") if isinstance(md_data, dict) else None
+        md_retro = md_data.get("is_retrograde") if isinstance(md_data, dict) else None
+        q_md = quality.get(md) if isinstance(quality, dict) else {}
+        md_bindu = q_md.get("bindu") if isinstance(q_md, dict) else None
+        s_md = strength.get(md) if isinstance(strength, dict) else {}
+        md_rupas = s_md.get("rupas") or s_md.get("shadbala_in_rupas") if isinstance(s_md, dict) else None
+        lines.append("DASHA DOMINANCE (major_transits MUST start with this):")
+        lines.append(f"  Mahadasha: {md}" + (f", transits house {md_house}" if md_house else "") + (f", dignity {md_dignity}" if md_dignity else "") + (f", bindu {md_bindu}" if md_bindu is not None else "") + (f", rupas {md_rupas}" if md_rupas is not None else ""))
+        if md_retro and md.lower() in [p.lower() for p in allowed_retrograde]:
+            lines.append(f"  {md} is retrograde — mention only if in ALLOWED RETROGRADE list.")
+        lines.append("  Begin Major Transits with Mahadasha lord synthesis before any other planet.")
+
+    if quality:
+        lines.append("")
+        lines.append("ASHTAKAVARGA (use ONLY from context.quality; do NOT hallucinate):")
+        for pname, qdata in quality.items():
+            if isinstance(qdata, dict):
+                b = qdata.get("bindu")
+                h = qdata.get("transit_house")
+                if b is not None and h is not None:
+                    if int(b) <= 1:
+                        lines.append(f"  {pname} house {h}: bindu {b} → stress")
+                    elif int(b) <= 3:
+                        lines.append(f"  {pname} house {h}: bindu {b} → moderate")
+                    else:
+                        lines.append(f"  {pname} house {h}: bindu {b} → strong support")
+        lines.append("  If bindu missing for a planet → skip silently. Never invent.")
+
+    if strength:
+        lines.append("")
+        lines.append("STRENGTH (Shadbala from context.strength):")
+        for pname, sdata in strength.items():
+            if isinstance(sdata, dict):
+                r = sdata.get("rupas") or sdata.get("shadbala_in_rupas")
+                st = sdata.get("status")
+                if r is not None or st:
+                    lines.append(f"  {pname}: " + (f"rupas {r}" if r is not None else "") + (f", {st}" if st else ""))
+        lines.append("  Strong planet → capacity. Weak planet → delay.")
+
+    if most_afflicted:
+        lines.append("")
+        lines.append(f"PRESSURE SYNTHESIS: Most pressured house today = {most_afflicted}. Mention once in Major Transits summary.")
+
+    lines.append("")
+    lines.append("RETROGRADE SAFETY: Only mention retrograde if transit[planet].is_retrograde == true in JSON. Otherwise remove.")
+
+    tara_cat = (tara.get("tara_category") or tara.get("tara_name") or tara.get("quality") or "").strip().lower()
+    if "mitra" in tara_cat or "sampat" in tara_cat or "sadhana" in tara_cat:
+        lines.append("")
+        lines.append("TARA TONE: Mitra/Sampat/Sadhana → measured support allowed in Nirnaya.")
+    if "vipat" in tara_cat or "naidhana" in tara_cat or "pratyak" in tara_cat:
+        lines.append("")
+        lines.append("TARA TONE: Vipat/Naidhana/Pratyak → reduce optimism in Nirnaya.")
+
+    paksha = ""
+    if isinstance(panchanga, dict):
+        tithi = panchanga.get("tithi") or {}
+        if isinstance(tithi, dict):
+            cur = tithi.get("current")
+            paksha = (cur.get("paksha") if isinstance(cur, dict) else None) or tithi.get("paksha") or ""
+        paksha = paksha or str(panchanga.get("paksha", "") or "")
+    if "krishna" in paksha.lower():
+        lines.append("")
+        lines.append("PANCHANGA: Krishna Paksha → consolidation bias in Nirnaya.")
+    if "shukla" in paksha.lower():
+        lines.append("")
+        lines.append("PANCHANGA: Shukla Paksha → initiation bias in Nirnaya.")
+
+    lines.append("")
+    lines.append("FINAL PRODUCTION RULE: No generic phrases. No 'amplifies energy'. No 'invites introspection'. Every sentence: Planet + House + Dasha reference OR bindu reference.")
+
+    lines.append("")
+    lines.append("DHARMIC_GUIDANCE: 2 house-specific behavioral disciplines + 1 psychological correction tied to pressured house + 1 Gita reference from context.gita. FORBIDDEN: 'Stay positive', 'Do not allow small setbacks', any motivational fluff.")
+
+    return "\n".join(lines) if lines else ""
 
 
 def _assemble_structured_output(
@@ -1225,6 +1324,8 @@ ALLOWED RETROGRADE PLANETS (use Retrograde/Vakri only for these): {allowed_retro
                     severe = context.get("severe_stress", False)
                     moderate = context.get("moderate_stress", False)
                     remedy_note = f"REMEDY GATING: severe_stress={severe}, moderate_stress={moderate}. Obey these flags."
+                    context["_allowed_retrograde_names"] = list(allowed_retrograde_set_out)
+                    content_depth_block = _build_content_depth_block(context)
                     structured_prompt = f"""Seeker: {seeker_name}
 
 Return ONLY a valid JSON object. No markdown, no code block, no other text.
@@ -1247,9 +1348,20 @@ shanti_parihara: One remedy only. One solemn sentence. Identify primary dosha of
 ALLOWED RETROGRADE: {allowed_retrograde_str}. Use retrograde words ONLY for these planets.
 Use transit.sign_index and transit.transit_house from JSON. Never invent.
 
+==================================================
+CONTENT DEPTH ENFORCEMENT (GuruSuite doctrine)
+==================================================
+
+{content_depth_block}
+
+==================================================
+
 JSON CONTEXT:
 {context_json}"""
                     try:
+                        _log = logging.getLogger(__name__)
+                        _log.info("[predict] OpenAI structured call starting")
+                        t0 = time.perf_counter()
                         resp = client.openai_client.chat.completions.create(
                             model="gpt-4o",
                             messages=[
@@ -1260,7 +1372,10 @@ JSON CONTEXT:
                             temperature=0.5,
                             top_p=0.9,
                             response_format={"type": "json_object"},
+                            timeout=120.0,
                         )
+                        elapsed = time.perf_counter() - t0
+                        _log.info("[predict] OpenAI structured call completed in %.2fs", elapsed)
                         raw = (resp.choices[0].message.content or "").strip()
                         # Strip markdown code blocks if present
                         if raw.startswith("```"):
@@ -1608,6 +1723,9 @@ JSON CONTEXT:
 
 Produce one seamless classical Daivajna daily prediction.
 """
+                _log = logging.getLogger(__name__)
+                _log.info("[predict] OpenAI unstructured call starting")
+                t0 = time.perf_counter()
                 response = client.openai_client.chat.completions.create(
                     model="gpt-4o",
                     messages=[
@@ -1617,7 +1735,10 @@ Produce one seamless classical Daivajna daily prediction.
                     max_tokens=1400,
                     temperature=0.5,
                     top_p=0.9,
+                    timeout=120.0,
                 )
+                elapsed = time.perf_counter() - t0
+                _log.info("[predict] OpenAI unstructured call completed in %.2fs", elapsed)
                 guidance = response.choices[0].message.content or ""
             else:
                 guidance = "Guidance could not be generated (client not openai)."

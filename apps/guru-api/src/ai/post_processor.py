@@ -87,6 +87,11 @@ DOCTRINAL_LEAK_PATTERNS = [
     (r"\bprimary dosha\b", "primary pressure"),
     (r"\bdosha of the day\b", "pressure of the day"),
     (r"\bcombust\b", "weakened by Sun"),
+    # GuruSuite: no generic astrology clichés
+    (r"\bamplifies energy\b", "strengthens influence"),
+    (r"\binvites introspection\b", "favors reflection"),
+    (r"\bencourages introspection\b", "favors reflection"),
+    (r"\bcalls for introspection\b", "favors reflection"),
 ]
 
 
@@ -456,12 +461,36 @@ def _apply_dharma_graha_tone(body: str, context: Dict[str, Any]) -> str:
     return body
 
 
+# GuruSuite doctrine: forbidden generic phrases in dharmic_guidance
+DHARMIC_FLUFF_PATTERNS = [
+    (r"\bStay positive\.?\s*", ""),
+    (r"\bDo not allow small setbacks[^.]*\.?\s*", ""),
+    (r"\bRemain optimistic\.?\s*", ""),
+    (r"\bKeep a positive mindset\.?\s*", ""),
+    (r"\bFocus on the bright side\.?\s*", ""),
+    (r"\bDo not let[^.]*get you down\.?\s*", ""),
+    (r"\bBelieve in yourself\.?\s*", ""),
+    (r"\bYou've got this\.?\s*", ""),
+]
+
+
+def strip_dharmic_fluff(text: str) -> str:
+    """Remove generic motivational fluff from dharmic_guidance. GuruSuite doctrine."""
+    if not text or not text.strip():
+        return text
+    result = text
+    for pat, repl in DHARMIC_FLUFF_PATTERNS:
+        result = re.sub(pat, repl, result, flags=re.IGNORECASE)
+    return re.sub(r"\n{3,}", "\n\n", result).strip()
+
+
 def apply_dharma_graha_tone_to_section(text: str, context: Dict[str, Any]) -> str:
     """
     ULTRA-TIGHT: Replace entire Dharma section with canonical block.
     Used for structured dharmic_guidance. Ignores input; returns deterministic 3-line block.
     """
-    return _enforce_dharma_authority(text or "", context)
+    out = _enforce_dharma_authority(text or "", context)
+    return strip_dharmic_fluff(out)
 
 
 def _apply_mahabharata_cadence(body: str, context: Dict[str, Any]) -> str:
