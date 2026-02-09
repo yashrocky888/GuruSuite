@@ -575,7 +575,9 @@ def _build_transit_declarations_and_retro(context: Dict[str, Any]) -> tuple:
 
 def _strip_disallowed_retrograde(guidance: str, allowed_retrograde: set) -> str:
     """
-    Remove only sentences that mention retrograde/vakri for a planet not in allowed_retrograde.
+    Remove only lines that mention retrograde/vakri for a planet not in allowed_retrograde.
+    LINE-PRESERVING: works line-by-line. No sentence splitting. No space-based joining.
+    Preserves headings, blank lines, bullet formatting, Nirnaya structure, SHANTI spacing.
     Never touch backend declaration lines (X currently transits ... in your N house.).
     """
     if not guidance or not guidance.strip():
@@ -583,28 +585,30 @@ def _strip_disallowed_retrograde(guidance: str, allowed_retrograde: set) -> str:
     allowed = {p.lower() for p in allowed_retrograde}
     planet_names = ["mercury", "venus", "mars", "jupiter", "saturn", "sun", "moon"]
     retro_keywords = ["retrograde", "vakri", "revisitation", "reversal", "karmic return", "return cycle", "internalized", "reprocessing"]
-    # Backend declaration pattern: do not strip these (allow leading ws/newline)
-    # Includes Rahu, Ketu per MAHABHARATA DAIVA-JÑA full planet lock
+    # Backend declaration pattern: never strip these
     declaration_re = re.compile(
-        r"^\s*(?:\s*\(Retrograde\)\s*\n?)?"
-        r"(Mercury|Venus|Mars|Jupiter|Saturn|Sun|Moon|Rahu|Ketu)\s+currently\s+transits\s+.+?\s+in\s+your\s+\d+(?:st|nd|rd|th)\s+house\.(?:\s*\(Retrograde\))?\s*$",
-        re.IGNORECASE | re.DOTALL,
+        r"^(Mercury|Venus|Mars|Jupiter|Saturn|Sun|Moon|Rahu|Ketu)\s+currently\s+transits\s+.+?\s+in\s+your\s+\d+(?:st|nd|rd|th)\s+house\.(?:\s*\(Retrograde\))?\s*$",
+        re.IGNORECASE,
     )
-    # Do not split after ". " when followed by " (Retrograde)" so declaration stays one segment
-    parts = re.split(r"(?<=[.!?])\s+(?!\s*\(Retrograde\))", guidance)
+    lines = guidance.split("\n")
     out = []
-    for part in parts:
-        part_stripped = part.strip()
-        if not part_stripped:
+    for line in lines:
+        stripped = line.strip()
+        # Blank lines: preserve exactly (maintain spacing)
+        if not stripped:
+            out.append(line)
             continue
-        if declaration_re.match(part_stripped):
-            out.append(part_stripped)
+        # Backend declarations: never remove
+        if declaration_re.match(stripped):
+            out.append(line)
             continue
-        lower = part_stripped.lower()
+        # No retrograde keywords: keep
+        lower = stripped.lower()
         has_retro = any(kw in lower for kw in retro_keywords)
         if not has_retro:
-            out.append(part_stripped)
+            out.append(line)
             continue
+        # Has retrograde: remove only if line mentions non-allowed planet
         remove = False
         for planet in planet_names:
             if planet in allowed:
@@ -613,8 +617,8 @@ def _strip_disallowed_retrograde(guidance: str, allowed_retrograde: set) -> str:
                 remove = True
                 break
         if not remove:
-            out.append(part_stripped)
-    return " ".join(out).strip()
+            out.append(line)
+    return "\n".join(out)
 
 
 def _strip_ai_later_today_moon(guidance: str) -> str:
