@@ -31,6 +31,8 @@ from src.ai.rishi_prompt import (
     RISHI_PRESENCE_PROMPT,
     RISHI_MASTER_FINAL_POLISH_LAYER,
     RISHI_MAHABHARATA_NIRNAYA_PARIHARA_LAYER,
+    RISHI_SYNTHESIS_DOMINANCE_OVERRIDE,
+    RISHI_SUPREME_PRODUCTION_REFINEMENT_LAYER,
 )
 from src.utils.timezone import get_julian_day, local_to_utc
 
@@ -378,6 +380,25 @@ def _fill_missing_section(key: str, val: str, context: Dict[str, Any]) -> str:
     if key == "shanti_parihara":
         return "Honor the day with a simple sattvic act."
     return "This section awaits further contemplation."
+
+
+def _ensure_mandatory_sections_in_guidance(guidance: str, context: Dict[str, Any]) -> str:
+    """
+    Ensure guidance always contains NIRNAYA and SHANTI & PARIHARA.
+    Appends fallback sections if missing (e.g. unstructured path or truncated output).
+    """
+    if not guidance or not guidance.strip():
+        return guidance
+    g = guidance.strip()
+    nirnaya_heading = CANONICAL_SECTION_HEADINGS.get("nirnaya", "")
+    shanti_heading = CANONICAL_SECTION_HEADINGS.get("shanti_parihara", "")
+    nirnaya_fallback = _fill_missing_section("nirnaya", "", context)
+    shanti_fallback = _fill_missing_section("shanti_parihara", "", context)
+    if nirnaya_heading and nirnaya_heading not in g:
+        g = g + "\n\n" + nirnaya_heading + "\n\n" + nirnaya_fallback
+    if shanti_heading and shanti_heading not in g:
+        g = g + "\n\n" + shanti_heading + "\n\n" + shanti_fallback
+    return g.strip()
 
 
 def _assemble_structured_output(
@@ -1022,7 +1043,11 @@ END ZERO-HALLUCINATION LOCK
 ==================================================
 """ + RISHI_MASTER_FINAL_POLISH_LAYER + """
 
-""" + RISHI_MAHABHARATA_NIRNAYA_PARIHARA_LAYER
+""" + RISHI_MAHABHARATA_NIRNAYA_PARIHARA_LAYER + """
+
+""" + RISHI_SYNTHESIS_DOMINANCE_OVERRIDE + """
+
+""" + RISHI_SUPREME_PRODUCTION_REFINEMENT_LAYER
 
 
 router = APIRouter()
@@ -1185,6 +1210,11 @@ JSON CONTEXT:
                             ) if allowed_retrograde_set_out else guidance
                             guidance = apply_anti_leak_sanitizer(guidance)
                             structured_out = sanitize_structured_dict(structured_out)
+                            guidance = _ensure_mandatory_sections_in_guidance(guidance, context)
+                            import logging as _log
+                            _log.getLogger(__name__).debug(
+                                "Structured sections: %s", list(structured_out.keys()),
+                            )
                             return {
                                 "guidance": guidance,
                                 "structured": structured_out,
@@ -1506,7 +1536,7 @@ Produce one seamless classical Daivajna daily prediction.
                         {"role": "system", "content": GURU_SYSTEM_PROMPT},
                         {"role": "user", "content": user_prompt},
                     ],
-                    max_tokens=800,
+                    max_tokens=1400,
                     temperature=0.5,
                     top_p=0.9,
                 )
@@ -1565,6 +1595,14 @@ Produce one seamless classical Daivajna daily prediction.
     # Post-LLM validation and formatting layer (final transformation before return)
     if guidance:
         guidance = validate_and_format_guidance(guidance, context)
+        guidance = _ensure_mandatory_sections_in_guidance(guidance, context)
+
+    import logging as _log
+    _log.getLogger(__name__).debug(
+        "Final guidance has NIRNAYA: %s, SHANTI: %s",
+        "NIRNAYA" in (guidance or ""),
+        "SHANTI" in (guidance or ""),
+    )
 
     return {
         "guidance": guidance,

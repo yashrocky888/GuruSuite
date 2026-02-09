@@ -84,6 +84,9 @@ DOCTRINAL_LEAK_PATTERNS = [
     (r"\brestrict expansion\b", "measure growth"),
     (r"\bshadbala\b", "planetary strength"),
     (r"[Aa]s lord of\b", "Governing"),
+    (r"\bprimary dosha\b", "primary pressure"),
+    (r"\bdosha of the day\b", "pressure of the day"),
+    (r"\bcombust\b", "weakened by Sun"),
 ]
 
 
@@ -98,6 +101,30 @@ def apply_anti_leak_sanitizer(text: str) -> str:
     for pattern, replacement in DOCTRINAL_LEAK_PATTERNS:
         result = re.sub(pattern, replacement, result, flags=re.IGNORECASE)
     return result
+
+
+def sanitize_structured_dict(structured: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Recursively sanitize every string value in structured dict using apply_anti_leak_sanitizer.
+    Returns a new dict; does not mutate input.
+    """
+    if not structured:
+        return {}
+    out: Dict[str, Any] = {}
+    for key, value in structured.items():
+        if isinstance(value, str):
+            out[key] = apply_anti_leak_sanitizer(value)
+        elif isinstance(value, dict):
+            out[key] = sanitize_structured_dict(value)
+        elif isinstance(value, list):
+            out[key] = [
+                apply_anti_leak_sanitizer(v) if isinstance(v, str) else
+                sanitize_structured_dict(v) if isinstance(v, dict) else v
+                for v in value
+            ]
+        else:
+            out[key] = value
+    return out
 
 
 def enforce_section_order(body: str, context: Dict[str, Any]) -> str:

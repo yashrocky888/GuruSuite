@@ -3,10 +3,10 @@
 /**
  * Guru Predictions — DAILY ONLY
  * Calls POST /api/v1/predict with timescale "daily". Full dark theme.
- * Renders structured sections with headings when API returns structured format.
+ * Renders the FULL response.guidance string exactly as returned — no split, no truncate, no section whitelist.
  */
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeftIcon, ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
 import { useBirthStore } from '@/store/useBirthStore';
@@ -14,49 +14,6 @@ import { getPredict } from '@/services/api';
 import type { BirthDetails } from '@/services/api';
 
 const TIMESCALE = 'daily' as const;
-
-const SECTION_HEADINGS: Record<string, string> = {
-  greeting: '', // No heading — greeting is the opening line
-  declarations: '🪐 CURRENT SKY POSITION',
-  panchanga: '🕉 PANCHANGA OF THE DAY',
-  dasha: '👑 DASHA AUTHORITY',
-  chandra_bala: '🌙 CHANDRA BALA',
-  tara_bala: '⭐ TARA BALA',
-  major_transits: '🪐 MAJOR TRANSITS',
-  dharmic_guidance: '⚖ DHARMA GUIDANCE',
-  throne: '🪔 JANMA NAKSHATRA THRONE',
-  moon_movement: '🔄 MOON MOVEMENT',
-};
-
-const SECTION_ORDER = ['greeting', 'declarations', 'panchanga', 'dasha', 'chandra_bala', 'tara_bala', 'major_transits', 'dharmic_guidance', 'throne', 'moon_movement'] as const;
-
-/** Parse guidance string with canonical headings into structured sections (fallback when API returns no structured) */
-function parseGuidanceIntoSections(guidance: string): Record<string, string> | null {
-  const headings = Object.values(SECTION_HEADINGS).filter(Boolean);
-  const headingToKey: Record<string, string> = {};
-  for (const [k, v] of Object.entries(SECTION_HEADINGS)) {
-    if (v) headingToKey[v] = k;
-  }
-  if (!headings.some((h) => guidance.includes(h))) return null;
-  const sections: Record<string, string> = {};
-  const parts = guidance.split(/\n\n+/).map((p) => p.trim()).filter(Boolean);
-  let currentKey = 'greeting';
-  let currentContent: string[] = [];
-  for (const p of parts) {
-    const matchedHeading = headings.find((h) => p === h || p.startsWith(h + '\n'));
-    const key = matchedHeading ? headingToKey[matchedHeading] : null;
-    if (key) {
-      if (currentKey) sections[currentKey] = currentContent.join('\n\n').trim();
-      currentKey = key;
-      const rest = p === matchedHeading ? '' : p.slice(matchedHeading.length).trim();
-      currentContent = rest ? [rest] : [];
-    } else {
-      currentContent.push(p);
-    }
-  }
-  if (currentKey) sections[currentKey] = currentContent.join('\n\n').trim();
-  return Object.keys(sections).length ? sections : null;
-}
 
 export default function PredictionsPage() {
   const { birthDetails, hasHydrated } = useBirthStore();
@@ -68,12 +25,6 @@ export default function PredictionsPage() {
   const [error, setError] = useState<string | null>(null);
   const [accordionOpen, setAccordionOpen] = useState(false);
   const [nameForFetch, setNameForFetch] = useState<string>('');
-
-  const parsedFromGuidance = useMemo(
-    () => (guidance && !structured ? parseGuidanceIntoSections(guidance) : null),
-    [guidance, structured]
-  );
-  const displaySections = structured ?? parsedFromGuidance;
 
   useEffect(() => {
     if (!hasHydrated || !birthDetails?.name?.trim()) return;
@@ -98,9 +49,13 @@ export default function PredictionsPage() {
       setStructured(null);
       try {
         const data = await getPredict(birthDetails as BirthDetails, TIMESCALE, nameForFetch);
-        setGuidance(data.message ?? data.guidance ?? '');
+        const g = data.message ?? data.guidance ?? '';
+        setGuidance(g);
         setStructured(data.structured ?? null);
         setTechnicalBreakdown(data.technical_breakdown ?? null);
+        if (process.env.NODE_ENV === 'development' && g) {
+          console.log('[Predictions] Full guidance length:', g.length, 'has NIRNAYA:', g.includes('NIRNAYA'), 'has SHANTI:', g.includes('SHANTI'));
+        }
       } catch (err: any) {
         setError(err?.response?.data?.detail || err?.message || 'Failed to load prediction');
         setGuidance('');
@@ -175,26 +130,6 @@ export default function PredictionsPage() {
         <div className="p-6 md:p-8">
           {loading ? (
             <p className="text-gray-400 italic">The Rishi is reflecting...</p>
-          ) : displaySections ? (
-            <div className="text-gray-200 leading-relaxed pb-6 space-y-6">
-              {SECTION_ORDER.map((key) => {
-                const content = displaySections[key] ?? '';
-                const heading = SECTION_HEADINGS[key];
-                if (!heading && !content?.trim()) return null;
-                return (
-                  <section key={key}>
-                    {heading && (
-                      <h3 className="text-amber-400/90 font-semibold text-sm uppercase tracking-wider mb-2">
-                        {heading}
-                      </h3>
-                    )}
-                    {content?.trim() ? (
-                      <div className="whitespace-pre-wrap [&_ul]:pl-5 [&_ol]:pl-5 [&_li]:py-0.5">{content}</div>
-                    ) : null}
-                  </section>
-                );
-              })}
-            </div>
           ) : guidance ? (
             <div className="text-gray-200 leading-relaxed whitespace-pre-wrap pb-6 space-y-2 [&_ul]:pl-5 [&_ol]:pl-5 [&_li]:py-0.5">{guidance}</div>
           ) : !nameForFetch ? (

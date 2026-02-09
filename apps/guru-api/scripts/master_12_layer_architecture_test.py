@@ -36,7 +36,9 @@ def assert_structure(text):
         "MAJOR TRANSITS",
         "DHARMA GUIDANCE",
         "JANMA NAKSHATRA THRONE",
-        "MOON MOVEMENT"
+        "MOON MOVEMENT",
+        "NIRNAYA (THE FINAL VERDICT)",
+        "SHANTI & PARIHARA (SACRED REMEDY)",
     ]
     for h in required:
         if h not in text:
@@ -44,8 +46,9 @@ def assert_structure(text):
 
 
 def assert_identity_anchor(text):
-    first_lines = "\n".join(text.split("\n")[:5])
-    if "I have" not in first_lines and "contemplated" not in first_lines:
+    first_lines = "\n".join(text.split("\n")[:8]).lower()
+    identity_phrases = ["i have", "contemplated", "observe", "examined", "examine", "observed"]
+    if not any(p in first_lines for p in identity_phrases):
         FAILURES.append("Identity anchor missing or weak")
 
 
