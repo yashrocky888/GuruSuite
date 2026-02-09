@@ -257,6 +257,7 @@ def _build_guidance_with_structure(structured: Dict[str, str]) -> str:
     Rebuild final guidance from structured sections WITH canonical headings.
     NEVER output raw body. Always preserve ceremonial structure.
     All sections with headings appear; content may be empty.
+    NIRNAYA and SHANTI get two blank lines before for visual separation.
     """
     parts = []
     for key in CANONICAL_SECTION_ORDER:
@@ -266,6 +267,9 @@ def _build_guidance_with_structure(structured: Dict[str, str]) -> str:
             if content:
                 parts.append(content)
         elif heading:
+            # Two blank lines before NIRNAYA and SHANTI for executive visual separation
+            if key in ("nirnaya", "shanti_parihara") and parts:
+                parts.append("")  # extra blank before
             parts.append(heading)
             if content:
                 parts.append(content)
@@ -370,6 +374,31 @@ def _build_greeting(seeker_name: str, context: Dict[str, Any]) -> str:
     return f"{name}, on this {tithi_name} of the {paksha}, the wheel of Time turns thus:"
 
 
+def _enforce_nirnaya_format(nirnaya_raw: str) -> str:
+    """
+    Force Nirnaya into strict markdown bullet format.
+    LLM decides content; backend enforces structure. Do not trust LLM formatting.
+    """
+    DEFAULTS = [
+        "Proceed with measured awareness.",
+        "Steady effort advised.",
+        "Patience preserves harmony.",
+        "Avoid impulsive decisions.",
+    ]
+    LABELS = ["Yatra", "Karya", "Sambandha", "Varjya"]
+    if not nirnaya_raw or not nirnaya_raw.strip():
+        return "\n".join(f"- **{k}:** {v}" for k, v in zip(LABELS, DEFAULTS))
+
+    raw = re.sub(r"\s+", " ", nirnaya_raw.strip())
+    # Split by sentence boundary; LLM typically returns 4 sentences in Yatra, Karya, Sambandha, Varjya order
+    sentences = re.split(r"(?<=[.!?])\s+", raw)
+    sentences = [s.strip() for s in sentences if s.strip() and len(s.strip()) > 2]
+    while len(sentences) < 4:
+        sentences.append(DEFAULTS[len(sentences)])
+    s1, s2, s3, s4 = sentences[:4]
+    return f"- **Yatra:** {s1}\n- **Karya:** {s2}\n- **Sambandha:** {s3}\n- **Varjya:** {s4}"
+
+
 def _fill_missing_section(key: str, val: str, context: Dict[str, Any]) -> str:
     """If val is empty, use context-aware fallback. Never expose "Interpretation unavailable"."""
     if val and val.strip():
@@ -377,7 +406,7 @@ def _fill_missing_section(key: str, val: str, context: Dict[str, Any]) -> str:
     if key == "moon_movement":
         return "The Moon remains in the same sign today, deepening the current emotional tone rather than shifting it."
     if key == "nirnaya":
-        return "• Yatra: Proceed with measured awareness.\n• Karya: Steady effort advised.\n• Sambandha: Patience preserves harmony.\n• Varjya: Avoid impulsive decisions."
+        return "- **Yatra:** Proceed with measured awareness.\n- **Karya:** Steady effort advised.\n- **Sambandha:** Patience preserves harmony.\n- **Varjya:** Avoid impulsive decisions."
     if key == "shanti_parihara":
         return "Honor the day with a simple sattvic act."
     return "This section awaits further contemplation."
@@ -1206,6 +1235,10 @@ JSON CONTEXT:
                             structured_out["dharmic_guidance"] = apply_dharma_graha_tone_to_section(
                                 structured_out.get("dharmic_guidance") or "", context
                             )
+                            # Nirnaya format lock: backend enforces bullet structure; do not trust LLM formatting
+                            structured_out["nirnaya"] = _enforce_nirnaya_format(
+                                structured_out.get("nirnaya") or ""
+                            )
                             # Rebuild guidance WITH canonical headings — never flat body
                             guidance = _build_guidance_with_structure(structured_out)
                             guidance = _strip_disallowed_retrograde(
@@ -1579,7 +1612,7 @@ Produce one seamless classical Daivajna daily prediction.
             "dharmic_guidance": placeholder,
             "throne": placeholder,
             "moon_movement": "No Moon sign change today." if not (context.get("transit_events") or []) else placeholder,
-            "nirnaya": "• Yatra: Proceed with measured awareness.\n• Karya: Steady effort advised.\n• Sambandha: Patience preserves harmony.\n• Varjya: Avoid impulsive decisions.",
+            "nirnaya": "- **Yatra:** Proceed with measured awareness.\n- **Karya:** Steady effort advised.\n- **Sambandha:** Patience preserves harmony.\n- **Varjya:** Avoid impulsive decisions.",
             "shanti_parihara": "Honor the day with a simple sattvic act.",
         }
         guidance = _build_guidance_with_structure(fallback_structured)
